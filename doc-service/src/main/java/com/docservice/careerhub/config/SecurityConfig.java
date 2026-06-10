@@ -23,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private static final String[] PUBLIC_PATHS = {
+            "/health",
             "/api/auth/signup",
             "/api/auth/register",
             "/api/auth/signin",
