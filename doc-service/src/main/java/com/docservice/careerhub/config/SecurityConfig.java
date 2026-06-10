@@ -8,6 +8,7 @@ import com.docservice.careerhub.security.JwtService;
 import com.docservice.careerhub.security.OAuth2LoginFailureHandler;
 import com.docservice.careerhub.security.OAuth2LoginSuccessHandler;
 import com.docservice.careerhub.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,8 +16,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -40,17 +48,38 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /** Allows the configured frontend origins to call the API with credentials (cookies). */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(AppProperties appProperties) {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(Arrays.stream(appProperties.getCorsAllowedOrigins().split(","))
+                .map(String::trim).filter(origin -> !origin.isEmpty()).toList());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService, AuthService authService,
                                            AuthCookies authCookies, RoleEndpointAccessLoader accessLoader,
                                            CustomOAuth2UserService oAuth2UserService,
                                            OAuth2LoginSuccessHandler oAuth2SuccessHandler,
                                            OAuth2LoginFailureHandler oAuth2FailureHandler,
-                                           CookieAuthorizationRequestRepository authRequestRepository) throws Exception {
+                                           CookieAuthorizationRequestRepository authRequestRepository,
+                                           CorsConfigurationSource corsConfigurationSource) throws Exception {
         JwtAuthenticationFilter jwtFilter =
                 new JwtAuthenticationFilter(jwtService, authService, authCookies);
 
+        // Return 401 for unauthenticated API calls instead of redirecting to the OAuth login page
+        // (oauth2Login would otherwise 302 → which breaks SPA/XHR session checks like /api/auth/me).
+        AuthenticationEntryPoint restEntryPoint =
+                (request, response, ex) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
@@ -65,6 +94,7 @@ public class SecurityConfig {
                     }
                     auth.anyRequest().authenticated();
                 })
+                .exceptionHandling(handling -> handling.authenticationEntryPoint(restEntryPoint))
                 .oauth2Login(oauth -> oauth
                         .authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(authRequestRepository))
                         .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))

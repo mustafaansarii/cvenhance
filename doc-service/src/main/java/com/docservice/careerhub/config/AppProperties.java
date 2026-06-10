@@ -16,6 +16,10 @@ public class AppProperties {
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    /** Comma-separated origins allowed to call the API with credentials (CORS). */
+    @Value("${cors.allowed-origins:http://localhost:5173}")
+    private String corsAllowedOrigins;
+
     @Value("${server.port:5001}")
     private int serverPort;
 
