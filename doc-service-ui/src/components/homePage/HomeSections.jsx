@@ -38,10 +38,10 @@ const STEPS = [
     { n: '03', title: 'Download & apply', desc: 'Export a pixel-perfect PDF and save it to your account for later edits.' },
 ];
 
-const TEMPLATE_SHOTS = [
-    'https://i.ibb.co/v4dWrK1j/Vishnu-Singh.jpg',
-    'http://raw.githubusercontent.com/jakegut/resume/refs/heads/master/resume.png',
-    'https://i.ibb.co/7HgSdbL/William-Lucas.jpg',
+const TEMPLATES = [
+    { src: 'https://i.ibb.co/v4dWrK1j/Vishnu-Singh.jpg', name: 'Modern Tech', tag: 'Resume', to: '/templates?type=CV_AND_RESUME' },
+    { src: 'http://raw.githubusercontent.com/jakegut/resume/refs/heads/master/resume.png', name: 'Classic Professional', tag: 'Resume', to: '/templates?type=CV_AND_RESUME' },
+    { src: 'https://i.ibb.co/7HgSdbL/William-Lucas.jpg', name: 'Engineering Pro', tag: 'Resume', to: '/templates?type=CV_AND_RESUME' },
 ];
 
 const REVIEWS = [
@@ -255,22 +255,50 @@ export default function HomeSections() {
             </section>
 
             {/* Templates showcase */}
-            <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <section className="relative overflow-hidden mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+                <div className="pointer-events-none absolute left-1/2 top-32 -z-10 h-72 w-[60%] -translate-x-1/2 rounded-full bg-teal-500/10 blur-3xl" />
                 <div className="flex flex-col items-end justify-between gap-6 sm:flex-row">
                     <div className="max-w-xl">
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Templates that recruiters love</h2>
+                        <span className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
+                            Templates
+                        </span>
+                        <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Templates that recruiters love</h2>
                         <p className="mt-4 text-base text-slate-500 dark:text-slate-400">Field-tested, ATS-safe, and fully editable. Pick one and make it yours.</p>
                     </div>
-                    <Link to="/templates" className="shrink-0 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">Browse all templates →</Link>
+                    <Link to="/templates" className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-teal-500/40 px-5 py-2.5 text-sm font-semibold text-teal-600 transition hover:bg-teal-500 hover:text-white dark:text-teal-400">
+                        Browse all templates
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 transition-transform group-hover:translate-x-0.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
+                    </Link>
                 </div>
-                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {TEMPLATE_SHOTS.map((src, i) => (
-                        <MotionDiv key={i} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                            className="group overflow-hidden rounded-2xl border border-black/10 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5">
-                            <div className="overflow-hidden" style={{ aspectRatio: '3/4' }}>
-                                <img src={src} alt={`Template ${i + 1}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/300x400?text=Template'; }} />
-                            </div>
+
+                <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+                    {TEMPLATES.map((t, i) => (
+                        <MotionDiv key={t.name} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+                            <Link
+                                to={t.to}
+                                className="group relative block overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:ring-teal-400/50"
+                            >
+                                <div className="relative overflow-hidden bg-white" style={{ aspectRatio: '3/4' }}>
+                                    <img
+                                        src={t.src}
+                                        alt={t.name}
+                                        className="h-full w-full object-cover object-top transition-transform duration-[600ms] ease-out group-hover:scale-[1.04]"
+                                        onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x800?text=Template'; }}
+                                    />
+                                    {/* Hover overlay + CTA */}
+                                    <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                        <span className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg">
+                                            Use this template
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
+                                        </span>
+                                    </div>
+                                </div>
+                                {/* Caption */}
+                                <div className="flex items-center justify-between gap-2 border-t border-black/5 px-4 py-3">
+                                    <span className="truncate text-sm font-semibold text-slate-800">{t.name}</span>
+                                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500">{t.tag}</span>
+                                </div>
+                            </Link>
                         </MotionDiv>
                     ))}
                 </div>
