@@ -1,5 +1,6 @@
 import Hero from '../components/homePage/Hero';
 import Navbar from '../components/navbar/Navbar';
+import HomeSections from '../components/homePage/HomeSections';
 
 function HomePage() {
     return (
@@ -13,6 +14,7 @@ function HomePage() {
                 <Navbar />
                 <Hero />
             </div>
+            <HomeSections />
         </>
     )
 }
