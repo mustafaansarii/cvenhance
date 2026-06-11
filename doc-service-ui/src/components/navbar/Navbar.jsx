@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import authService from '../../services/auth.service';
+import BrandLogo from '../shared/BrandLogo';
 
 /* ── Icons ─────────────────────────────────────────────────────────── */
 const iconBase = 'h-5 w-5';
@@ -460,7 +461,7 @@ function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, 
                         <NavLink to="/login" className="block w-full rounded-full border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-slate-800 hover:bg-slate-50">
                             Sign in
                         </NavLink>
-                        <NavLink to="/signup" className="block w-full rounded-full bg-teal-500 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-teal-400">
+                        <NavLink to="/signup" className="block w-full rounded-full border-2 border-teal-500 px-3 py-2.5 text-center text-sm font-semibold text-teal-600 hover:bg-teal-50">
                             Get Started
                         </NavLink>
                     </div>
@@ -529,20 +530,15 @@ export default function Navbar() {
     return (
         <header
             ref={headerRef}
-            className="relative z-50 border-b border-white/40 bg-gradient-to-b from-slate-950/45 via-slate-950/15 to-transparent text-white"
+            className="relative z-50 border-b border-white bg-gradient-to-b from-slate-950/45 via-slate-950/15 to-transparent text-white"
         >
             <nav className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
                 {/* Logo */}
                 <div className="flex flex-1 items-center">
                     <button onClick={() => navigate('/')} className="group flex items-center gap-2.5 outline-none">
-                        <svg width="34" height="34" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="shrink-0">
-                            <g stroke="white" strokeWidth="22" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M150 150 L300 450 L450 150" />
-                                <path d="M220 200 L300 380 L380 200" strokeWidth="10" />
-                            </g>
-                        </svg>
-                        <span className="text-base font-bold tracking-[0.2em] text-white transition-opacity group-hover:opacity-90">
-                            CAREERHUB
+                        <BrandLogo height={38} />
+                        <span className="text-lg font-medium tracking-[0.14em] text-white transition-opacity group-hover:opacity-90">
+                            NextCV
                         </span>
                     </button>
                 </div>
@@ -566,7 +562,7 @@ export default function Navbar() {
                             </NavLink>
                             <NavLink
                                 to="/signup"
-                                className="inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-teal-900/30 transition hover:bg-teal-400 hover:shadow-md"
+                                className="inline-flex items-center gap-1.5 rounded-full border-2 border-teal-400 px-5 py-2 text-sm font-semibold text-white transition hover:bg-teal-400/10"
                             >
                                 Get Started
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">

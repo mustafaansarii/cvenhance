@@ -64,7 +64,7 @@ export default function Hero() {
         <>
 
 
-            <div className="mx-4 sm:mx-auto max-w-7xl sm:border-l sm:border-r border-black/50 dark:border-white/50 pb-12">
+            <div className="mx-4 sm:mx-auto max-w-7xl sm:border-l sm:border-r border-white pb-12">
                 {/* ── Ray / beam hero background ─────────────────────────── */}
                 <div className="absolute inset-0 -z-10" />
 
@@ -147,7 +147,7 @@ export default function Hero() {
                             {Doc_templates_images.map((src) => (
                                 <div
                                     key={src}
-                                    className="snap-start min-w-[260px] sm:min-w-[320px] h-[240px] sm:h-[300px] rounded-2xl overflow-hidden border border-black/50 dark:border-white/50 bg-white/60 dark:bg-black/20"
+                                    className="snap-start min-w-[260px] sm:min-w-[320px] h-[240px] sm:h-[300px] rounded-2xl overflow-hidden border border-white bg-white/60"
                                 >
                                     <img src={src} alt="Resume template preview" className="w-full h-full object-contain" />
                                 </div>

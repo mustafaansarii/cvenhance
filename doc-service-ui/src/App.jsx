@@ -3,7 +3,6 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 
-import Notifications from './components/homePage/notifications';
 import PrivateRoute from './components/route-manage/PrivateRoute';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -47,7 +46,6 @@ function App() {
           },
         }}
       />
-      {!isEditor && <Notifications />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

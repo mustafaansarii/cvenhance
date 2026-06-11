@@ -6,7 +6,7 @@ function HomePage() {
     return (
         <>
             <div
-                className="relative w-full overflow-hidden bg-top bg-no-repeat home-page-hero-bg border-b border-black/50 dark:border-white/50"
+                className="relative w-full overflow-hidden bg-top bg-no-repeat home-page-hero-bg border-b border-white"
                 style={{
                     backgroundImage: "url('/assest/home_page.png')",
                 }}

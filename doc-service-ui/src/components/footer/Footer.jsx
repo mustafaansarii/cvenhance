@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import BrandLogo from '../shared/BrandLogo';
 
 export default function Footer() {
     const links = {
@@ -29,20 +30,16 @@ export default function Footer() {
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
                     <div className="space-y-3 col-span-2 md:col-span-1">
                         <Link to="/" className="flex items-center gap-2">
-                            <img
-                                src="./logo.svg"
-                                alt="DocService"
-                                className="h-7 w-auto"
-                            />
-                            <span className="text-base font-bold tracking-widest text-white">
-                                CAREERHUB
+                            <BrandLogo height={38} />
+                            <span className="text-lg font-medium tracking-[0.14em] text-white">
+                                NextCV
                             </span>
                         </Link>
                     <p className="text-sm sm:text-slate-300 text-slate-900 max-w-xs">
                             Build ATS-friendly resumes and documents in minutes.
                         </p>
                         <p className="hidden text-sm text-slate-400 md:block">
-                            © {new Date().getFullYear()} CAREERHUB. All rights reserved.
+                            © {new Date().getFullYear()} NextCV. All rights reserved.
                         </p>
                     </div>
 
@@ -69,7 +66,7 @@ export default function Footer() {
                     ))}
                 </div>
                 <p className="mt-4 -mb-8 text-center text-sm text-slate-400 md:hidden">
-                    © {new Date().getFullYear()} DocService. All rights reserved.
+                    © {new Date().getFullYear()} NextCV. All rights reserved.
                 </p>
             </div>
             </div>

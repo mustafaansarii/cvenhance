@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Light mode only: make `dark:` utilities apply ONLY under an explicit `.dark` class (which we
+   never add), so the OS dark-mode setting can't flip the app to a dark theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", "Plus Jakarta Sans", "Satoshi", "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Inter", "Plus Jakarta Sans", "Satoshi", "Geist", ui-sans-serif, system-ui, sans-serif;
@@ -14,6 +18,7 @@ body {
   font-size: 17px;
   font-family: var(--font-sans);
   color: #0f172a;
+  color-scheme: light;
 }
 
 body {
@@ -29,32 +34,6 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #020617;
-    background-image:
-      radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.26) 0%, transparent 45%),
-      radial-gradient(circle at 90% 25%, rgba(99, 102, 241, 0.22) 0%, transparent 50%),
-      radial-gradient(circle at 20% 95%, rgba(168, 85, 247, 0.18) 0%, transparent 55%),
-      linear-gradient(135deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 1) 100%);
-    background-attachment: fixed;
-    background-size: cover;
-  }
-}
-
-/* Tailwind dark class support (when `class="dark"` is used instead of OS setting). */
-.dark body {
-  background-color: #020617;
-  background-image:
-    radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.30) 0%, transparent 48%),
-    radial-gradient(circle at 92% 30%, rgba(99, 102, 241, 0.25) 0%, transparent 52%),
-    radial-gradient(circle at 25% 100%, rgba(168, 85, 247, 0.16) 0%, transparent 58%),
-    linear-gradient(135deg, rgba(2, 6, 23, 1) 0%, rgba(15, 23, 42, 1) 100%);
-  background-attachment: fixed;
-  background-size: cover;
 }
 
 .font-display {

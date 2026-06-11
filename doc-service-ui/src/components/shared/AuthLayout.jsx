@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import BrandLogo from './BrandLogo';
 
 /**
  * Generic full-page auth layout.
@@ -34,14 +35,8 @@ export default function AuthLayout({ badge, title, description, features = [], b
                             onClick={() => navigate('/')}
                             className="group flex items-center gap-3 outline-none"
                         >
-                            <svg width="34" height="34" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
-                                className="shrink-0 drop-shadow-[0_0_10px_rgba(45,212,191,0.45)]">
-                                <g stroke="white" strokeWidth="22" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M150 150 L300 450 L450 150" />
-                                    <path d="M220 200 L300 380 L380 200" strokeWidth="10" />
-                                </g>
-                            </svg>
-                            <span className="text-sm font-bold tracking-[0.25em] text-white">CAREERHUB</span>
+                            <BrandLogo height={38} className="drop-shadow-[0_0_10px_rgba(45,212,191,0.45)]" />
+                            <span className="text-sm font-medium tracking-[0.25em] text-white">NextCV</span>
                         </button>
                     </div>
                 </header>
@@ -121,13 +116,8 @@ export default function AuthLayout({ badge, title, description, features = [], b
                 >
                     <div className="flex h-14 items-center justify-between px-4">
                         <button onClick={() => navigate('/')} className="group flex items-center gap-3 outline-none">
-                            <svg width="32" height="32" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="shrink-0">
-                                <g stroke="white" strokeWidth="22" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M150 150 L300 450 L450 150" />
-                                    <path d="M220 200 L300 380 L380 200" strokeWidth="10" />
-                                </g>
-                            </svg>
-                            <span className="text-base font-bold tracking-widest text-white">CAREERHUB</span>
+                            <BrandLogo height={36} />
+                            <span className="text-base font-medium tracking-widest text-white">NextCV</span>
                         </button>
                         {/* Breadcrumb on mobile */}
                         {breadcrumb && (

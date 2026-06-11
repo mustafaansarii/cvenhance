@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import BrandLogo from './BrandLogo';
 
 export default function MinimalNavbar() {
     const navigate = useNavigate();
@@ -11,23 +12,11 @@ export default function MinimalNavbar() {
                     className="group flex items-center gap-3 outline-none"
                 >
                     {/* Logo mark */}
-                    <svg
-                        width="38"
-                        height="38"
-                        viewBox="0 0 600 600"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                        className="shrink-0"
-                    >
-                        <g stroke="white" strokeWidth="22" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M150 150 L300 450 L450 150" />
-                            <path d="M220 200 L300 380 L380 200" strokeWidth="10" />
-                        </g>
-                    </svg>
+                    <BrandLogo height={40} />
 
                     {/* Brand name */}
-                    <span className="text-base text-white font-bold tracking-widest">
-                        CAREERHUB
+                    <span className="text-base text-white font-medium tracking-widest">
+                        NextCV
                     </span>
                 </button>
             </nav>

@@ -55,7 +55,7 @@ const REVIEWS = [
 ];
 
 const FAQS = [
-    { q: 'Is DocService free to use?', a: 'Yes — you can create an account, build documents, and download PDFs for free. Premium templates and advanced features are available on paid plans.' },
+    { q: 'Is NextCV free to use?', a: 'Yes — you can create an account, build documents, and download PDFs for free. Premium templates and advanced features are available on paid plans.' },
     { q: 'Are the resumes ATS-friendly?', a: 'Every template uses clean, parsable layouts with standard section titles and readable fonts, so applicant tracking systems can read them without losing content.' },
     { q: 'Can I edit my document after downloading?', a: 'Absolutely. Documents are saved to your account, so you can come back anytime, tweak the content, recompile, and download an updated PDF.' },
     { q: 'How do I sign in?', a: 'Use your email and password, or continue with Google or GitHub — if you do not have an account yet, one is created automatically on your first social login.' },
@@ -94,7 +94,7 @@ function FaqSection() {
             <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
                 <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} className="text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently asked questions</h2>
-                    <p className="mt-4 text-base text-slate-500 dark:text-slate-400">Everything you need to know about building documents with DocService.</p>
+                    <p className="mt-4 text-base text-slate-500 dark:text-slate-400">Everything you need to know about building documents with NextCV.</p>
                 </MotionDiv>
                 <div className="mt-12 space-y-3">
                     {FAQS.map((item, i) => (
@@ -172,7 +172,7 @@ export default function HomeSections() {
                             Chosen by <span className="text-teal-600 dark:text-teal-400">thousands</span> of job applicants worldwide
                         </h2>
                         <p className="mt-5 text-base leading-relaxed text-slate-500 dark:text-slate-400">
-                            DocService is a document builder that helps you create applications with impact and professionalism — trusted at every step of the job hunt to emphasize your experience, value, and skills.
+                            NextCV is a document builder that helps you create applications with impact and professionalism — trusted at every step of the job hunt to emphasize your experience, value, and skills.
                         </p>
                         <p className="mt-4 text-base leading-relaxed text-slate-500 dark:text-slate-400">
                             We pair flexible, ATS-friendly templates with an intuitive editor and a live PDF preview, so you can present a complete, polished application in minutes.
