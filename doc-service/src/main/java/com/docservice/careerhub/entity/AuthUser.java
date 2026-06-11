@@ -40,6 +40,10 @@ public class AuthUser {
 
     private String provider;
 
+    /** Structured resume/profile details (JSON): name, contact, education[], experience[], etc. */
+    @Column(columnDefinition = "TEXT")
+    private String profileData;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "auth_user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)

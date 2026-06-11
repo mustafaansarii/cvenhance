@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Navbar from '../components/navbar/Navbar';
 import PageHero from '../components/shared/PageHero';
+import ProfileDetailsForm from '../components/profile/ProfileDetailsForm';
 import userService from '../services/user.service';
 
 function initialsOf(profile) {
@@ -23,6 +24,7 @@ function Badge({ ok, okText, noText }) {
 export default function ProfilePage() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [editing, setEditing] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -37,7 +39,19 @@ export default function ProfilePage() {
         })();
     }, []);
 
-    const roles = Array.isArray(profile?.role) ? profile.role : [];
+    const saveDetails = async (data) => {
+        try {
+            const updated = await userService.updateProfile(data);
+            setProfile(updated);
+            setEditing(false);
+            toast.success('Details saved');
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Failed to save details');
+        }
+    };
+
+    const roles = Array.isArray(profile?.roles) ? profile.roles : (Array.isArray(profile?.role) ? profile.role : []);
+    const details = profile?.profileData || null;
 
     return (
         <>
@@ -131,6 +145,29 @@ export default function ProfilePage() {
                             </section>
                         </div>
 
+                        {/* Resume details */}
+                        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                            <div className="mb-4 flex items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Resume details</h2>
+                                    <p className="mt-1 text-xs text-slate-400">Saved to your account and reused to prefill the resume builder.</p>
+                                </div>
+                                {!editing && (
+                                    <button onClick={() => setEditing(true)} className="shrink-0 rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                                        {details ? 'Edit details' : 'Add details'}
+                                    </button>
+                                )}
+                            </div>
+
+                            {editing ? (
+                                <ProfileDetailsForm initial={details} onCancel={() => setEditing(false)} onSave={saveDetails} />
+                            ) : details ? (
+                                <DetailsSummary d={details} />
+                            ) : (
+                                <p className="text-sm text-slate-400">No resume details yet. Click <span className="font-medium text-slate-600">Add details</span> to fill in your experience, education, skills and more.</p>
+                            )}
+                        </section>
+
                         <DeleteAccountSection />
                     </div>
                 ) : (
@@ -140,6 +177,38 @@ export default function ProfilePage() {
                 )}
             </main>
         </>
+    );
+}
+
+function DetailsSummary({ d }) {
+    const counts = [
+        ['Experience', d.experience?.length],
+        ['Projects', d.projects?.length],
+        ['Education', d.education?.length],
+        ['Skill groups', d.skills?.length],
+        ['Achievements', d.achievements?.length],
+    ].filter(([, n]) => n);
+    return (
+        <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                {[
+                    ['Name', d.name], ['Location', d.location], ['Phone', d.phone], ['Email', d.email],
+                    ['LinkedIn', d.linkedin || d.linkedinUrl], ['GitHub', d.github || d.githubUrl],
+                ].filter(([, v]) => v).map(([k, v]) => (
+                    <div key={k} className="flex justify-between gap-3 border-b border-slate-100 py-1.5">
+                        <span className="text-slate-500">{k}</span>
+                        <span className="truncate text-right font-medium text-slate-800">{v}</span>
+                    </div>
+                ))}
+            </div>
+            {counts.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                    {counts.map(([k, n]) => (
+                        <span key={k} className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-200">{n} {k}</span>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }
 

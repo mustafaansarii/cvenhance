@@ -7,8 +7,10 @@ import com.docservice.careerhub.dto.response.UserResponse;
 import com.docservice.careerhub.entity.AuthUser;
 import com.docservice.careerhub.security.AuthCookies;
 import com.docservice.careerhub.security.RequestMetadataExtractor;
+import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.service.AuthService;
 import com.docservice.careerhub.util.AbstractDtoUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.Objects;
 
 @Component
@@ -26,6 +29,9 @@ public class AuthDtoApi extends AbstractDtoUtil {
 
     @Autowired
     private AuthCookies authCookies;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public MessageResponse signup(SignupRequest request) {
         validate(request);
@@ -51,20 +57,38 @@ public class AuthDtoApi extends AbstractDtoUtil {
     }
 
     public UserResponse me(Authentication authentication) {
-        AuthUser user = authService.getActiveUser(authentication.getName());
-        UserResponse response = toUserResponse(user);
-        return response;
+        return toUserResponse(authService.getActiveUser(authentication.getName()));
+    }
+
+    /** Persists the caller's structured resume/profile details (free-form JSON object). */
+    public UserResponse updateProfile(Authentication authentication, Map<String, Object> profile) {
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(profile == null ? Map.of() : profile);
+        } catch (Exception e) {
+            throw ApiException.badData("Invalid profile data");
+        }
+        return toUserResponse(authService.updateProfile(authentication.getName(), json));
     }
 
     // ── private helpers ─────────────────────────────────────────────────
 
     private UserResponse toUserResponse(AuthUser user) {
+        Object profile = null;
+        if (user.getProfileData() != null && !user.getProfileData().isBlank()) {
+            try {
+                profile = objectMapper.readValue(user.getProfileData(), Object.class);
+            } catch (Exception ignored) {
+                // stored value isn't valid JSON — return null rather than failing the request
+            }
+        }
         return UserResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .verified(user.isVerified())
                 .roles(user.getRoles())
+                .profileData(profile)
                 .build();
     }
 

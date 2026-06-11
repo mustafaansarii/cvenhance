@@ -156,6 +156,13 @@ public class AuthService {
                 .orElseThrow(() -> ApiException.unauthorized("Session is no longer valid"));
     }
 
+    @Transactional
+    public AuthUser updateProfile(String email, String profileJson) {
+        AuthUser user = getActiveUser(email);
+        user.setProfileData(profileJson);
+        return authUserRepository.save(user);
+    }
+
     // ── private helpers ─────────────────────────────────────────────────
 
     private AuthUser authenticate(SigninRequest request) {

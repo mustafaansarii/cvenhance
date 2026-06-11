@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import Footer from './components/footer/Footer';
 import DocEditor from './pages/DocEditor';
+import ResumeBuilder from './pages/ResumeBuilder';
 import NotFound from './components/not-found/NotFound';
 import authService from './services/auth.service';
 import ContactUsPage from './pages/contact-us';
@@ -21,7 +22,7 @@ import SettingsPage from './pages/SettingsPage';
 
 function App() {
   const location = useLocation();
-  const isEditor = location.pathname.startsWith('/doc-editor');
+  const isEditor = location.pathname.startsWith('/doc-editor') || location.pathname.startsWith('/resume-builder');
   const noFooterPaths = ['/login', '/signup'];
   const hideFooter = isEditor || noFooterPaths.includes(location.pathname);
 
@@ -53,6 +54,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/contact-us" element={<ContactUsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/resume-builder" element={<ResumeBuilder />} />
+        <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
 
         {/* Document builder (auth required) */}
         <Route

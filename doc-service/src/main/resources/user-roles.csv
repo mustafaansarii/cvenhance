@@ -4,6 +4,7 @@
 # '*' matches one path segment, '**' matches multiple.
 method,path,roles
 GET,/api/auth/me,USER|ADMIN
+PATCH,/api/auth/profile,USER|ADMIN
 POST,/api/admin/doc-templates,ADMIN
 GET,/api/admin/doc-templates,PUBLIC
 GET,/api/admin/doc-templates/*,PUBLIC
