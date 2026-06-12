@@ -56,4 +56,15 @@ public class UserDocController {
     public byte[] unlock(Authentication authentication, @PathVariable Long id) {
         return userDocDtoApi.unlock(authentication.getName(), id);
     }
+
+    @PostMapping("/by-template/{code}")
+    public UserDocResponse openByTemplate(Authentication authentication, @PathVariable String code) {
+        return userDocDtoApi.openByTemplate(authentication.getName(), code);
+    }
+
+    @PostMapping("/{id}/claim")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void claim(Authentication authentication, @PathVariable Long id) {
+        userDocDtoApi.claim(authentication.getName(), id);
+    }
 }

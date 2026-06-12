@@ -69,7 +69,6 @@ public class EntitlementService {
         return subscription.getCreditsRemaining() == null || subscription.getUnlockedDocIds().contains(docId);
     }
 
-    /** Spends one credit to unlock a resume (idempotent for already-unlocked docs). */
     @Transactional
     public boolean unlock(String ownerEmail, Long docId) {
         if (isAdmin()) {
@@ -94,7 +93,6 @@ public class EntitlementService {
         return true;
     }
 
-    /** Grants a purchased plan: extends validity by a year and adds the plan's credits. */
     @Transactional
     public Subscription grant(String ownerEmail, Plan plan) {
         Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElseGet(() -> {

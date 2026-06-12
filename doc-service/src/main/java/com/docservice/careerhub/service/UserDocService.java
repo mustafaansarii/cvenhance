@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 @Service
 public class UserDocService {
 
@@ -45,6 +47,33 @@ public class UserDocService {
     public UserDoc saveTemplateToAccount(String ownerEmail, Long templateId) {
         DocTemplate template = docTemplateRepository.findById(templateId)
                 .orElseThrow(() -> ApiException.notFound("Doc template not found: " + templateId));
+        return findOrCreateForTemplate(ownerEmail, template);
+    }
+
+    @Transactional
+    public UserDoc openByTemplateCode(String ownerEmail, String templateCode) {
+        DocTemplate template = docTemplateRepository.findFirstByTemplateCode(templateCode)
+                .orElseThrow(() -> ApiException.notFound("Doc template not found: " + templateCode));
+        return findOrCreateForTemplate(ownerEmail, template);
+    }
+
+    @Transactional
+    public void claim(String ownerEmail, Long id) {
+        getOwned(ownerEmail, id);
+        if (!entitlementService.unlock(ownerEmail, id)) {
+            throw ApiException.paymentRequired("Upgrade your plan to download this resume");
+        }
+    }
+
+    private UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
+        if (Objects.nonNull(template.getTemplateCode())) {
+            UserDoc existing = userDocRepository
+                    .findFirstByOwnerEmailAndTemplateCode(ownerEmail, template.getTemplateCode())
+                    .orElse(null);
+            if (Objects.nonNull(existing)) {
+                return existing;
+            }
+        }
 
         String merged = latexMergeService.merge(template.getLatexCode(), resumeDataResolver.forUser(ownerEmail));
 

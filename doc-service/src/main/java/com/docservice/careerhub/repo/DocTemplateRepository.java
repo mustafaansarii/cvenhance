@@ -8,7 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface DocTemplateRepository extends JpaRepository<DocTemplate, Long> {
+
+    Optional<DocTemplate> findFirstByTemplateCode(String templateCode);
 
     String SEARCH_QUERY = """
             SELECT t FROM DocTemplate t

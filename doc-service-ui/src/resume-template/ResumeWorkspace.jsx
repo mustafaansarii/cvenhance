@@ -8,6 +8,7 @@ import {
 } from './shared';
 import userService from '../services/user.service';
 import paymentService from '../services/payment.service';
+import docService from '../services/doc.service';
 import PricingModal from '../components/payment/PricingModal';
 
 const ITEM_MARGIN = { exp: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
@@ -151,13 +152,20 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             return;
         }
         setSaving(true);
-        try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ } finally { setSaving(false); }
-        let entitlement = null;
-        try { entitlement = await paymentService.getEntitlement(); } catch { /* treat as free */ }
-        if (entitlement?.active) {
+        try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ }
+        try {
+            const doc = await docService.openByTemplate(design.code);
+            await docService.claim(doc.id);
+            setLocked(false);
             window.print();
-        } else {
-            setPricingOpen(true);
+        } catch (err) {
+            if (err?.response?.status === 402) {
+                setPricingOpen(true);
+            } else {
+                toast.error(err?.response?.data?.message || 'Could not prepare your download');
+            }
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -457,7 +465,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             <PricingModal
                 open={pricingOpen}
                 onClose={() => setPricingOpen(false)}
-                onSuccess={() => { setPricingOpen(false); setLocked(false); window.print(); }}
+                onSuccess={() => { setPricingOpen(false); download(); }}
                 title="Upgrade to download your resume"
             />
         </div>

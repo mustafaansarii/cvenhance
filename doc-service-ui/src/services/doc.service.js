@@ -37,6 +37,15 @@ class DocService {
         return res.data;
     }
 
+    async openByTemplate(code) {
+        const res = await api.post(`${USER_DOCS}/by-template/${code}`);
+        return res.data;
+    }
+
+    async claim(id) {
+        await api.post(`${USER_DOCS}/${id}/claim`);
+    }
+
     async compile(id, latexCode) {
         const res = await api.patch(
             `${USER_DOCS}/${id}/compile`,

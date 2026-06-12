@@ -14,6 +14,8 @@ public interface UserDocRepository extends JpaRepository<UserDoc, Long> {
 
     Optional<UserDoc> findByIdAndOwnerEmail(Long id, String ownerEmail);
 
+    Optional<UserDoc> findFirstByOwnerEmailAndTemplateCode(String ownerEmail, String templateCode);
+
     @Query("""
             SELECT d FROM UserDoc d
             WHERE d.ownerEmail = :ownerEmail

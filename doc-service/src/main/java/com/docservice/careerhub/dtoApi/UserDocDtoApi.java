@@ -31,6 +31,14 @@ public class UserDocDtoApi extends AbstractDtoUtil {
         return toResponse(userDocService.saveTemplateToAccount(ownerEmail, request.getTemplateId()));
     }
 
+    public UserDocResponse openByTemplate(String ownerEmail, String templateCode) {
+        return toResponse(userDocService.openByTemplateCode(ownerEmail, templateCode));
+    }
+
+    public void claim(String ownerEmail, Long id) {
+        userDocService.claim(ownerEmail, id);
+    }
+
     public PageResponse<UserDocMetadata> list(String ownerEmail, PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);
         Page<UserDoc> result = userDocService.list(ownerEmail, query.getKeyword(), type, pageable);
