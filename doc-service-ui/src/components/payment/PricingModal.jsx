@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import paymentService, { PLANS, loadCashfree } from '../../services/payment.service';
+import paymentService, { PLANS, loadCashfree, currentPlanLevel } from '../../services/payment.service';
 
 
 export default function PricingModal({ open, onClose, onSuccess, title = 'Upgrade to download' }) {
     const [busy, setBusy] = useState(null);
+    const [entitlement, setEntitlement] = useState(null);
+
+    useEffect(() => {
+        if (!open) return;
+        paymentService.getEntitlement().then(setEntitlement).catch(() => setEntitlement(null));
+    }, [open]);
 
     if (!open) return null;
+
+    const currentLevel = currentPlanLevel(entitlement);
+    const activePlan = entitlement?.active ? entitlement.plan : null;
 
     const buy = async (plan) => {
         setBusy(plan.code);
@@ -44,21 +53,27 @@ export default function PricingModal({ open, onClose, onSuccess, title = 'Upgrad
                 <p className="mt-1 text-sm text-slate-500">Pay once — valid for 1 year. Cancel anytime before paying.</p>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                    {PLANS.map((plan) => (
-                        <div key={plan.code} className={`relative flex flex-col rounded-2xl border p-5 ${plan.highlight ? 'border-teal-400 ring-2 ring-teal-400/30' : 'border-slate-200'}`}>
-                            {plan.highlight && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-teal-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Popular</span>}
-                            <p className="text-sm font-bold text-slate-800">{plan.title}</p>
-                            <p className="mt-1 text-2xl font-extrabold text-slate-900">₹{plan.price}</p>
-                            <p className="mt-2 flex-1 text-xs leading-relaxed text-slate-500">{plan.perk}</p>
-                            <button
-                                onClick={() => buy(plan)}
-                                disabled={busy !== null}
-                                className={`mt-4 rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${plan.highlight ? 'bg-teal-500 text-white hover:bg-teal-400' : 'border border-slate-300 text-slate-800 hover:bg-slate-50'}`}
-                            >
-                                {busy === plan.code ? 'Starting…' : 'Choose'}
-                            </button>
-                        </div>
-                    ))}
+                    {PLANS.map((plan) => {
+                        const isCurrent = activePlan === plan.code;
+                        const isIncluded = currentLevel > 0 && plan.level < currentLevel;
+                        const blocked = isCurrent || isIncluded;
+                        const label = isCurrent ? 'Current plan' : isIncluded ? 'Included' : busy === plan.code ? 'Starting…' : 'Choose';
+                        return (
+                            <div key={plan.code} className={`relative flex flex-col rounded-2xl border p-5 ${plan.highlight ? 'border-teal-400 ring-2 ring-teal-400/30' : 'border-slate-200'} ${blocked ? 'opacity-70' : ''}`}>
+                                {plan.highlight && <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-teal-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">Popular</span>}
+                                <p className="text-sm font-bold text-slate-800">{plan.title}</p>
+                                <p className="mt-1 text-2xl font-extrabold text-slate-900">₹{plan.price}</p>
+                                <p className="mt-2 flex-1 text-xs leading-relaxed text-slate-500">{plan.perk}</p>
+                                <button
+                                    onClick={() => buy(plan)}
+                                    disabled={busy !== null || blocked}
+                                    className={`mt-4 rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${plan.highlight ? 'bg-teal-500 text-white hover:bg-teal-400' : 'border border-slate-300 text-slate-800 hover:bg-slate-50'}`}
+                                >
+                                    {label}
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>

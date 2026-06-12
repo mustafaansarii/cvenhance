@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import paymentService, { PLANS, loadCashfree } from '../../services/payment.service';
+import paymentService, { PLANS, loadCashfree, currentPlanLevel } from '../../services/payment.service';
 import authService from '../../services/auth.service';
 
 const PLAN_DETAILS = {
@@ -65,8 +65,10 @@ function CrossIcon() {
   );
 }
 
-function PricingCard({ plan, isPopular, isCurrent, busy, onBuy }) {
+function PricingCard({ plan, isPopular, isCurrent, isIncluded, busy, onBuy }) {
   const details = PLAN_DETAILS[plan.code];
+  const blocked = isCurrent || isIncluded;
+  const label = isCurrent ? 'Current plan' : isIncluded ? 'Included' : busy === plan.code ? 'Starting…' : details.cta;
   return (
     <div className="relative flex flex-col h-full">
 
@@ -113,7 +115,7 @@ function PricingCard({ plan, isPopular, isCurrent, busy, onBuy }) {
       <div className="px-7 py-6">
         <button
           onClick={() => onBuy(plan.code)}
-          disabled={busy !== null || isCurrent}
+          disabled={busy !== null || blocked}
           className={[
             'flex w-full items-center justify-center gap-2 border px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60',
             isPopular
@@ -121,8 +123,8 @@ function PricingCard({ plan, isPopular, isCurrent, busy, onBuy }) {
               : 'border-black/30 text-slate-800 hover:border-black',
           ].join(' ')}
         >
-          {isCurrent ? 'Current plan' : busy === plan.code ? 'Starting…' : details.cta}
-          {!isCurrent && busy !== plan.code && (
+          {label}
+          {!blocked && busy !== plan.code && (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" />
             </svg>
@@ -176,6 +178,7 @@ export default function PricingFeature() {
   };
 
   const activePlan = entitlement?.active ? entitlement.plan : null;
+  const currentLevel = currentPlanLevel(entitlement);
 
   return (
     <section className="w-full">
@@ -208,6 +211,7 @@ export default function PricingFeature() {
               plan={plan}
               isPopular={plan.code === 'STANDARD'}
               isCurrent={activePlan === plan.code}
+              isIncluded={currentLevel > 0 && plan.level < currentLevel}
               busy={busy}
               onBuy={buy}
             />

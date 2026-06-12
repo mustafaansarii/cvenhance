@@ -4,10 +4,16 @@ import axios from 'axios';
 export const CASHFREE_MODE = 'sandbox';
 
 export const PLANS = [
-    { code: 'BASIC', price: 99, title: 'Starter', perk: 'Download 1 resume', highlight: false },
-    { code: 'STANDARD', price: 199, title: 'Pro', perk: 'Download up to 5 resumes', highlight: true },
-    { code: 'UNLIMITED', price: 399, title: 'Unlimited', perk: 'Unlimited resumes & downloads', highlight: false },
+    { code: 'BASIC', price: 99, title: 'Starter', perk: 'Download 1 resume', highlight: false, level: 1 },
+    { code: 'STANDARD', price: 199, title: 'Pro', perk: 'Download up to 5 resumes', highlight: true, level: 2 },
+    { code: 'UNLIMITED', price: 399, title: 'Unlimited', perk: 'Unlimited resumes & downloads', highlight: false, level: 3 },
 ];
+
+export const PLAN_LEVEL = { BASIC: 1, STANDARD: 2, UNLIMITED: 3 };
+
+export function currentPlanLevel(entitlement) {
+    return entitlement?.active ? (PLAN_LEVEL[entitlement.plan] || 0) : 0;
+}
 
 const api = axios.create({
     baseURL: '/careerhub/api/',

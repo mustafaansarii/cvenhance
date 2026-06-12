@@ -4,6 +4,8 @@ import com.docservice.careerhub.dto.constants.PaymentOrderStatus;
 import com.docservice.careerhub.dto.constants.Plan;
 import com.docservice.careerhub.entity.AuthUser;
 import com.docservice.careerhub.entity.PaymentOrder;
+import com.docservice.careerhub.entity.Subscription;
+import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.payment.CreateOrderRequest;
 import com.docservice.careerhub.payment.OrderResponse;
 import com.docservice.careerhub.payment.PaymentService;
@@ -45,6 +47,7 @@ public class PaymentOrderService {
     @Transactional
     public OrderResponse createOrder(String ownerEmail, Plan plan, String customerPhone) {
         AuthUser user = authService.getActiveUser(ownerEmail);
+        rejectNonUpgrade(ownerEmail, plan);
         String phone = (Objects.isNull(customerPhone) || customerPhone.isBlank()) ? FALLBACK_PHONE : customerPhone;
 
         OrderResponse response = paymentService.createOrder(
@@ -93,6 +96,15 @@ public class PaymentOrderService {
             log.info("Webhook processed for order {} — Cashfree status {}", orderId, verification.orderStatus());
         } catch (Exception e) {
             log.warn("Webhook for order {} could not be confirmed: {}", orderId, e.getMessage());
+        }
+    }
+
+    private void rejectNonUpgrade(String ownerEmail, Plan requested) {
+        Subscription current = entitlementService.find(ownerEmail).orElse(null);
+        if (entitlementService.isActive(current) && Objects.nonNull(current.getPlan())
+                && requested.getLevel() <= current.getPlan().getLevel()) {
+            throw ApiException.badData("You already have the " + current.getPlan().name()
+                    + " plan — you can only upgrade to a higher plan.");
         }
     }
 
