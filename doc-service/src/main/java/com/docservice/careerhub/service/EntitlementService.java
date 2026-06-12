@@ -4,6 +4,9 @@ import com.docservice.careerhub.dto.constants.Plan;
 import com.docservice.careerhub.entity.Subscription;
 import com.docservice.careerhub.repo.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +20,23 @@ import java.util.Optional;
 public class EntitlementService {
 
     private static final long VALIDITY_DAYS = 365;
+    private static final String ADMIN_AUTHORITY = "ROLE_ADMIN";
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+
+    public boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (Objects.isNull(authentication)) {
+            return false;
+        }
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (ADMIN_AUTHORITY.equals(authority.getAuthority())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Transactional(readOnly = true)
     public Optional<Subscription> find(String ownerEmail) {
@@ -34,6 +51,9 @@ public class EntitlementService {
 
     @Transactional(readOnly = true)
     public boolean isUnlocked(String ownerEmail, Long docId) {
+        if (isAdmin()) {
+            return true;
+        }
         Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElse(null);
         if (!isActive(subscription)) {
             return false;
@@ -44,6 +64,9 @@ public class EntitlementService {
     /** Spends one credit to unlock a resume (idempotent for already-unlocked docs). */
     @Transactional
     public boolean unlock(String ownerEmail, Long docId) {
+        if (isAdmin()) {
+            return true;
+        }
         Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElse(null);
         if (!isActive(subscription)) {
             return false;

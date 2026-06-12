@@ -18,16 +18,17 @@ public class EntitlementController {
 
     @GetMapping("/api/me/entitlement")
     public Map<String, Object> entitlement(Authentication authentication) {
+        boolean admin = entitlementService.isAdmin();
         Subscription subscription = entitlementService.find(authentication.getName()).orElse(null);
-        boolean active = entitlementService.isActive(subscription);
-        boolean unlimited = active && subscription.getCreditsRemaining() == null;
+        boolean active = admin || entitlementService.isActive(subscription);
+        boolean unlimited = admin || (active && subscription.getCreditsRemaining() == null);
 
         Map<String, Object> result = new HashMap<>();
-        result.put("plan", active ? subscription.getPlan().name() : "FREE");
+        result.put("plan", admin ? "ADMIN" : (active ? subscription.getPlan().name() : "FREE"));
         result.put("active", active);
         result.put("unlimited", unlimited);
-        result.put("creditsRemaining", active ? (unlimited ? -1 : subscription.getCreditsRemaining()) : 0);
-        result.put("validUntil", active ? subscription.getValidUntil().toString() : null);
+        result.put("creditsRemaining", admin ? -1 : (active ? (unlimited ? -1 : subscription.getCreditsRemaining()) : 0));
+        result.put("validUntil", (!admin && active) ? subscription.getValidUntil().toString() : null);
         return result;
     }
 }
