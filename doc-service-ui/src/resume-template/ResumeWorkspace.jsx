@@ -42,7 +42,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [saving, setSaving] = useState(false);
     const [panel, setPanel] = useState(null);
     const [settings, setSettings] = useState(() => ({
-        margin: MARGIN, spacing: 24, fontSize: 15, lineHeight: 1.5, fontFamily: '', accent: design.accent || '#0f766e',
+        margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e',
     }));
     const setSetting = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
     const sheetRef = useRef(null);
@@ -226,6 +226,19 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 3a9 9 0 000 18" fill="currentColor" stroke="none" opacity="0.5" /></svg>
                         Design &amp; Font
                     </button>
+                    <button
+                        onClick={download}
+                        disabled={saving}
+                        title="Download PDF"
+                        className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:opacity-60"
+                    >
+                        {saving ? (
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" /></svg>
+                        )}
+                        {saving ? 'Saving…' : 'Download'}
+                    </button>
                 </div>
             </div>
 
@@ -320,22 +333,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Floating download icon to the right of the sheet */}
-            <div className={`no-print fixed right-5 top-24 z-30 flex-col gap-2 ${panel === 'ats' ? 'hidden' : 'flex'}`}>
-                <button
-                    onClick={download}
-                    disabled={saving}
-                    title="Download PDF"
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-500 text-white shadow-lg shadow-teal-900/20 transition hover:bg-teal-400 disabled:opacity-60"
-                >
-                    {saving ? (
-                        <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
-                    ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" /></svg>
-                    )}
-                </button>
             </div>
 
             {/* Design & Font panel */}
