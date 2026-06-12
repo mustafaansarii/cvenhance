@@ -20,7 +20,7 @@ import java.time.Instant;
 @Data
 @Entity
 @Table(name = "user_docs", indexes = {
-        @Index(name = "idx_user_docs_owner", columnList = "ownerEmail")
+        @Index(name = "idx_user_docs_owner_template", columnList = "ownerEmail, templateCode")
 })
 public class UserDoc {
 

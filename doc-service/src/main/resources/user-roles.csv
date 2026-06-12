@@ -15,6 +15,7 @@ PATCH,/api/user-docs/*/compile,USER|ADMIN
 POST,/api/user-docs/*/unlock,USER|ADMIN
 POST,/api/user-docs/by-template/*,USER|ADMIN
 POST,/api/user-docs/*/claim,USER|ADMIN
+POST,/api/user-docs/*/refresh,USER|ADMIN
 GET,/api/me/entitlement,USER|ADMIN
 POST,/api/payments/create-order,USER|ADMIN
 POST,/api/payments/verify,USER|ADMIN

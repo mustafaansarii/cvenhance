@@ -45,6 +45,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [saving, setSaving] = useState(false);
     const [panel, setPanel] = useState(null);
     const [pricingOpen, setPricingOpen] = useState(false);
+    const [dataVersion, setDataVersion] = useState(0);
     const [locked, setLocked] = useState(true);
     const [docId, setDocId] = useState(null);
     const navigate = useNavigate();
@@ -249,6 +250,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                                 const r = profileToResume(p);
                                 setResume(r);
                                 setOrder(r._order || ['summary', 'experience', 'skills', 'courses', 'education']);
+                                setDataVersion((v) => v + 1);
                             }}
                         />
                     )}
@@ -301,6 +303,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     ))}
 
                     <div
+                        key={dataVersion}
                         id="resume-sheet"
                         ref={sheetRef}
                         className={`relative z-10 ${design.sheetClass}`}

@@ -170,8 +170,17 @@ export default function DocEditor() {
                 <div className="flex items-center justify-end gap-1">
                     <ResumeUploadButton
                         label="Upload CV"
-                        confirm="Import a resume to update your saved profile details?"
+                        confirm="Import a resume and rewrite this document with the new details?"
                         className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-slate-500 transition hover:bg-white/50 hover:text-slate-900 disabled:opacity-40"
+                        onDone={async () => {
+                            try {
+                                const updated = await docService.refreshDoc(id);
+                                setCode(updated.latexCode || '');
+                                toast.success('Document updated with your new details');
+                            } catch (err) {
+                                toast.error(err?.response?.data?.message || 'Could not refresh the document');
+                            }
+                        }}
                     />
                     <button
                         onClick={handleDownload}

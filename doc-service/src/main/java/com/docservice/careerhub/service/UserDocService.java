@@ -65,6 +65,18 @@ public class UserDocService {
         }
     }
 
+    @Transactional
+    public UserDoc refreshFromProfile(String ownerEmail, Long id) {
+        UserDoc doc = getOwned(ownerEmail, id);
+        if (Objects.isNull(doc.getSourceTemplateId())) {
+            throw ApiException.badData("This document has no source template to refresh from");
+        }
+        DocTemplate template = docTemplateRepository.findById(doc.getSourceTemplateId())
+                .orElseThrow(() -> ApiException.notFound("Source template not found: " + doc.getSourceTemplateId()));
+        doc.setLatexCode(latexMergeService.merge(template.getLatexCode(), resumeDataResolver.forUser(ownerEmail)));
+        return userDocRepository.save(doc);
+    }
+
     private UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
         if (Objects.nonNull(template.getTemplateCode())) {
             UserDoc existing = userDocRepository

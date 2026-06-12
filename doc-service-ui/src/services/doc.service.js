@@ -46,6 +46,11 @@ class DocService {
         await api.post(`${USER_DOCS}/${id}/claim`);
     }
 
+    async refreshDoc(id) {
+        const res = await api.post(`${USER_DOCS}/${id}/refresh`);
+        return res.data;
+    }
+
     async compile(id, latexCode) {
         const res = await api.patch(
             `${USER_DOCS}/${id}/compile`,

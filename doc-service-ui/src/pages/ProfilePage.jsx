@@ -57,7 +57,7 @@ export default function ProfilePage() {
                 />
             </div>
 
-            <div className="min-h-screen">
+            <div>
                 <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
                     {loading ? (
                         <div className="space-y-6">

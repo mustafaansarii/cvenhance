@@ -67,4 +67,9 @@ public class UserDocController {
     public void claim(Authentication authentication, @PathVariable Long id) {
         userDocDtoApi.claim(authentication.getName(), id);
     }
+
+    @PostMapping("/{id}/refresh")
+    public UserDocResponse refresh(Authentication authentication, @PathVariable Long id) {
+        return userDocDtoApi.refresh(authentication.getName(), id);
+    }
 }
