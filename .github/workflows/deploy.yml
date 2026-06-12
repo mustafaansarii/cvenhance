@@ -5,6 +5,8 @@ on:
     branches: [master]
     paths:
       - 'doc-service/**'
+      - 'payment-service/**'
+      - 'ai-service/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -26,6 +28,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install local library modules
+        run: |
+          mvn -B -q -DskipTests -f payment-service/pom.xml install
+          mvn -B -q -DskipTests -f ai-service/pom.xml install
+
       - name: Run unit tests
         working-directory: doc-service
         run: mvn -B test
@@ -42,7 +49,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: ./doc-service
+          context: .
           file: ./doc-service/Dockerfile
           push: true
           tags: |
