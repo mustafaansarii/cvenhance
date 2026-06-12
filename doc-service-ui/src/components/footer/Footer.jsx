@@ -13,8 +13,9 @@ export default function Footer() {
             { name: 'Settings', url: '/settings' },
         ],
         company: [
-            { name: 'Pricing', url: '/pricing' },
             { name: 'Contact Us', url: '/contact-us' },
+            { name: 'Terms & Conditions', url: '/terms' },
+            { name: 'Cancellation & Refund', url: '/refund-policy' },
         ],
     };
 

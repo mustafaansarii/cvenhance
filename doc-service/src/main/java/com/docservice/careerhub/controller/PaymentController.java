@@ -36,7 +36,6 @@ public class PaymentController {
         return paymentOrderService.createOrder(authentication.getName(), plan, body.get("customerPhone"));
     }
 
-    /** Called on return from checkout — authoritatively confirms status and grants if paid. */
     @PostMapping("/verify")
     public VerifyResponse verify(@RequestBody Map<String, String> body) {
         String orderId = body == null ? null : body.get("orderId");
@@ -46,7 +45,6 @@ public class PaymentController {
         return paymentOrderService.confirmAndGrant(orderId);
     }
 
-    /** Cashfree webhook (public, signature-verified over the raw body). */
     @PostMapping("/webhook")
     public ResponseEntity<String> webhook(@RequestBody byte[] rawBody,
                                           @RequestHeader(value = "x-webhook-signature", required = false) String signature,

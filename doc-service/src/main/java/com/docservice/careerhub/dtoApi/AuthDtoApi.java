@@ -74,7 +74,8 @@ public class AuthDtoApi extends AbstractDtoUtil {
         }
         return toUserResponse(authService.updateProfile(authentication.getName(), json));
     }
-
+    
+//-----------------------------------private methods-----------------------------------
     private UserResponse toUserResponse(AuthUser user) {
         Object profile = null;
         if (user.getProfileData() != null && !user.getProfileData().isBlank()) {

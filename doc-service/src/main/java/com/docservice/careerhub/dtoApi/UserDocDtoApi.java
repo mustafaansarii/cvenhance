@@ -67,6 +67,8 @@ public class UserDocDtoApi extends AbstractDtoUtil {
         return userDocService.unlockAndCompile(ownerEmail, id);
     }
 
+//-----------------------------------private methods-----------------------------------
+
     private UserDocMetadata toMetadata(UserDoc doc) {
         return UserDocMetadata.builder()
                 .id(doc.getId())

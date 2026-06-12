@@ -1,6 +1,7 @@
 package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.Plan;
+import com.docservice.careerhub.dto.response.EntitlementResponse;
 import com.docservice.careerhub.entity.Subscription;
 import com.docservice.careerhub.repo.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,25 @@ public class EntitlementService {
     @Transactional(readOnly = true)
     public Optional<Subscription> find(String ownerEmail) {
         return subscriptionRepository.findByOwnerEmail(ownerEmail);
+    }
+    
+    @Transactional(readOnly = true)
+    public EntitlementResponse describe(String ownerEmail) {
+        if (isAdmin()) {
+            return EntitlementResponse.unlimited("ADMIN");
+        }
+        Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElse(null);
+        if (!isActive(subscription)) {
+            return EntitlementResponse.free();
+        }
+        boolean unlimited = subscription.getCreditsRemaining() == null;
+        int creditsRemaining = unlimited ? EntitlementResponse.UNLIMITED_CREDITS : subscription.getCreditsRemaining();
+        return new EntitlementResponse(
+                subscription.getPlan().name(),
+                true,
+                unlimited,
+                creditsRemaining,
+                subscription.getValidUntil().toString());
     }
 
     public boolean isActive(Subscription subscription) {

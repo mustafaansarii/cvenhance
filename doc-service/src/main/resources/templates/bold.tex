@@ -1,0 +1,139 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\input{glyphtounicode}
+\usepackage{fontawesome5}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1in}
+\addtolength{\topmargin}{-.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\bfseries\raggedright\large\color{RoyalBlue}
+}{}{0em}{}[\color{RoyalBlue}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{\item\small{{#1 \vspace{-2pt}}}}
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{0.97\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & #2 \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-7pt}
+}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+\begin{document}
+
+\begin{center}
+    {\Huge \color{RoyalBlue} {{ name }} } \\ \vspace{2pt}
+    {{ location }}\\ \vspace{4pt}
+    \small
+    {{#phone}}\href{tel:{{{ phone }}}}{\raisebox{-0.1\height}\faPhone\ \underline{ {{ phone }} }} \hspace{0.6em}{{/phone}}
+    {{#email}}\href{mailto:{{{ email }}}}{\raisebox{-0.5\height}\faEnvelope\ \underline{ {{ email }} }} \hspace{0.6em}{{/email}}
+    {{#linkedinUrl}}\href{ {{{ linkedinUrl }}} }{\raisebox{-0.2\height}\faLinkedin\ \underline{ {{ linkedin }} }} \hspace{0.6em}{{/linkedinUrl}}
+    {{#githubUrl}}\href{ {{{ githubUrl }}} }{\raisebox{-0.2\height}\faGithub\ \underline{ {{ github }} }}{{/githubUrl}}
+\end{center}
+
+{{#summary}}
+\section{Summary}
+\small{ {{ summary }} }
+\vspace{-4pt}
+{{/summary}}
+
+{{#hasEducation}}
+\section{Education}
+\resumeSubHeadingListStart
+{{#education}}
+  \resumeSubheading
+    { {{ school }} }{ {{ period }} }
+    { {{ degree }} }{ {{ location }} }
+{{/education}}
+\resumeSubHeadingListEnd
+{{/hasEducation}}
+
+{{#hasSkills}}
+\section{Skills}
+\begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+{{#skills}}     \textbf{ {{ label }}:} {{ value }} \\
+{{/skills}}    }}
+\end{itemize}
+\vspace{-16pt}
+{{/hasSkills}}
+
+{{#hasExperience}}
+\section{Experience}
+  \resumeSubHeadingListStart
+{{#experience}}
+\resumeSubheading
+{ {{ company }} }{ {{ period }} }
+{ {{ role }} }{ {{ location }} }
+\resumeItemListStart
+{{#bullets}}\resumeItem{ {{ . }} }
+{{/bullets}}\resumeItemListEnd
+{{/experience}}
+  \resumeSubHeadingListEnd
+{{/hasExperience}}
+
+{{#hasProjects}}
+\section{Projects}
+  \resumeSubHeadingListStart
+{{#projects}}
+    \resumeProjectHeading
+      {\textbf{ {{ name }} }{{#tech}} $|$ \emph{ {{ tech }} }{{/tech}}}{ {{#githubUrl}}\href{ {{{ githubUrl }}} }{\textcolor{blue}{GitHub}}{{/githubUrl}}{{#liveUrl}} $|$ \href{ {{{ liveUrl }}} }{\textcolor{red}{Live}}{{/liveUrl}} }
+      \resumeItemListStart
+{{#bullets}}        \resumeItem{ {{ . }} }
+{{/bullets}}      \resumeItemListEnd
+{{/projects}}
+  \resumeSubHeadingListEnd
+{{/hasProjects}}
+
+{{#hasAchievements}}
+\section{Achievements}
+\vspace{-13pt}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {}{}
+      \resumeItemListStart
+{{#achievements}}        \resumeItem{ {{ . }} }
+{{/achievements}}      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+{{/hasAchievements}}
+
+\end{document}

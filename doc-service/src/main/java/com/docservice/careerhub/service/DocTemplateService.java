@@ -48,6 +48,8 @@ public class DocTemplateService {
         return docTemplateRepository.search(keyword, type, pageable);
     }
 
+//--------------------------private methods------------------------------------
+
     private DocTemplate buildTemplate(CreateDocTemplateRequest request) {
         DocTemplate template = newPending(request);
         try {

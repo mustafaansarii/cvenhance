@@ -15,6 +15,8 @@ import NotFound from './components/not-found/NotFound';
 import authService from './services/auth.service';
 import ContactUsPage from './pages/contact-us';
 import PricingPage from './pages/pricing';
+import TermsPage from './pages/terms';
+import RefundPolicyPage from './pages/refund-policy';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
 import SettingsPage from './pages/SettingsPage';
@@ -54,6 +56,8 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/contact-us" element={<ContactUsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/resume-builder" element={<ResumeBuilder />} />
         <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
 

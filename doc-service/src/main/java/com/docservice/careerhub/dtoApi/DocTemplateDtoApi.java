@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class DocTemplateDtoApi extends AbstractDtoUtil {
@@ -26,7 +27,7 @@ public class DocTemplateDtoApi extends AbstractDtoUtil {
     private DocTemplateService docTemplateService;
 
     public List<DocTemplateMetadata> create(List<CreateDocTemplateRequest> requests) {
-        if (requests == null || requests.isEmpty()) {
+        if (Objects.isNull(requests) || requests.isEmpty()) {
             throw ApiException.badData("At least one template is required");
         }
         if (requests.size() > MAX_BATCH) {

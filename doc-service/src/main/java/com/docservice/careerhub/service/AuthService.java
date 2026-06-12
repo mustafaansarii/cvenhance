@@ -153,6 +153,8 @@ public class AuthService {
         return authUserRepository.save(user);
     }
 
+//-----------------------------------private methods-----------------------------------
+
     private AuthUser authenticate(SigninRequest request) {
         AuthUser user = authUserRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> ApiException.badData(INVALID_CREDENTIALS));
