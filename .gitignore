@@ -1,6 +1,4 @@
 **/target/
 **/node_modules/
 **/.env
-latex-templates/1.sample.json
-latex-templates/1.tex
-latex-templates/1.template.tex
+latex-templates/
