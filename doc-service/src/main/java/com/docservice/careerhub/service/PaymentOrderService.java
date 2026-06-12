@@ -11,6 +11,8 @@ import com.docservice.careerhub.payment.VerifyResponse;
 import com.docservice.careerhub.repo.PaymentOrderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import java.util.Objects;
  */
 @Service
 public class PaymentOrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentOrderService.class);
 
     private static final String STATUS_PAID = "PAID";
     private static final String FALLBACK_PHONE = "9999999999";
@@ -73,6 +77,7 @@ public class PaymentOrderService {
             order.setStatus(PaymentOrderStatus.PAID);
             paymentOrderRepository.save(order);
             entitlementService.grant(order.getOwnerEmail(), order.getPlan());
+            log.info("Granted plan {} to {} for order {}", order.getPlan(), order.getOwnerEmail(), orderId);
         }
         return verification;
     }
@@ -80,8 +85,16 @@ public class PaymentOrderService {
     @Transactional
     public void processWebhook(String rawBody) {
         String orderId = extractOrderId(rawBody);
-        if (Objects.nonNull(orderId)) {
-            confirmAndGrant(orderId);
+        if (Objects.isNull(orderId)) {
+            log.warn("Webhook received with no order_id in payload");
+            return;
+        }
+        log.info("Webhook received for order {} — confirming with Cashfree", orderId);
+        try {
+            VerifyResponse verification = confirmAndGrant(orderId);
+            log.info("Webhook processed for order {} — Cashfree status {}", orderId, verification.orderStatus());
+        } catch (Exception e) {
+            log.warn("Webhook for order {} could not be confirmed: {}", orderId, e.getMessage());
         }
     }
 
