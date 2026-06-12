@@ -122,12 +122,6 @@ function DropdownNavItem({ item, isOpen, onOpen, onCloseSelf, onClose }) {
         };
     }, [isOpen, reposition]);
 
-    useEffect(() => {
-        const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, [onClose]);
-
     useEffect(() => () => clearTimeout(closeTimer.current), []);
 
     const enter = () => {
@@ -247,11 +241,18 @@ function MegaPanel({ mega, onClose }) {
 
 function NavCenter({ visibleNavItems }) {
     const [openItem, setOpenItem] = useState(null);
+    const navRef = useRef(null);
     const closeAll = useCallback(() => setOpenItem(null), []);
     const closeIf = useCallback((label) => setOpenItem((cur) => (cur === label ? null : cur)), []);
 
+    useEffect(() => {
+        const handler = (e) => { if (navRef.current && !navRef.current.contains(e.target)) closeAll(); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [closeAll]);
+
     return (
-        <div className="hidden items-center gap-1 md:flex">
+        <div ref={navRef} className="hidden items-center gap-1 md:flex">
             {visibleNavItems.map((item) =>
                 item.mega ? (
                     <DropdownNavItem
