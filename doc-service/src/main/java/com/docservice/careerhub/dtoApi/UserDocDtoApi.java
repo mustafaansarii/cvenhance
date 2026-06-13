@@ -50,7 +50,7 @@ public class UserDocDtoApi extends AbstractDtoUtil {
     public PageResponse<UserDocMetadata> list(String ownerEmail, PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);
         Page<UserDoc> result = userDocService.list(ownerEmail, query.getKeyword(), type, pageable);
-        List<UserDocMetadata> content = result.getContent().stream().map(this::toMetadata).toList();
+        List<UserDocMetadata> content = result.getContent().stream().map((doc) -> toMetadata(ownerEmail, doc)).toList();
         return PageUtil.toResponse(result, content);
     }
 
@@ -69,7 +69,7 @@ public class UserDocDtoApi extends AbstractDtoUtil {
 
 //-----------------------------------private methods-----------------------------------
 
-    private UserDocMetadata toMetadata(UserDoc doc) {
+    private UserDocMetadata toMetadata(String ownerEmail, UserDoc doc) {
         return UserDocMetadata.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
@@ -80,6 +80,7 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
+                .unlocked(entitlementService.isUnlocked(ownerEmail, doc.resumeKey()))
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();

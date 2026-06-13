@@ -263,6 +263,16 @@ export default function Templates({ mode = 'templates' }) {
     const templates = data?.content ?? [];
     const totalPages = data?.totalPages ?? 1;
     const totalElements = data?.totalElements ?? 0;
+    const unlockedDocs = isUserDocs ? templates.filter((d) => d.unlocked) : [];
+    const recentDocs = isUserDocs ? templates.filter((d) => !d.unlocked) : [];
+
+    const docGrid = (items) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {items.map((doc) => (
+                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} actionLabel="Open" onAction={handleAction} />
+            ))}
+        </div>
+    );
 
     return (
         <div className="min-h-screen">
@@ -312,14 +322,37 @@ export default function Templates({ mode = 'templates' }) {
                     </div>
                 )}
 
-                {!error && (
+                {!error && loading && (
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                        {loading
-                            ? Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)
-                            : templates.map((doc) => (
-                                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id}
-                                    actionLabel={isUserDocs ? 'Open' : 'Start Editing'} onAction={handleAction} />
-                            ))}
+                        {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
+                    </div>
+                )}
+
+                {!error && !loading && isUserDocs && (
+                    <>
+                        {unlockedDocs.length > 0 && (
+                            <section className="mb-8">
+                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Your resumes</h3>
+                                {docGrid(unlockedDocs)}
+                            </section>
+                        )}
+                        {recentDocs.length > 0 && (
+                            <section>
+                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
+                                    Recently used <span className="font-normal normal-case text-slate-400">— locked, unlock to download</span>
+                                </h3>
+                                {docGrid(recentDocs)}
+                            </section>
+                        )}
+                    </>
+                )}
+
+                {!error && !loading && !isUserDocs && (
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                        {templates.map((doc) => (
+                            <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id}
+                                actionLabel="Start Editing" onAction={handleAction} />
+                        ))}
                     </div>
                 )}
 

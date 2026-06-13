@@ -20,6 +20,7 @@ public class UserDocMetadata {
     private String pdfUrl;
     private String imageUrl;
     private String errorMessage;
+    private boolean unlocked;
     private Instant createdAt;
     private Instant updatedAt;
 }
