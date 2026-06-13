@@ -152,6 +152,13 @@ export default function DocEditor() {
                         Templates
                     </Link>
                     <div className="h-3.5 w-px bg-slate-300" />
+                    <Link
+                        to="/my-templates?type=CV_AND_RESUME&page=1&size=10"
+                        className="rounded px-1.5 py-1 text-xs text-slate-600 transition hover:bg-white/50 hover:text-slate-900"
+                    >
+                        My Templates
+                    </Link>
+                    <div className="h-3.5 w-px bg-slate-300" />
                     <span className="truncate text-xs font-medium text-slate-600">
                         {loadingDoc ? 'Loading…' : (doc?.name ?? 'Document Editor')}
                     </span>
