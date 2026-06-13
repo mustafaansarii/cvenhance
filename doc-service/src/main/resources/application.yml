@@ -1,4 +1,7 @@
 spring:
+  threads:
+    virtual:
+      enabled: ${USE_VIRTUAL_THREADS:true}
   config:
     import: optional:file:./.env[.properties],optional:file:/etc/secrets/.env[.properties]
   servlet:
