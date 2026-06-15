@@ -37,7 +37,7 @@ export default function Footer() {
                             Build ATS-friendly resumes and documents in minutes.
                         </p>
                         <p className="hidden text-sm text-slate-400 md:block">
-                            © {new Date().getFullYear()} MyCV. All rights reserved.
+                            © {new Date().getFullYear()} CareerHub. All rights reserved.
                         </p>
                     </div>
 
@@ -64,7 +64,7 @@ export default function Footer() {
                     ))}
                 </div>
                 <p className="mt-4 -mb-8 text-center text-sm text-slate-400 md:hidden">
-                    © {new Date().getFullYear()} MyCV. All rights reserved.
+                    © {new Date().getFullYear()} CareerHub. All rights reserved.
                 </p>
             </div>
             </div>

@@ -3,3 +3,5 @@
 **/.env
 latex-templates/
 dist/
+.DS_Store
+doc-service-ui/.DS_Store

@@ -57,17 +57,17 @@ export default function BrandLogo({ height = 60, className = "" }) {
         />
       </g>
 
-      {/* MyCV Text */}
+      {/* CareerHub Text */}
       <text
         x="170"
         y="145"
-        fontSize="140"
+        fontSize="110"
         fontWeight="100"
         fontFamily="Inter, Poppins, Arial, sans-serif"
         letterSpacing="-2"
         fill="currentColor"
       >
-        MyCV
+        CareerHub
       </text>
     </svg>
   );
