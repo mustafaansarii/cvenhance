@@ -508,7 +508,7 @@ export default function Navbar() {
 
                 <div className="flex flex-1 items-center">
                     <button onClick={() => navigate('/')} className="group flex items-center outline-none">
-                        <BrandLogo height={34} className="transition-opacity group-hover:opacity-90" />
+                        <BrandLogo height={42} className="transition-opacity group-hover:opacity-90" />
                     </button>
                 </div>
 
