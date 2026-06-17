@@ -34,42 +34,33 @@ const navItems = [
         mega: {
             columns: [
                 {
-                    kind: 'cards',
+                    kind: 'cards', heading: 'Tools',
                     items: [
-                        { icon: 'grid', title: 'Resume Templates', desc: 'Recruiter-approved designs', to: '/templates' },
-                        { icon: 'folder', title: 'Explore Doc Templates', desc: 'Browse every document design', to: '/templates' },
-                        { icon: 'mail', title: 'My Templates', desc: 'Resumes saved to your account', to: '/my-templates' },
-                        { icon: 'builder', title: 'Build your resume', desc: 'Create with live preview', to: '/templates' },
-                    ],
-                },
-                {
-                    kind: 'list', heading: 'Popular examples',
-                    items: [
-                        { label: 'Software Engineer', to: '/templates?type=CV_AND_RESUME&keyword=Software' },
-                        { label: 'Data Scientist', to: '/templates?type=CV_AND_RESUME&keyword=Data' },
-                        { label: 'Marketing', to: '/templates?type=CV_AND_RESUME&keyword=Marketing' },
-                        { label: 'Finance & Accounting', to: '/templates?type=CV_AND_RESUME&keyword=Finance' },
-                        { label: 'Graduate / Entry level', to: '/templates?type=CV_AND_RESUME&keyword=Entry' },
+                        { icon: 'builder', title: 'Resume Builder', desc: 'Helps you to land interviews', to: '/resume-builder' },
+                        { icon: 'grid', title: 'Resume Checker', desc: 'Is your resume good enough?', to: '/resume-checker' },
+                        { icon: 'folder', title: 'Resume Templates', desc: 'Free and premium templates', to: '/templates' },
+                        { icon: 'mail', title: 'Resume Examples', desc: 'Generate or explore', to: '/resume-example' },
                     ],
                 },
             ],
-            promo: { title: 'Free, ATS-friendly resume builder', desc: 'Build and download in minutes — no account needed.', cta: 'Build your resume', to: '/templates' },
+            promo: { title: 'Free, ATS-friendly resume builder', desc: 'Build and download in minutes — no account needed.', cta: 'Build your resume', to: '/resume-builder' },
         },
     },
     {
-        label: 'Cover Letter',
+        label: 'Job Search',
         mega: {
             columns: [
                 {
-                    kind: 'cards',
+                    kind: 'cards', heading: 'Job Search',
                     items: [
-                        { icon: 'mail', title: 'Cover Letter Templates', desc: 'Match your resume design', to: '/templates?type=COVER_LETTER&page=1&size=10' },
-                        { icon: 'grid', title: 'Keyword based', desc: 'Find by style, e.g. modern', to: '/templates?type=COVER_LETTER&page=1&size=10&keyword=modern' },
-                        { icon: 'folder', title: 'For all', desc: 'See every cover letter', to: '/templates?type=COVER_LETTER&page=1&size=20' },
+                        { icon: 'builder', title: 'Interview prep', desc: 'Practice with AI mock interviews', to: '/interview-prep' },
+                        { icon: 'folder', title: 'Job Tracker', desc: 'Organize your applications', to: '/job-tracker' },
+                        { icon: 'grid', title: 'Job Board', desc: 'Find roles that match you', to: '/job-board' },
+                        { icon: 'mail', title: 'Cover letter', desc: 'Match your resume design', to: '/templates?type=COVER_LETTER&page=1&size=10' },
                     ],
                 },
             ],
-            promo: { title: 'ATS-friendly cover letters', desc: 'Create a matching cover letter fast.', cta: 'Browse templates', to: '/templates?type=COVER_LETTER&page=1&size=20' },
+            promo: { title: 'Land your next role faster', desc: 'Prep, track and apply — all in one place.', cta: 'Browse templates', to: '/templates?type=CV_AND_RESUME&page=1&size=10' },
         },
     },
     { label: 'For Organizations', to: '/contact-us' },
@@ -165,6 +156,7 @@ function MegaColumn({ col, onClose }) {
     if (col.kind === 'cards') {
         return (
             <div className="space-y-1">
+                {col.heading && <p className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">{col.heading}</p>}
                 {col.items.map((it) => (
                     <NavLink key={it.to + it.title} to={it.to} onClick={onClose} className="group/item flex items-start gap-3 rounded-xl p-3 transition hover:bg-slate-50">
                         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 transition-colors group-hover/item:bg-teal-100">{ICONS[it.icon]}</span>

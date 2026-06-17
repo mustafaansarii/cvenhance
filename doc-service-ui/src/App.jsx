@@ -17,6 +17,9 @@ import ContactUsPage from './pages/contact-us';
 import PricingPage from './pages/pricing';
 import TermsPage from './pages/terms';
 import RefundPolicyPage from './pages/refund-policy';
+import ResumeCheckerPage from './pages/resume-checker';
+import ResumeExamplePage from './pages/resume-example';
+import ComingSoon from './pages/ComingSoon';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
 import SettingsPage from './pages/SettingsPage';
@@ -58,6 +61,11 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/resume-checker" element={<ResumeCheckerPage />} />
+        <Route path="/resume-example" element={<ResumeExamplePage />} />
+        <Route path="/interview-prep" element={<ComingSoon breadcrumb="Job Search" title="Interview Prep" description="Practice with AI mock interviews and get instant feedback." />} />
+        <Route path="/job-tracker" element={<ComingSoon breadcrumb="Job Search" title="Job Tracker" description="Organize all your applications in one place." />} />
+        <Route path="/job-board" element={<ComingSoon breadcrumb="Job Search" title="Job Board" description="Find roles that match your skills and experience." />} />
         <Route path="/resume-builder" element={<ResumeBuilder />} />
         <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
 
