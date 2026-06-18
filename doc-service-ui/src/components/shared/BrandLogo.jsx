@@ -39,10 +39,10 @@ export default function BrandLogo({ height = 40, className = "" }) {
       <text
         x="132"
         y="90"
-        fontFamily="Inter, Poppins, Arial, sans-serif"
+        fontFamily="'Plus Jakarta Sans', Inter, Arial, sans-serif"
         fontSize="74"
-        fontWeight="700"
-        letterSpacing="-2"
+        fontWeight="800"
+        letterSpacing="-3"
         fill={white}
       >
         CV<tspan fill={green}>Enhance</tspan>
