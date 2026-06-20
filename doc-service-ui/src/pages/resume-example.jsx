@@ -41,7 +41,7 @@ export default function ResumeExamplePage() {
                 </div>
 
                 <div className="mt-9 flex justify-center">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=10" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
                         Generate my resume
                     </Link>
                 </div>

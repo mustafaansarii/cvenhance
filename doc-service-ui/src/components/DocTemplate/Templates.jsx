@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import {
+    DocumentTextIcon,
+    EllipsisHorizontalIcon,
+    PencilSquareIcon,
+    CodeBracketIcon,
+    ArrowDownTrayIcon,
+    MagnifyingGlassIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 import docService from '../../services/doc.service';
 import authService from '../../services/auth.service';
 import { DEFAULT_CODE } from '../../resume-template/registry';
@@ -23,8 +33,8 @@ const CATEGORIES = [
     { key: 'THESIS', label: 'Thesis' },
 ];
 
-const PAGE_SIZE_OPTIONS = [10, 20, 50];
-const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [50, 80, 100];
+const DEFAULT_PAGE_SIZE = 50;
 
 const STATUS_BADGE = {
     READY: 'bg-emerald-50 text-emerald-600',
@@ -58,9 +68,7 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                 ) : doc.pdfUrl ? (
                     <iframe src={`${doc.pdfUrl}#toolbar=0&navpanes=0`} title={doc.name} className="pointer-events-none h-full w-full" />
                 ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="h-12 w-12 text-slate-300">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <DocumentTextIcon className="h-12 w-12 text-slate-300" />
                 )}
                 {doc.status && doc.status !== 'READY' && (
                     <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[doc.status] || 'bg-slate-100 text-slate-500'}`}>
@@ -87,14 +95,14 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         title="More options"
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:border-teal-400 hover:text-teal-600"
                     >
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+                        <EllipsisHorizontalIcon className="h-4 w-4" />
                     </button>
                     {menuOpen && (
                         <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                            <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">✏️ Edit with form</button>
-                            <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">{'</>'} Edit with LaTeX editor</button>
+                            <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><PencilSquareIcon className="h-4 w-4 text-slate-400" /> Edit with form</button>
+                            <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><CodeBracketIcon className="h-4 w-4 text-slate-400" /> Edit with LaTeX editor</button>
                             {doc.pdfUrl && (
-                                <a href={doc.pdfUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">⬇️ Download PDF</a>
+                                <a href={doc.pdfUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><ArrowDownTrayIcon className="h-4 w-4 text-slate-400" /> Download PDF</a>
                             )}
                         </div>
                     )}
@@ -147,7 +155,7 @@ function Pagination({ page, totalPages, pageSize, onPageChange, onPageSizeChange
             <div className="flex items-center gap-1.5">
                 <button onClick={() => onPageChange(page - 1)} disabled={page === 1}
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-teal-400 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-40">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                    <ChevronLeftIcon className="h-4 w-4" />
                 </button>
                 {buildPages().map((p, idx) =>
                     p === '...' ? (
@@ -161,7 +169,7 @@ function Pagination({ page, totalPages, pageSize, onPageChange, onPageSizeChange
                 )}
                 <button onClick={() => onPageChange(page + 1)} disabled={page >= safeTotal}
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-teal-400 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-40">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    <ChevronRightIcon className="h-4 w-4" />
                 </button>
             </div>
 
@@ -291,9 +299,7 @@ export default function Templates({ mode = 'templates' }) {
                 <div className="mb-8">
                     <div className="mx-auto w-full max-w-md">
                         <div className="relative">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400">
-                                <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
-                            </svg>
+                            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <input type="text" value={inputValue} onChange={handleSearchChange}
                                 placeholder={isUserDocs ? 'Search my documents…' : 'Search templates…'}
                                 className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20" />

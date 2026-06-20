@@ -42,7 +42,7 @@ export default function ResumeCheckerPage() {
                 </ul>
 
                 <div className="mt-9 flex flex-wrap justify-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=10" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
                         Build &amp; improve my resume
                     </Link>
                     <Link to="/profile" className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">

@@ -249,12 +249,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
             <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 px-4 shadow-sm sm:px-6">
                 <div className="flex items-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=10" className="flex items-center gap-2 text-slate-600 transition hover:text-slate-900">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex items-center gap-2 text-slate-600 transition hover:text-slate-900">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                         <span className="text-sm font-medium">Templates</span>
                     </Link>
                     <div className="h-4 w-px bg-slate-300" />
-                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=10" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">My Templates</Link>
+                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">My Templates</Link>
                     {design?.name && <span className="hidden rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 sm:inline">{design.name}</span>}
                 </div>
                 <div className="flex items-center gap-1.5">
