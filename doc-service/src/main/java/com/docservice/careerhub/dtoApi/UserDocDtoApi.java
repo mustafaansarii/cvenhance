@@ -32,11 +32,13 @@ public class UserDocDtoApi extends AbstractDtoUtil {
 
     public UserDocResponse save(String ownerEmail, SaveUserDocRequest request) {
         validate(request);
-        return toResponse(ownerEmail, userDocService.saveTemplateToAccount(ownerEmail, request.getTemplateId()));
+        UserDoc doc = userDocService.saveTemplateToAccount(ownerEmail, request.getTemplateId());
+        return toResponse(doc, entitlementService.unlockViewFor(ownerEmail));
     }
 
     public UserDocResponse openByTemplate(String ownerEmail, String templateCode) {
-        return toResponse(ownerEmail, userDocService.openByTemplateCode(ownerEmail, templateCode));
+        UserDoc doc = userDocService.openByTemplateCode(ownerEmail, templateCode);
+        return toResponse(doc, entitlementService.unlockViewFor(ownerEmail));
     }
 
     public void claim(String ownerEmail, Long id) {
@@ -44,18 +46,21 @@ public class UserDocDtoApi extends AbstractDtoUtil {
     }
 
     public UserDocResponse refresh(String ownerEmail, Long id) {
-        return toResponse(ownerEmail, userDocService.refreshFromProfile(ownerEmail, id));
+        UserDoc doc = userDocService.refreshFromProfile(ownerEmail, id);
+        return toResponse(doc, entitlementService.unlockViewFor(ownerEmail));
     }
 
     public PageResponse<UserDocMetadata> list(String ownerEmail, PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);
         Page<UserDoc> result = userDocService.list(ownerEmail, query.getKeyword(), type, pageable);
-        List<UserDocMetadata> content = result.getContent().stream().map((doc) -> toMetadata(ownerEmail, doc)).toList();
+        EntitlementService.UnlockView unlockView = entitlementService.unlockViewFor(ownerEmail);
+        List<UserDocMetadata> content = result.getContent().stream().map((doc) -> toMetadata(doc, unlockView)).toList();
         return PageUtil.toResponse(result, content);
     }
 
     public UserDocResponse get(String ownerEmail, Long id) {
-        return toResponse(ownerEmail, userDocService.getOwned(ownerEmail, id));
+        UserDoc doc = userDocService.getOwned(ownerEmail, id);
+        return toResponse(doc, entitlementService.unlockViewFor(ownerEmail));
     }
 
     public byte[] compileAndUpdate(String ownerEmail, Long id, CompileDocRequest request) {
@@ -69,7 +74,7 @@ public class UserDocDtoApi extends AbstractDtoUtil {
 
 //-----------------------------------private methods-----------------------------------
 
-    private UserDocMetadata toMetadata(String ownerEmail, UserDoc doc) {
+    private UserDocMetadata toMetadata(UserDoc doc, EntitlementService.UnlockView unlockView) {
         return UserDocMetadata.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
@@ -81,13 +86,13 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(entitlementService.isUnlocked(ownerEmail, doc.resumeKey()))
+                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 
-    private UserDocResponse toResponse(String ownerEmail, UserDoc doc) {
+    private UserDocResponse toResponse(UserDoc doc, EntitlementService.UnlockView unlockView) {
         return UserDocResponse.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
@@ -100,7 +105,7 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(entitlementService.isUnlocked(ownerEmail, doc.resumeKey()))
+                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();

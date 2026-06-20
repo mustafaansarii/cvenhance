@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -79,14 +80,30 @@ public class EntitlementService {
 
     @Transactional(readOnly = true)
     public boolean isUnlocked(String ownerEmail, String resumeKey) {
+        return unlockViewFor(ownerEmail).isUnlocked(resumeKey);
+    }
+
+    @Transactional(readOnly = true)
+    public UnlockView unlockViewFor(String ownerEmail) {
         if (isAdmin()) {
-            return true;
+            return UnlockView.ALL;
         }
         Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElse(null);
         if (!isActive(subscription)) {
-            return false;
+            return UnlockView.NONE;
         }
-        return subscription.getCreditsRemaining() == null || subscription.getUnlockedTemplateCodes().contains(resumeKey);
+        boolean unlimited = subscription.getCreditsRemaining() == null;
+        return new UnlockView(false, unlimited, Set.copyOf(subscription.getUnlockedTemplateCodes()));
+    }
+
+    public record UnlockView(boolean unlockAll, boolean unlimited, Set<String> unlockedKeys) {
+
+        private static final UnlockView ALL = new UnlockView(true, true, Set.of());
+        private static final UnlockView NONE = new UnlockView(false, false, Set.of());
+
+        public boolean isUnlocked(String resumeKey) {
+            return unlockAll || unlimited || unlockedKeys.contains(resumeKey);
+        }
     }
 
     @Transactional

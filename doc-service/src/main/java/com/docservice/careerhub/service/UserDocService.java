@@ -1,6 +1,7 @@
 package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
+import com.docservice.careerhub.dto.constants.DocType;
 import com.docservice.careerhub.entity.DocTemplate;
 import com.docservice.careerhub.entity.UserDoc;
 import com.docservice.careerhub.exception.ApiException;
@@ -77,6 +78,60 @@ public class UserDocService {
         return userDocRepository.save(doc);
     }
 
+    @Transactional(readOnly = true)
+    public Page<UserDoc> list(String ownerEmail, String keyword, DocType type, Pageable pageable) {
+        return userDocRepository.search(ownerEmail, keyword, type, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDoc getOwned(String ownerEmail, Long id) {
+        return userDocRepository.findByIdAndOwnerEmail(id, ownerEmail)
+                .orElseThrow(() -> ApiException.notFound("Doc not found: " + id));
+    }
+
+    @Transactional
+    public byte[] compileAndUpdate(String ownerEmail, Long id, String latexCode) {
+        UserDoc doc = getOwned(ownerEmail, id);
+        doc.setLatexCode(latexCode);
+        return renderAndStore(doc, entitlementService.isUnlocked(ownerEmail, doc.resumeKey()));
+    }
+
+    @Transactional
+    public byte[] unlockAndCompile(String ownerEmail, Long id) {
+        UserDoc doc = getOwned(ownerEmail, id);
+        if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
+            throw ApiException.paymentRequired("Upgrade your plan to download this resume");
+        }
+        return renderAndStore(doc, true);
+    }
+
+//-----------------------------------private methods-----------------------------------
+
+    private byte[] renderAndStore(UserDoc doc, boolean full) {
+        try {
+            byte[] compiled = latexCompiler.compile(doc.getLatexCode());
+            byte[] output = full ? compiled : watermarkService.buildPreview(compiled);
+            String url = storageService.upload(output, "user-docs/" + doc.getId() + ".pdf", "application/pdf");
+            doc.setPdfUrl(url);
+            doc.setStatus(DocTemplateStatus.READY);
+            doc.setErrorMessage(null);
+            userDocRepository.save(doc);
+            return output;
+        } catch (RuntimeException exception) {
+            doc.setStatus(DocTemplateStatus.FAILED);
+            doc.setErrorMessage(truncate(exception.getMessage()));
+            userDocRepository.save(doc);
+            throw exception;
+        }
+    }
+
+    private String truncate(String message) {
+        if (Objects.isNull(message)) {
+            return "Unknown error";
+        }
+        return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
+    }
+    
     private UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
         if (Objects.nonNull(template.getTemplateCode())) {
             UserDoc existing = userDocRepository
@@ -103,56 +158,5 @@ public class UserDocService {
         return userDocRepository.save(doc);
     }
 
-    @Transactional(readOnly = true)
-    public Page<UserDoc> list(String ownerEmail, String keyword, com.docservice.careerhub.dto.constants.DocType type,
-                              Pageable pageable) {
-        return userDocRepository.search(ownerEmail, keyword, type, pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public UserDoc getOwned(String ownerEmail, Long id) {
-        return userDocRepository.findByIdAndOwnerEmail(id, ownerEmail)
-                .orElseThrow(() -> ApiException.notFound("Doc not found: " + id));
-    }
-
-    @Transactional
-    public byte[] compileAndUpdate(String ownerEmail, Long id, String latexCode) {
-        UserDoc doc = getOwned(ownerEmail, id);
-        doc.setLatexCode(latexCode);
-        return renderAndStore(doc, entitlementService.isUnlocked(ownerEmail, doc.resumeKey()));
-    }
-
-    @Transactional
-    public byte[] unlockAndCompile(String ownerEmail, Long id) {
-        UserDoc doc = getOwned(ownerEmail, id);
-        if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
-            throw ApiException.paymentRequired("Upgrade your plan to download this resume");
-        }
-        return renderAndStore(doc, true);
-    }
-
-    private byte[] renderAndStore(UserDoc doc, boolean full) {
-        try {
-            byte[] compiled = latexCompiler.compile(doc.getLatexCode());
-            byte[] output = full ? compiled : watermarkService.buildPreview(compiled);
-            String url = storageService.upload(output, "user-docs/" + doc.getId() + ".pdf", "application/pdf");
-            doc.setPdfUrl(url);
-            doc.setStatus(DocTemplateStatus.READY);
-            doc.setErrorMessage(null);
-            userDocRepository.save(doc);
-            return output;
-        } catch (ApiException exception) {
-            doc.setStatus(DocTemplateStatus.FAILED);
-            doc.setErrorMessage(truncate(exception.getMessage()));
-            userDocRepository.save(doc);
-            throw exception;
-        }
-    }
-
-    private String truncate(String message) {
-        if (message == null) {
-            return "Unknown error";
-        }
-        return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
-    }
 }
+
