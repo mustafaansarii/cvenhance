@@ -275,7 +275,7 @@ export default function Templates({ mode = 'templates' }) {
     const recentDocs = isUserDocs ? templates.filter((d) => !d.unlocked) : [];
 
     const docGrid = (items) => (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {items.map((doc) => (
                 <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} actionLabel="Open" onAction={handleAction} />
             ))}
@@ -329,7 +329,7 @@ export default function Templates({ mode = 'templates' }) {
                 )}
 
                 {!error && loading && (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                         {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
                     </div>
                 )}
@@ -354,7 +354,7 @@ export default function Templates({ mode = 'templates' }) {
                 )}
 
                 {!error && !loading && !isUserDocs && (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                         {templates.map((doc) => (
                             <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id}
                                 actionLabel="Start Editing" onAction={handleAction} />
