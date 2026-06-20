@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -39,6 +40,25 @@ public class SupabaseStorageService implements StorageService {
             throw ApiException.badData("Failed to upload PDF to storage: " + exception.getMessage());
         }
         return base + "/storage/v1/object/public/" + bucket + "/" + objectPath;
+    }
+
+    @Override
+    public byte[] download(String objectPath) {
+        String bucket = appProperties.getSupabaseBucketName();
+        String base = trimTrailingSlash(appProperties.getSupabaseUrl());
+        String downloadUrl = base + "/storage/v1/object/" + bucket + "/" + objectPath;
+        try {
+            return restClient.get()
+                    .uri(downloadUrl)
+                    .header("Authorization", "Bearer " + appProperties.getSupabaseServiceKey())
+                    .retrieve()
+                    .body(byte[].class);
+        } catch (HttpClientErrorException.NotFound notFound) {
+            return null;
+        } catch (RestClientException exception) {
+            logger.warn("Supabase download failed for {}: {}", objectPath, exception.getMessage());
+            return null;
+        }
     }
 
     private String trimTrailingSlash(String url) {

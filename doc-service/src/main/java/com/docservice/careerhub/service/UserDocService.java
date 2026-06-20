@@ -13,12 +13,21 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Objects;
+import java.util.concurrent.Semaphore;
 
 @Service
 public class UserDocService {
 
     private static final int MAX_ERROR_LENGTH = 2000;
+    private static final String COMPILED_CACHE_PREFIX = "compiled/";
+
+
+    private final Semaphore compileLock = new Semaphore(1);
 
     @Autowired
     private UserDocRepository userDocRepository;
@@ -109,7 +118,7 @@ public class UserDocService {
 
     private byte[] renderAndStore(UserDoc doc, boolean full) {
         try {
-            byte[] compiled = latexCompiler.compile(doc.getLatexCode());
+            byte[] compiled = compileCached(doc.getLatexCode());
             byte[] output = full ? compiled : watermarkService.buildPreview(compiled);
             String url = storageService.upload(output, "user-docs/" + doc.getId() + ".pdf", "application/pdf");
             doc.setPdfUrl(url);
@@ -122,6 +131,54 @@ public class UserDocService {
             doc.setErrorMessage(truncate(exception.getMessage()));
             userDocRepository.save(doc);
             throw exception;
+        }
+    }
+
+    /**
+     * Returns the compiled (un-watermarked) PDF for this LaTeX, reusing a cached copy when the exact
+     * same source was compiled before. Identical source always produces the same PDF, so pdflatex never
+     * runs twice for it — and the watermarked preview is derived from this same output.
+     */
+    private byte[] compileCached(String latexCode) {
+        String cacheKey = COMPILED_CACHE_PREFIX + sha256(latexCode) + ".pdf";
+        byte[] cached = storageService.download(cacheKey);
+        if (hasContent(cached)) {
+            return cached;
+        }
+        return compileAndCache(latexCode, cacheKey);
+    }
+
+    private byte[] compileAndCache(String latexCode, String cacheKey) {
+        try {
+            compileLock.acquire();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw ApiException.badData("Compilation was interrupted while queued");
+        }
+        try {
+            // Re-check: another request may have compiled the same source while we waited for the lock.
+            byte[] cached = storageService.download(cacheKey);
+            if (hasContent(cached)) {
+                return cached;
+            }
+            byte[] compiled = latexCompiler.compile(latexCode);
+            storageService.upload(compiled, cacheKey, "application/pdf");
+            return compiled;
+        } finally {
+            compileLock.release();
+        }
+    }
+
+    private boolean hasContent(byte[] bytes) {
+        return Objects.nonNull(bytes) && bytes.length > 0;
+    }
+
+    private String sha256(String value) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is not available", exception);
         }
     }
 

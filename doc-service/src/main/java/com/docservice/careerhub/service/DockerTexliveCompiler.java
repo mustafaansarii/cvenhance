@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -38,6 +39,9 @@ public class DockerTexliveCompiler implements LatexCompiler {
             texFile.toFile().setReadable(true, false);
             texFile.toFile().setWritable(true, false);
             String output = runPdflatex(workDir);
+            if (needsRerun(output)) {
+                output = runPdflatex(workDir);
+            }
             Path pdf = workDir.resolve(PDF_FILE);
             if (!Files.exists(pdf)) {
                 throw ApiException.badData("LaTeX compilation produced no PDF.\n" + tail(output));
@@ -80,6 +84,10 @@ public class DockerTexliveCompiler implements LatexCompiler {
             Thread.currentThread().interrupt();
             throw ApiException.badData("LaTeX compilation was interrupted");
         }
+    }
+
+    private boolean needsRerun(String output) {
+        return Objects.nonNull(output) && output.contains("Rerun");
     }
 
     private Path createWorkDir() {

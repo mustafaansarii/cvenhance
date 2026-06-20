@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -35,8 +36,10 @@ public class NativeLatexCompiler implements LatexCompiler {
             Path texFile = workDir.resolve(TEX_FILE);
             Files.writeString(texFile, latexCode, StandardCharsets.UTF_8);
 
-            runPdflatex(workDir);
-            runPdflatex(workDir);
+            String output = runPdflatex(workDir);
+            if (needsRerun(output)) {
+                runPdflatex(workDir);
+            }
 
             Path pdf = workDir.resolve(PDF_FILE);
             if (!Files.exists(pdf)) {
@@ -50,7 +53,7 @@ public class NativeLatexCompiler implements LatexCompiler {
         }
     }
 
-    private void runPdflatex(Path workDir) {
+    private String runPdflatex(Path workDir) {
         List<String> command = List.of(
                 "pdflatex",
                 "-interaction=nonstopmode",
@@ -72,12 +75,17 @@ public class NativeLatexCompiler implements LatexCompiler {
             if (process.exitValue() != 0) {
                 throw ApiException.badData("LaTeX compilation error.\n" + tail(output));
             }
+            return output;
         } catch (IOException e) {
             throw ApiException.badData("Could not start pdflatex (is TeX Live installed?): " + e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw ApiException.badData("LaTeX compilation was interrupted");
         }
+    }
+
+    private boolean needsRerun(String output) {
+        return Objects.nonNull(output) && output.contains("Rerun");
     }
 
     private Path createWorkDir() {
