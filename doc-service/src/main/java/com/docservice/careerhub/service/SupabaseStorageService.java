@@ -39,6 +39,13 @@ public class SupabaseStorageService implements StorageService {
             logger.error("Supabase upload failed for {}: {}", objectPath, exception.getMessage(), exception);
             throw ApiException.badData("Failed to upload PDF to storage: " + exception.getMessage());
         }
+        return publicUrl(objectPath);
+    }
+
+    @Override
+    public String publicUrl(String objectPath) {
+        String bucket = appProperties.getSupabaseBucketName();
+        String base = trimTrailingSlash(appProperties.getSupabaseUrl());
         return base + "/storage/v1/object/public/" + bucket + "/" + objectPath;
     }
 

@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -114,15 +115,29 @@ class UserDocServiceTest {
     }
 
     @Test
-    void compileAndUpdatePersistsCompilesUploadsAndReturnsPdf() {
+    void compileAndUpdateCompilesCachesAndReturnsPdf() {
         when(userDocRepo.findByIdAndOwnerEmail(100L, "user@example.com")).thenReturn(Optional.of(ownedDoc()));
+        when(storage.download(anyString())).thenReturn(null); // nothing cached yet
         when(compiler.compile("new latex")).thenReturn(new byte[]{9, 9});
-        when(storage.upload(any(), eq("user-docs/100.pdf"), eq("application/pdf"))).thenReturn("https://store/user-docs/100.pdf");
+        when(storage.publicUrl(anyString())).thenReturn("https://store/compiled/abc.pdf");
 
         byte[] pdf = service.compileAndUpdate("user@example.com", 100L, "new latex");
 
         assertThat(pdf).containsExactly(9, 9);
-        verify(storage).upload(any(), eq("user-docs/100.pdf"), eq("application/pdf"));
+        verify(storage).upload(any(), startsWith("compiled/"), eq("application/pdf"));
+    }
+
+    @Test
+    void compileAndUpdateReusesCachedPdfWithoutRecompiling() {
+        when(userDocRepo.findByIdAndOwnerEmail(100L, "user@example.com")).thenReturn(Optional.of(ownedDoc()));
+        when(storage.download(anyString())).thenReturn(new byte[]{7, 7}); // cache hit
+        when(storage.publicUrl(anyString())).thenReturn("https://store/compiled/abc.pdf");
+
+        byte[] pdf = service.compileAndUpdate("user@example.com", 100L, "new latex");
+
+        assertThat(pdf).containsExactly(7, 7);
+        verify(compiler, never()).compile(anyString());
+        verify(storage, never()).upload(any(), anyString(), anyString());
     }
 
     @Test

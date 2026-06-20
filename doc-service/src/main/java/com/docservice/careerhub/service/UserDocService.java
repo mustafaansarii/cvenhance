@@ -25,6 +25,7 @@ public class UserDocService {
 
     private static final int MAX_ERROR_LENGTH = 2000;
     private static final String COMPILED_CACHE_PREFIX = "compiled/";
+    private static final String PREVIEW_CACHE_PREFIX = "preview/";
 
 
     private final Semaphore compileLock = new Semaphore(1);
@@ -118,10 +119,10 @@ public class UserDocService {
 
     private byte[] renderAndStore(UserDoc doc, boolean full) {
         try {
-            byte[] compiled = compileCached(doc.getLatexCode());
-            byte[] output = full ? compiled : watermarkService.buildPreview(compiled);
-            String url = storageService.upload(output, "user-docs/" + doc.getId() + ".pdf", "application/pdf");
-            doc.setPdfUrl(url);
+            String hash = sha256(doc.getLatexCode());
+            String key = (full ? COMPILED_CACHE_PREFIX : PREVIEW_CACHE_PREFIX) + hash + ".pdf";
+            byte[] output = full ? compiledPdf(doc.getLatexCode(), hash) : previewPdf(doc.getLatexCode(), hash);
+            doc.setPdfUrl(storageService.publicUrl(key));
             doc.setStatus(DocTemplateStatus.READY);
             doc.setErrorMessage(null);
             userDocRepository.save(doc);
@@ -134,18 +135,25 @@ public class UserDocService {
         }
     }
 
-    /**
-     * Returns the compiled (un-watermarked) PDF for this LaTeX, reusing a cached copy when the exact
-     * same source was compiled before. Identical source always produces the same PDF, so pdflatex never
-     * runs twice for it — and the watermarked preview is derived from this same output.
-     */
-    private byte[] compileCached(String latexCode) {
-        String cacheKey = COMPILED_CACHE_PREFIX + sha256(latexCode) + ".pdf";
-        byte[] cached = storageService.download(cacheKey);
+
+    private byte[] compiledPdf(String latexCode, String hash) {
+        String key = COMPILED_CACHE_PREFIX + hash + ".pdf";
+        byte[] cached = storageService.download(key);
         if (hasContent(cached)) {
             return cached;
         }
-        return compileAndCache(latexCode, cacheKey);
+        return compileAndCache(latexCode, key);
+    }
+
+    private byte[] previewPdf(String latexCode, String hash) {
+        String key = PREVIEW_CACHE_PREFIX + hash + ".pdf";
+        byte[] cached = storageService.download(key);
+        if (hasContent(cached)) {
+            return cached;
+        }
+        byte[] preview = watermarkService.buildPreview(compiledPdf(latexCode, hash));
+        storageService.upload(preview, key, "application/pdf");
+        return preview;
     }
 
     private byte[] compileAndCache(String latexCode, String cacheKey) {
@@ -156,7 +164,6 @@ public class UserDocService {
             throw ApiException.badData("Compilation was interrupted while queued");
         }
         try {
-            // Re-check: another request may have compiled the same source while we waited for the lock.
             byte[] cached = storageService.download(cacheKey);
             if (hasContent(cached)) {
                 return cached;
