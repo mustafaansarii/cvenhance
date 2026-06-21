@@ -16,10 +16,10 @@ const ITEM_MARGIN = { exp: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1',
 const topLevelBlocks = (root) =>
     Array.from(root.querySelectorAll('[data-block]')).filter((b) => !b.parentElement?.closest('[data-block]'));
 
-const breakUnits = (root, usable) => {
+const breakUnits = (root, usable, scale = 1) => {
     const units = [];
     for (const sec of topLevelBlocks(root)) {
-        if (sec.getBoundingClientRect().height <= usable + 0.5) {
+        if (sec.getBoundingClientRect().height / scale <= usable + 0.5) {
             units.push(sec);
         } else {
             const items = Array.from(sec.querySelectorAll('[data-block]'));
@@ -63,6 +63,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [pricingOpen, setPricingOpen] = useState(false);
     const [dataVersion, setDataVersion] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [fitScale, setFitScale] = useState(1);
     const [locked, setLocked] = useState(true);
     const [docId, setDocId] = useState(null);
     const navigate = useNavigate();
@@ -78,9 +79,29 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     }));
     const setSetting = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
     const sheetRef = useRef(null);
+    const canvasRef = useRef(null);
+    const scaleRef = useRef(1);
     const scheduleRef = useRef(() => {});
     const settingsRef = useRef(settings);
     useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+    // Fit the fixed-width (Letter) sheet to the viewport: keep the 816px layout (so pagination & PDF
+    // stay correct) but visually scale it down on smaller screens.
+    useEffect(() => {
+        const el = canvasRef.current;
+        if (!el) return undefined;
+        const compute = () => {
+            const avail = el.clientWidth - 32; // px-4 padding both sides
+            const s = Math.min(1, Math.max(0.25, avail / PAGE_W));
+            scaleRef.current = s;
+            setFitScale(s);
+            scheduleRef.current?.();
+        };
+        compute();
+        const ro = new ResizeObserver(compute);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
 
     useEffect(() => {
         if (!previewUrl) return undefined;
@@ -115,11 +136,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         let ro;
         const measureApply = () => {
             sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
+            const s = scaleRef.current || 1;   // sheet may be visually scaled to fit; normalize to layout px
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
-            const blocks = breakUnits(sheet, usable);
+            const blocks = breakUnits(sheet, usable, s);
             const sheetTop = sheet.getBoundingClientRect().top;
-            const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: r.top - sheetTop, h: r.height }; });
+            const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: (r.top - sheetTop) / s, h: r.height / s }; });
             let page = 0, push = 0;
             for (const d of data) {
                 const curTop = d.top + push;
@@ -407,22 +429,22 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         }
       `}</style>
 
-            <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 px-4 shadow-sm sm:px-6">
-                <div className="flex items-center gap-3">
+            <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-slate-200 px-3 shadow-sm sm:px-6">
+                <div className="flex min-w-0 items-center gap-3">
                     <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex items-center gap-2 text-slate-600 transition hover:text-slate-900">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                         <span className="text-sm font-medium">Templates</span>
                     </Link>
-                    <div className="h-4 w-px bg-slate-300" />
-                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">My Templates</Link>
+                    <div className="hidden h-4 w-px bg-slate-300 md:block" />
+                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 md:inline">My Templates</Link>
                     {design?.name && <span className="hidden rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 sm:inline">{design.name}</span>}
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                     {authed && (
                         <ResumeUploadButton
                             label="Upload CV"
                             confirm="Replace your current resume details with the uploaded file?"
-                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 sm:inline-flex"
                             onDone={(p) => {
                                 const r = profileToResume(p);
                                 setResume(r);
@@ -433,26 +455,28 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     )}
                     <button
                         onClick={() => setPanel(panel === 'ats' ? null : 'ats')}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${panel === 'ats' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                        title="ATS Check"
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'ats' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                         <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">ATS</span>
-                        Check
+                        <span className="hidden sm:inline">Check</span>
                     </button>
                     <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${panel === 'design' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                        title="Design & Font"
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'design' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 3a9 9 0 000 18" fill="currentColor" stroke="none" opacity="0.5" /></svg>
-                        Design &amp; Font
+                        <span className="hidden sm:inline">Design &amp; Font</span>
                     </button>
                     <button
                         onClick={preview}
                         disabled={saving}
                         title="Preview the PDF before downloading"
-                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 sm:px-3"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" /><circle cx="12" cy="12" r="3" /></svg>
-                        Preview
+                        <span className="hidden sm:inline">Preview</span>
                     </button>
                     {locked ? (
                         <button
@@ -498,8 +522,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 </div>
             )}
 
-            <div id="rb-canvas" className="flex justify-center px-4 py-8">
-                <div id="rb-stack" className="relative max-w-full" style={{ width: PAGE_W, height: stackHeight }}>
+            <div id="rb-canvas" ref={canvasRef} className="flex justify-center overflow-hidden px-4 py-8">
+                <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
+                <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
                     {Array.from({ length: pageCount }).map((_, p) => (
                         <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
                     ))}
@@ -593,11 +618,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         </div>
                     )}
                 </div>
+                </div>
             </div>
 
             {/* Design & Font panel */}
             {panel === 'design' && (
-                <div className="no-print fixed left-0 top-14 bottom-0 z-40 w-72 overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl">
+                <div className="no-print fixed left-0 top-14 bottom-0 z-40 w-72 max-w-[88vw] overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl">
                     <div className="mb-5 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-800">Design &amp; Font</h3>
                         <button onClick={() => setPanel(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
@@ -649,7 +675,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
             {/* ATS Check panel */}
             {panel === 'ats' && (
-                <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-80 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl">
+                <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-80 max-w-[88vw] overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl">
                     <div className="mb-4 flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-800">ATS Check</h3>
                         <button onClick={() => setPanel(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
