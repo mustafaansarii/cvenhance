@@ -13,6 +13,22 @@ import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
 const ITEM_MARGIN = { exp: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
 
+const topLevelBlocks = (root) =>
+    Array.from(root.querySelectorAll('[data-block]')).filter((b) => !b.parentElement?.closest('[data-block]'));
+
+const breakUnits = (root, usable) => {
+    const units = [];
+    for (const sec of topLevelBlocks(root)) {
+        if (sec.getBoundingClientRect().height <= usable + 0.5) {
+            units.push(sec);
+        } else {
+            const items = Array.from(sec.querySelectorAll('[data-block]'));
+            units.push(...(items.length ? items : [sec]));
+        }
+    }
+    return units;
+};
+
 const FONT_OPTIONS = [
     { label: 'Template default', value: '' },
     { label: 'Serif (Georgia)', value: 'Georgia, "Times New Roman", serif' },
@@ -90,12 +106,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         let raf = 0;
         let ro;
         const measureApply = () => {
-            const blocks = Array.from(sheet.querySelectorAll('[data-block]'));
-            blocks.forEach((b) => { b.style.marginTop = ''; });
-            const sheetTop = sheet.getBoundingClientRect().top;
-            const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: r.top - sheetTop, h: r.height }; });
+            sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
+            const blocks = breakUnits(sheet, usable);
+            const sheetTop = sheet.getBoundingClientRect().top;
+            const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: r.top - sheetTop, h: r.height }; });
             let page = 0, push = 0;
             for (const d of data) {
                 const curTop = d.top + push;
@@ -183,8 +199,83 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             return;
         }
         setSaving(true);
-        try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ } finally { setSaving(false); }
-        window.print();
+        let holder = null;
+        try {
+            try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ }
+
+            const sheet = sheetRef.current;
+            if (!sheet) { window.print(); return; }
+
+            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+                import('html2canvas-pro'),
+                import('jspdf'),
+            ]);
+
+            const margin = settings.margin;
+            const usable = Math.max(1, PAGE - 2 * margin);
+            holder = document.createElement('div');
+            holder.style.cssText = `position:fixed; left:-100000px; top:0; width:${PAGE_W}px; background:#ffffff;`;
+            const clone = sheet.cloneNode(true);
+            clone.style.margin = '0';
+            clone.style.paddingTop = '0px';
+            clone.style.paddingBottom = '0px';
+            clone.querySelectorAll('.no-print').forEach((el) => el.remove());
+            clone.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
+            holder.appendChild(clone);
+            document.body.appendChild(holder);
+
+            const cTop = clone.getBoundingClientRect().top;
+            const starts = [0];
+            let pageStart = 0;
+            breakUnits(clone, usable).forEach((b) => {
+                const r = b.getBoundingClientRect();
+                const top = r.top - cTop;
+                const bottom = r.bottom - cTop;
+                if (bottom - pageStart > usable + 0.5 && top > pageStart + 0.5) {
+                    pageStart = top;
+                    starts.push(pageStart);
+                }
+            });
+            const totalH = clone.scrollHeight;
+
+            const scale = 2;
+            const canvas = await html2canvas(clone, { scale, backgroundColor: '#ffffff', useCORS: true });
+
+            const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
+            const pageWpt = pdf.internal.pageSize.getWidth();
+            const factor = pageWpt / canvas.width;
+            const marginPt = margin * scale * factor;
+            const usablePx = usable * scale;
+
+            let pageIdx = 0;
+            for (let s = 0; s < starts.length; s++) {
+                const segTop = starts[s] * scale;
+                const segEnd = Math.min(((s + 1 < starts.length) ? starts[s + 1] : totalH) * scale, canvas.height);
+                let y = segTop;
+                while (y < segEnd - 0.5) {
+                    const h = Math.min(usablePx, segEnd - y);
+                    const slice = document.createElement('canvas');
+                    slice.width = canvas.width;
+                    slice.height = h;
+                    const ctx = slice.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, slice.width, slice.height);
+                    ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+                    if (pageIdx > 0) pdf.addPage();
+                    pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, marginPt, pageWpt, h * factor);
+                    pageIdx += 1;
+                    y += h;
+                }
+            }
+
+            pdf.save(`${(resume.name || 'resume').trim() || 'resume'}.pdf`);
+        } catch {
+            toast.error('Could not generate the PDF — opening print instead');
+            window.print();
+        } finally {
+            if (holder && holder.parentNode) holder.parentNode.removeChild(holder);
+            setSaving(false);
+        }
     };
 
     const renderBody = (type) => {
