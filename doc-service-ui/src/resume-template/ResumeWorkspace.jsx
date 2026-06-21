@@ -227,18 +227,20 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
         try {
             const cTop = clone.getBoundingClientRect().top;
-            const starts = [0];
+            const segs = [];
             let pageStart = 0;
+            let lastBottom = 0;
             breakUnits(clone, usable).forEach((b) => {
                 const r = b.getBoundingClientRect();
                 const top = r.top - cTop;
                 const bottom = r.bottom - cTop;
-                if (bottom - pageStart > usable + 0.5 && top > pageStart + 0.5) {
+                if (top > pageStart + 0.5 && bottom - pageStart > usable + 0.5) {
+                    segs.push({ top: pageStart, bottom: lastBottom });
                     pageStart = top;
-                    starts.push(pageStart);
                 }
+                lastBottom = Math.max(lastBottom, bottom);
             });
-            const totalH = clone.scrollHeight;
+            segs.push({ top: pageStart, bottom: lastBottom });
 
             const scale = 2;
             const canvas = await html2canvas(clone, { scale, backgroundColor: '#ffffff', useCORS: true });
@@ -251,12 +253,11 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             const cssToPt = pageWpt / PAGE_W;
             const pageRanges = [];
             let pageIdx = 0;
-            for (let s = 0; s < starts.length; s++) {
-                const segTop = starts[s] * scale;
-                const segEnd = Math.min(((s + 1 < starts.length) ? starts[s + 1] : totalH) * scale, canvas.height);
-                let y = segTop;
-                while (y < segEnd - 0.5) {
-                    const h = Math.min(usablePx, segEnd - y);
+            for (const seg of segs) {
+                let y = seg.top * scale;
+                const end = Math.min(seg.bottom * scale, canvas.height);
+                while (y < end - 0.5) {
+                    const h = Math.min(usablePx, end - y);
                     const slice = document.createElement('canvas');
                     slice.width = canvas.width;
                     slice.height = h;
