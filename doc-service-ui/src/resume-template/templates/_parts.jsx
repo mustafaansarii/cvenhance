@@ -73,5 +73,10 @@ export const renderItem = (kind, ctx) => {
             </p>
         );
     }
-    return <Field value={item.text} onChange={(v) => update({ text: v })} ph={ph} className="block" />;
+    return (
+        <div className="flex gap-2 text-slate-700">
+            <span aria-hidden className="mt-[0.55em] h-[3px] w-[3px] shrink-0 rounded-full bg-current" />
+            <Field value={item.text} onChange={(v) => update({ text: v })} ph={ph} className="block flex-1" />
+        </div>
+    );
 };

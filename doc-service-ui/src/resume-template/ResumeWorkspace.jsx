@@ -62,15 +62,17 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [panel, setPanel] = useState(null);
     const [pricingOpen, setPricingOpen] = useState(false);
     const [dataVersion, setDataVersion] = useState(0);
-    const [locked, setLocked] = useState(true);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    // Locking disabled for the form-based builder — every resume form is fully open (no paywall/blur).
+    const [locked, setLocked] = useState(false);
     const [docId, setDocId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!authed) { setLocked(true); return; }
+        if (!authed) return;
         docService.openByTemplate(design.code)
-            .then((doc) => { setDocId(doc.id); setLocked(!doc.unlocked); })
-            .catch(() => setLocked(true));
+            .then((doc) => setDocId(doc.id))
+            .catch(() => {});
     }, [authed, design.code]);
     const [settings, setSettings] = useState(() => ({
         margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e',
@@ -80,6 +82,13 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const scheduleRef = useRef(() => {});
     const settingsRef = useRef(settings);
     useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+    useEffect(() => {
+        if (!previewUrl) return undefined;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, [previewUrl]);
 
     const setField = (key, value) => setResume((r) => ({ ...r, [key]: value }));
     const updateItem = (type, id, changes) => setResume((r) => ({ ...r, [type]: r[type].map((it) => (it.id === id ? { ...it, ...changes } : it)) }));
@@ -188,42 +197,36 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         }
     };
 
-    const download = async () => {
-        if (!authed) {
-            toast.error('Sign in to download your resume');
-            navigate('/login');
-            return;
-        }
-        if (locked) {
-            unlock();
-            return;
-        }
-        setSaving(true);
-        let holder = null;
-        try {
+    // Builds the exact PDF that gets downloaded — reused by both Preview and Download. Returns a jsPDF.
+    const buildPdf = async () => {
+        if (authed) {
             try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ }
+        }
+        const sheet = sheetRef.current;
+        if (!sheet) return null;
 
-            const sheet = sheetRef.current;
-            if (!sheet) { window.print(); return; }
+        const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+            import('html2canvas-pro'),
+            import('jspdf'),
+        ]);
 
-            const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-                import('html2canvas-pro'),
-                import('jspdf'),
-            ]);
+        const margin = settings.margin;
+        const usable = Math.max(1, PAGE - 2 * margin);
+        const holder = document.createElement('div');
+        holder.style.cssText = `position:fixed; left:-100000px; top:0; width:${PAGE_W}px; background:#ffffff;`;
+        const clone = sheet.cloneNode(true);
+        clone.style.margin = '0';
+        clone.style.paddingTop = '0px';
+        clone.style.paddingBottom = '0px';
+        clone.querySelectorAll('.no-print').forEach((el) => el.remove());
+        clone.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
+        // Keep empty fields blank in the PDF (the image capture ignores @media print).
+        clone.querySelectorAll('.editable').forEach((el) => { if (!el.textContent.trim()) el.removeAttribute('data-ph'); });
+        clone.querySelectorAll('.period-ph').forEach((el) => el.remove());
+        holder.appendChild(clone);
+        document.body.appendChild(holder);
 
-            const margin = settings.margin;
-            const usable = Math.max(1, PAGE - 2 * margin);
-            holder = document.createElement('div');
-            holder.style.cssText = `position:fixed; left:-100000px; top:0; width:${PAGE_W}px; background:#ffffff;`;
-            const clone = sheet.cloneNode(true);
-            clone.style.margin = '0';
-            clone.style.paddingTop = '0px';
-            clone.style.paddingBottom = '0px';
-            clone.querySelectorAll('.no-print').forEach((el) => el.remove());
-            clone.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
-            holder.appendChild(clone);
-            document.body.appendChild(holder);
-
+        try {
             const cTop = clone.getBoundingClientRect().top;
             const starts = [0];
             let pageStart = 0;
@@ -247,7 +250,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             const marginPt = margin * scale * factor;
             const usablePx = usable * scale;
             const cssToPt = pageWpt / PAGE_W;
-            const pageRanges = []; 
+            const pageRanges = [];
             let pageIdx = 0;
             for (let s = 0; s < starts.length; s++) {
                 const segTop = starts[s] * scale;
@@ -291,15 +294,43 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 }
             });
 
-            pdf.save(`${(resume.name || 'resume').trim() || 'resume'}.pdf`);
+            return pdf;
+        } finally {
+            if (holder.parentNode) holder.parentNode.removeChild(holder);
+        }
+    };
+
+    const pdfName = () => `${(resume.name || 'resume').trim() || 'resume'}.pdf`;
+
+    const download = async () => {
+        setSaving(true);
+        try {
+            const pdf = await buildPdf();
+            if (pdf) pdf.save(pdfName());
+            else window.print();
         } catch {
             toast.error('Could not generate the PDF — opening print instead');
             window.print();
         } finally {
-            if (holder && holder.parentNode) holder.parentNode.removeChild(holder);
             setSaving(false);
         }
     };
+
+    const preview = async () => {
+        setSaving(true);
+        try {
+            const pdf = await buildPdf();
+            if (!pdf) { window.print(); return; }
+            const url = URL.createObjectURL(pdf.output('blob'));
+            setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
+        } catch {
+            toast.error('Could not generate the preview');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
     const renderBody = (type) => {
         const meta = META[type];
@@ -398,6 +429,15 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 3a9 9 0 000 18" fill="currentColor" stroke="none" opacity="0.5" /></svg>
                         Design &amp; Font
+                    </button>
+                    <button
+                        onClick={preview}
+                        disabled={saving}
+                        title="Preview the PDF before downloading"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" /><circle cx="12" cy="12" r="3" /></svg>
+                        Preview
                     </button>
                     {locked ? (
                         <button
@@ -631,6 +671,41 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 onSuccess={() => { setPricingOpen(false); unlock(); }}
                 title="Upgrade to download your resume"
             />
+
+            {previewUrl && (
+                <div className="no-print fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/70 p-4" onClick={closePreview}>
+                    <div
+                        className="flex h-[92vh] w-full max-w-[850px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                            <p className="text-sm font-semibold text-slate-800">PDF preview</p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={download}
+                                    disabled={saving}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-400 disabled:opacity-60"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" /></svg>
+                                    Download
+                                </button>
+                                <button
+                                    onClick={closePreview}
+                                    className="inline-flex items-center justify-center rounded-full border border-slate-300 p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                                    title="Close"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <iframe
+                            src={previewUrl}
+                            title="PDF preview"
+                            className="min-h-0 flex-1 border-0 bg-slate-100"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
