@@ -63,16 +63,15 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [pricingOpen, setPricingOpen] = useState(false);
     const [dataVersion, setDataVersion] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
-    // Locking disabled for the form-based builder — every resume form is fully open (no paywall/blur).
-    const [locked, setLocked] = useState(false);
+    const [locked, setLocked] = useState(true);
     const [docId, setDocId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!authed) return;
+        if (!authed) { setLocked(true); return; }
         docService.openByTemplate(design.code)
-            .then((doc) => setDocId(doc.id))
-            .catch(() => {});
+            .then((doc) => { setDocId(doc.id); setLocked(!doc.unlocked); })
+            .catch(() => setLocked(true));
     }, [authed, design.code]);
     const [settings, setSettings] = useState(() => ({
         margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e',
@@ -302,7 +301,21 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
     const pdfName = () => `${(resume.name || 'resume').trim() || 'resume'}.pdf`;
 
+    const ensureUnlocked = () => {
+        if (!authed) {
+            toast.error('Sign in to download your resume');
+            navigate('/login');
+            return false;
+        }
+        if (locked) {
+            unlock();
+            return false;
+        }
+        return true;
+    };
+
     const download = async () => {
+        if (!ensureUnlocked()) return;
         setSaving(true);
         try {
             const pdf = await buildPdf();
@@ -317,6 +330,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     };
 
     const preview = async () => {
+        if (!ensureUnlocked()) return;
         setSaving(true);
         try {
             const pdf = await buildPdf();
