@@ -246,7 +246,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             const factor = pageWpt / canvas.width;
             const marginPt = margin * scale * factor;
             const usablePx = usable * scale;
-
+            const cssToPt = pageWpt / PAGE_W;
+            const pageRanges = []; 
             let pageIdx = 0;
             for (let s = 0; s < starts.length; s++) {
                 const segTop = starts[s] * scale;
@@ -263,10 +264,32 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
                     if (pageIdx > 0) pdf.addPage();
                     pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, marginPt, pageWpt, h * factor);
+                    pageRanges.push({ topCss: y / scale, bottomCss: (y + h) / scale });
                     pageIdx += 1;
                     y += h;
                 }
             }
+
+            const cRect = clone.getBoundingClientRect();
+            clone.querySelectorAll('a[href]').forEach((a) => {
+                const href = a.getAttribute('href');
+                if (!href || !/^(https?:|mailto:|tel:)/i.test(href)) return;
+                for (const lr of a.getClientRects()) {
+                    const topCss = lr.top - cRect.top;
+                    const leftCss = lr.left - cRect.left;
+                    const centerCss = topCss + lr.height / 2;
+                    const pIndex = pageRanges.findIndex((p) => centerCss >= p.topCss - 0.5 && centerCss < p.bottomCss + 0.5);
+                    if (pIndex < 0) continue;
+                    pdf.setPage(pIndex + 1);
+                    pdf.link(
+                        leftCss * cssToPt,
+                        marginPt + (topCss - pageRanges[pIndex].topCss) * cssToPt,
+                        lr.width * cssToPt,
+                        lr.height * cssToPt,
+                        { url: href },
+                    );
+                }
+            });
 
             pdf.save(`${(resume.name || 'resume').trim() || 'resume'}.pdf`);
         } catch {
