@@ -248,6 +248,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         document.body.appendChild(holder);
 
         try {
+            try { await document.fonts?.ready; } catch { /* ignore */ }
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
             const cTop = clone.getBoundingClientRect().top;
             const segs = [];
             let pageStart = 0;
