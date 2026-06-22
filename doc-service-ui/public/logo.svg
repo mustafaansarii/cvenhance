@@ -1,23 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <path
-    d="M36 12h36l24 24v68a12 12 0 0 1-12 12H36a12 12 0 0 1-12-12V24a12 12 0 0 1 12-12z"
-    stroke="#14b8a6"
-    stroke-width="6"
-    stroke-linejoin="round"
-  />
-  <path
-    d="M72 12v24h24"
-    stroke="#14b8a6"
-    stroke-width="6"
-    stroke-linejoin="round"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="35%" stop-color="#2563EB"/>
+      <stop offset="70%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+
   <text
-    x="60"
-    y="76"
+    x="50%"
+    y="52%"
     text-anchor="middle"
-    font-family="Inter, Arial, sans-serif"
-    font-size="26"
-    font-weight="700"
-    fill="#14b8a6"
-  >CV</text>
+    dominant-baseline="middle"
+    font-family="Manrope, Inter, Arial, sans-serif"
+    font-size="34"
+    font-weight="900"
+    letter-spacing="-2"
+    fill="url(#grad)"
+  >
+    CV
+  </text>
 </svg>
