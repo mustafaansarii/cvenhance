@@ -78,6 +78,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e',
     }));
     const setSetting = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
+    const resetDesign = () => setSettings({ margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e' });
     const sheetRef = useRef(null);
     const canvasRef = useRef(null);
     const scaleRef = useRef(1);
@@ -626,54 +627,82 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
             {/* Design & Font panel */}
             {panel === 'design' && (
-                <div className="no-print fixed left-0 top-14 bottom-0 z-40 w-72 max-w-[88vw] overflow-y-auto border-r border-slate-200 bg-white p-5 shadow-2xl">
-                    <div className="mb-5 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-800">Design &amp; Font</h3>
-                        <button onClick={() => setPanel(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <aside className="no-print fixed left-0 top-14 bottom-0 z-40 flex w-80 max-w-[88vw] flex-col border-r border-slate-200 bg-white shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h10M4 12h7M4 18h13M16 4v4M11 10v4M17 16v4" /></svg>
+                            </span>
+                            <div>
+                                <h3 className="text-sm font-bold leading-tight text-slate-800">Design &amp; Font</h3>
+                                <p className="text-[11px] text-slate-400">Make it yours</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setPanel(null)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
 
-                    <Control label="Page margins" hint={`${settings.margin}px`}>
-                        <input type="range" min="24" max="80" value={settings.margin} onChange={(e) => setSetting('margin', Number(e.target.value))} className="w-full accent-teal-500" />
-                        <div className="mt-0.5 flex justify-between text-[10px] text-slate-400"><span>narrow</span><span>wide</span></div>
-                    </Control>
+                    <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+                        <PanelSection title="Accent color">
+                            <div className="flex flex-wrap gap-2.5">
+                                {ACCENTS.map((c) => {
+                                    const active = settings.accent === c;
+                                    return (
+                                        <button
+                                            key={c}
+                                            onClick={() => setSetting('accent', c)}
+                                            title={c}
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${active ? 'ring-2 ring-slate-900 ring-offset-2' : 'ring-1 ring-inset ring-black/10 hover:scale-110'}`}
+                                            style={{ backgroundColor: c }}
+                                        >
+                                            {active && <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                        </button>
+                                    );
+                                })}
+                                <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-teal-400 hover:text-teal-500" title="Custom color">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
+                                    <input type="color" value={settings.accent} onChange={(e) => setSetting('accent', e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+                                </label>
+                            </div>
+                        </PanelSection>
 
-                    <Control label="Section spacing" hint={`${settings.spacing}px`}>
-                        <input type="range" min="8" max="48" value={settings.spacing} onChange={(e) => setSetting('spacing', Number(e.target.value))} className="w-full accent-teal-500" />
-                        <div className="mt-0.5 flex justify-between text-[10px] text-slate-400"><span>compact</span><span>more space</span></div>
-                    </Control>
+                        <PanelSection title="Font">
+                            <div className="space-y-1.5">
+                                {FONT_OPTIONS.map((f) => {
+                                    const active = settings.fontFamily === f.value;
+                                    return (
+                                        <button
+                                            key={f.label}
+                                            onClick={() => setSetting('fontFamily', f.value)}
+                                            className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition ${active ? 'border-teal-500 bg-teal-50/70' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                                        >
+                                            <span className="text-sm text-slate-800" style={{ fontFamily: f.value || 'Inter, system-ui, sans-serif' }}>{f.label}</span>
+                                            {active && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 shrink-0 text-teal-600"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </PanelSection>
 
-                    <Control label="Colors">
-                        <div className="flex flex-wrap gap-2">
-                            {ACCENTS.map((c) => (
-                                <button key={c} onClick={() => setSetting('accent', c)} title={c}
-                                    className={`h-7 w-7 rounded-full ring-2 ring-offset-2 transition ${settings.accent === c ? 'ring-slate-800' : 'ring-transparent hover:ring-slate-300'}`}
-                                    style={{ backgroundColor: c }} />
-                            ))}
-                            <label className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400" title="Custom color">
-                                <input type="color" value={settings.accent} onChange={(e) => setSetting('accent', e.target.value)} className="h-0 w-0 opacity-0" />
-                                +
-                            </label>
-                        </div>
-                    </Control>
+                        <PanelSection title="Typography">
+                            <SliderRow label="Font size" display={`${settings.fontSize}px`} value={settings.fontSize} min={11} max={20} step={1} onChange={(e) => setSetting('fontSize', Number(e.target.value))} />
+                            <SliderRow label="Line height" display={settings.lineHeight.toFixed(2)} value={settings.lineHeight} min={1.1} max={1.9} step={0.05} onChange={(e) => setSetting('lineHeight', Number(e.target.value))} />
+                        </PanelSection>
 
-                    <Control label="Font style">
-                        <select value={settings.fontFamily} onChange={(e) => setSetting('fontFamily', e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-teal-400 focus:outline-none">
-                            {FONT_OPTIONS.map((f) => <option key={f.label} value={f.value}>{f.label}</option>)}
-                        </select>
-                    </Control>
+                        <PanelSection title="Layout">
+                            <SliderRow label="Page margins" display={`${settings.margin}px`} value={settings.margin} min={24} max={80} step={1} onChange={(e) => setSetting('margin', Number(e.target.value))} />
+                            <SliderRow label="Section spacing" display={`${settings.spacing}px`} value={settings.spacing} min={8} max={48} step={1} onChange={(e) => setSetting('spacing', Number(e.target.value))} />
+                        </PanelSection>
+                    </div>
 
-                    <Control label="Font size" hint={`${settings.fontSize}px`}>
-                        <input type="range" min="11" max="20" value={settings.fontSize} onChange={(e) => setSetting('fontSize', Number(e.target.value))} className="w-full accent-teal-500" />
-                        <div className="mt-0.5 flex justify-between text-[10px] text-slate-400"><span>A</span><span className="text-base">A</span></div>
-                    </Control>
-
-                    <Control label="Line height" hint={settings.lineHeight.toFixed(2)}>
-                        <input type="range" min="1.1" max="1.9" step="0.05" value={settings.lineHeight} onChange={(e) => setSetting('lineHeight', Number(e.target.value))} className="w-full accent-teal-500" />
-                    </Control>
-                </div>
+                    <div className="border-t border-slate-100 px-5 py-3">
+                        <button onClick={resetDesign} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0119 5" /></svg>
+                            Reset to template default
+                        </button>
+                    </div>
+                </aside>
             )}
 
             {/* ATS Check panel */}
@@ -754,14 +783,23 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     );
 }
 
-function Control({ label, hint, children }) {
+function PanelSection({ title, children }) {
     return (
-        <div className="mb-5">
-            <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
-                {hint && <span className="text-[11px] text-slate-400">{hint}</span>}
-            </div>
+        <section>
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
             {children}
+        </section>
+    );
+}
+
+function SliderRow({ label, display, value, min, max, step = 1, onChange }) {
+    return (
+        <div className="mb-4 last:mb-0">
+            <div className="mb-2 flex items-center justify-between">
+                <span className="text-[13px] font-medium text-slate-600">{label}</span>
+                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-slate-500">{display}</span>
+            </div>
+            <input type="range" min={min} max={max} step={step} value={value} onChange={onChange} className="w-full accent-teal-500" />
         </div>
     );
 }
