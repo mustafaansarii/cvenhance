@@ -32,6 +32,9 @@ export default function DocEditor() {
     const [locked, setLocked] = useState(true);
     const blobUrlRef = useRef(null);
     const handleCompileRef = useRef(null);
+    const lockedRef = useRef(true);
+    useEffect(() => { lockedRef.current = locked; }, [locked]);
+    const autoCompiledRef = useRef(false);
 
     useEffect(() => {
         if (prefetched) {
@@ -67,6 +70,12 @@ export default function DocEditor() {
         document.addEventListener('keydown', handler, true);
         return () => document.removeEventListener('keydown', handler, true);
     }, []);
+
+    useEffect(() => {
+        if (autoCompiledRef.current || loadingDoc || !code) return;
+        autoCompiledRef.current = true;
+        handleCompileRef.current?.();
+    }, [loadingDoc, code]);
 
     const handleCompile = async () => {
         if (compiling) return;
@@ -269,6 +278,23 @@ export default function DocEditor() {
                                     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
                                     () => handleCompileRef.current()
                                 );
+                                // Free (locked) plan: block copy / cut / select-all from the keyboard…
+                                editor.onKeyDown((e) => {
+                                    if (!lockedRef.current) return;
+                                    const combo = e.ctrlKey || e.metaKey;
+                                    if (combo && [monaco.KeyCode.KeyC, monaco.KeyCode.KeyX, monaco.KeyCode.KeyA].includes(e.keyCode)) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }
+                                });
+                                // …and block the native copy/cut/context-menu so the code can't be lifted out.
+                                const dom = editor.getDomNode();
+                                if (dom) {
+                                    const block = (ev) => { if (lockedRef.current) { ev.preventDefault(); ev.stopPropagation(); } };
+                                    dom.addEventListener('copy', block, true);
+                                    dom.addEventListener('cut', block, true);
+                                    dom.addEventListener('contextmenu', block, true);
+                                }
                             }}
                             options={{
                                 fontSize: 14,
@@ -279,6 +305,9 @@ export default function DocEditor() {
                                 padding: { top: 12, bottom: 12 },
                                 fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                                 renderValidationDecorations: 'off',
+                                readOnly: locked,
+                                domReadOnly: locked,
+                                contextmenu: !locked,
                             }}
                         />
                     )}
