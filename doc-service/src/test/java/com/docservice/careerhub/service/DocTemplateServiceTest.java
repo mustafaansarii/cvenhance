@@ -11,33 +11,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DocTemplateServiceTest {
 
     private DocTemplateRepository repo;
-    private LatexCompiler compiler;
-    private StorageService storage;
     private DocTemplateService service;
 
     @BeforeEach
     void setUp() {
         repo = mock(DocTemplateRepository.class);
-        compiler = mock(LatexCompiler.class);
-        storage = mock(StorageService.class);
         service = new DocTemplateService();
         ReflectionTestUtils.setField(service, "docTemplateRepository", repo);
-        ReflectionTestUtils.setField(service, "latexCompiler", compiler);
-        ReflectionTestUtils.setField(service, "storageService", storage);
 
         AtomicLong ids = new AtomicLong(0);
         when(repo.save(any(DocTemplate.class))).thenAnswer(inv -> {
@@ -59,53 +51,53 @@ class DocTemplateServiceTest {
     }
 
     @Test
-    void createCompilesUploadsAndMarksReady() {
-        when(compiler.compile(anyString())).thenReturn(new byte[]{1, 2, 3});
-        when(storage.upload(any(), anyString(), eq("application/pdf"))).thenReturn("https://store/doc-templates/1.pdf");
-
+    void createPersistsAsPendingWithoutCompiling() {
         List<DocTemplate> result = service.createAll(List.of(request("resume")));
 
         assertThat(result).hasSize(1);
         DocTemplate template = result.get(0);
-        assertThat(template.getStatus()).isEqualTo(DocTemplateStatus.READY);
-        assertThat(template.getPdfUrl()).isEqualTo("https://store/doc-templates/1.pdf");
-        assertThat(template.getErrorMessage()).isNull();
-
-        verify(storage).upload(any(), eq("doc-templates/1.pdf"), eq("application/pdf"));
-    }
-
-    @Test
-    void createMarksFailedWhenCompilationFailsAndDoesNotUpload() {
-        when(compiler.compile(anyString())).thenThrow(ApiException.badData("LaTeX compilation error"));
-
-        List<DocTemplate> result = service.createAll(List.of(request("broken")));
-
-        DocTemplate template = result.get(0);
-        assertThat(template.getStatus()).isEqualTo(DocTemplateStatus.FAILED);
+        assertThat(template.getStatus()).isEqualTo(DocTemplateStatus.PENDING);
         assertThat(template.getPdfUrl()).isNull();
-        assertThat(template.getErrorMessage()).contains("LaTeX compilation error");
-        verify(storage, never()).upload(any(), anyString(), anyString());
     }
 
     @Test
-    void createIsolatesFailuresAcrossBatch() {
-        when(compiler.compile(anyString()))
-                .thenReturn(new byte[]{1})
-                .thenThrow(ApiException.badData("boom"));
-        when(storage.upload(any(), anyString(), anyString())).thenReturn("https://store/x.pdf");
+    void createBlankCodeIsStoredAsNull() {
+        CreateDocTemplateRequest request = request("resume");
+        request.setTemplateCode("   ");
 
-        List<DocTemplate> result = service.createAll(List.of(request("ok"), request("bad")));
+        DocTemplate template = service.createAll(List.of(request)).get(0);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getStatus()).isEqualTo(DocTemplateStatus.READY);
-        assertThat(result.get(1).getStatus()).isEqualTo(DocTemplateStatus.FAILED);
+        assertThat(template.getTemplateCode()).isNull();
+    }
+
+    @Test
+    void createRejectsDuplicateCodeWithinBatch() {
+        CreateDocTemplateRequest a = request("a");
+        a.setTemplateCode("modern");
+        CreateDocTemplateRequest b = request("b");
+        b.setTemplateCode("modern");
+
+        assertThatThrownBy(() -> service.createAll(List.of(a, b)))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("Duplicate templateCode");
+    }
+
+    @Test
+    void createRejectsCodeThatAlreadyExists() {
+        when(repo.existsByTemplateCode("modern")).thenReturn(true);
+        CreateDocTemplateRequest a = request("a");
+        a.setTemplateCode("modern");
+
+        assertThatThrownBy(() -> service.createAll(List.of(a)))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("already exists");
     }
 
     @Test
     void getByIdThrowsWhenMissing() {
-        when(repo.findById(99L)).thenReturn(java.util.Optional.empty());
+        when(repo.findById(99L)).thenReturn(Optional.empty());
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.getById(99L))
+        assertThatThrownBy(() -> service.getById(99L))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("not found");
     }

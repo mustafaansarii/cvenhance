@@ -93,4 +93,10 @@ public class AppProperties {
 
     @Value("${latex.compiler:${LATEX_COMPILER:docker}}")
     private String latexCompiler;
+
+    @Value("${doc-templates.compile-poll-ms:15000}")
+    private long docTemplatesCompilePollMs;
+
+    @Value("${doc-templates.compile-initial-ms:8000}")
+    private long docTemplatesCompileInitialMs;
 }

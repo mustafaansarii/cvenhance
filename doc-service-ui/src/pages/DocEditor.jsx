@@ -89,7 +89,6 @@ export default function DocEditor() {
             const url = URL.createObjectURL(blob);
             blobUrlRef.current = url;
             setPdfUrl(url);
-            toast.success('Compiled');
         } catch (err) {
             let msg = 'Compilation failed';
             if (err?.response?.data instanceof Blob) {

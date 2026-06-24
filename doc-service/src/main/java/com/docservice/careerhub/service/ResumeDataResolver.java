@@ -43,6 +43,11 @@ public class ResumeDataResolver {
 
             }
         }
+        return sample();
+    }
+
+    /** Realistic placeholder data used to render template previews (and as the fallback for new users). */
+    public Map<String, Object> sample() {
         return new HashMap<>(sample);
     }
 }
