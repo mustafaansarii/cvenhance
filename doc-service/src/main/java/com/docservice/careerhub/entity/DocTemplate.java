@@ -49,8 +49,6 @@ public class DocTemplate {
     @Column(nullable = false)
     private DocTemplateStatus status = DocTemplateStatus.PENDING;
 
-    private String pdfUrl;
-
     private String imageUrl;
 
     @Column(length = 2000)

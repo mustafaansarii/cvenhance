@@ -6,7 +6,6 @@ import {
     EllipsisHorizontalIcon,
     PencilSquareIcon,
     CodeBracketIcon,
-    ArrowDownTrayIcon,
     MagnifyingGlassIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
@@ -65,12 +64,6 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                ) : doc.pdfUrl ? (
-                    <iframe
-                        src={`${doc.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                        title={doc.name}
-                        className="pointer-events-none absolute left-0 top-0 h-[130%] w-full border-0"
-                    />
                 ) : (
                     <DocumentTextIcon className="h-12 w-12 text-slate-300" />
                 )}
@@ -105,9 +98,6 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                             <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><PencilSquareIcon className="h-4 w-4 text-slate-400" /> Edit with form</button>
                             <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><CodeBracketIcon className="h-4 w-4 text-slate-400" /> Edit with LaTeX editor</button>
-                            {doc.pdfUrl && (
-                                <a href={doc.pdfUrl} target="_blank" rel="noreferrer" onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><ArrowDownTrayIcon className="h-4 w-4 text-slate-400" /> Download PDF</a>
-                            )}
                         </div>
                     )}
                 </div>

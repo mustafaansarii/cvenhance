@@ -17,7 +17,6 @@ public class DocTemplateMetadata {
     private DocType type;
     private String description;
     private DocTemplateStatus status;
-    private String pdfUrl;
     private String imageUrl;
     private String errorMessage;
     private Instant createdAt;

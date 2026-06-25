@@ -58,7 +58,6 @@ class DocTemplateServiceTest {
         assertThat(result).hasSize(1);
         DocTemplate template = result.get(0);
         assertThat(template.getStatus()).isEqualTo(DocTemplateStatus.PENDING);
-        assertThat(template.getPdfUrl()).isNull();
     }
 
     @Test

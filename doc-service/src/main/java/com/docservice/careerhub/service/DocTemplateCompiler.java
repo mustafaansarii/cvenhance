@@ -29,9 +29,6 @@ public class DocTemplateCompiler {
     private LatexCompiler latexCompiler;
 
     @Autowired
-    private StorageService storageService;
-
-    @Autowired
     private LatexMergeService latexMergeService;
 
     @Autowired
@@ -61,13 +58,16 @@ public class DocTemplateCompiler {
         docTemplateRepository.save(template);
     }
 
-    /** Rendering only: merge sample data, compile, upload the preview. No DB writes. */
+    /**
+     * Rendering only: merge sample data and compile to verify the template's LaTeX is valid.
+     * The compiled PDF is intentionally NOT stored — a template only needs to be validated; the
+     * downloadable PDF lives on the user's own document (UserDoc). No DB writes.
+     */
     private RenderResult render(DocTemplate template) {
         try {
             String filled = latexMergeService.merge(template.getLatexCode(), resumeDataResolver.sample());
-            byte[] pdf = latexCompiler.compile(filled);
-            String url = storageService.upload(pdf, "doc-templates/" + template.getId() + ".pdf", "application/pdf");
-            return RenderResult.ready(url);
+            latexCompiler.compile(filled);
+            return RenderResult.ok();
         } catch (RuntimeException exception) {
             LOGGER.warn("Template {} ({}) failed to compile: {}", template.getId(), template.getName(),
                     exception.getMessage());
@@ -78,7 +78,6 @@ public class DocTemplateCompiler {
     /** Persistence only: write the render outcome back to the template. */
     private void persistOutcome(DocTemplate template, RenderResult result) {
         if (result.ready()) {
-            template.setPdfUrl(result.pdfUrl());
             template.setStatus(DocTemplateStatus.READY);
             template.setErrorMessage(null);
         } else {
@@ -95,13 +94,13 @@ public class DocTemplateCompiler {
         return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
     }
 
-    private record RenderResult(boolean ready, String pdfUrl, String error) {
-        static RenderResult ready(String pdfUrl) {
-            return new RenderResult(true, pdfUrl, null);
+    private record RenderResult(boolean ready, String error) {
+        static RenderResult ok() {
+            return new RenderResult(true, null);
         }
 
         static RenderResult failed(String error) {
-            return new RenderResult(false, null, error);
+            return new RenderResult(false, error);
         }
     }
 }
