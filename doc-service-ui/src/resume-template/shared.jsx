@@ -15,7 +15,7 @@ export const SECTION_CATALOG = [
     { type: 'experience', title: 'Experience', kind: 'exp', primaryPh: 'Company Name', secondaryPh: 'Title', addLabel: 'experience' },
     { type: 'education', title: 'Education', kind: 'edu', addLabel: 'education' },
     { type: 'skills', title: 'Skills', kind: 'pair', addLabel: 'skill group' },
-    { type: 'projects', title: 'Projects', kind: 'exp', primaryPh: 'Project Name', secondaryPh: 'Tech / Role', addLabel: 'project' },
+    { type: 'projects', title: 'Projects', kind: 'proj', primaryPh: 'Project Name', secondaryPh: 'Tech / Stack', addLabel: 'project' },
     { type: 'courses', title: 'Training / Courses', kind: 'courses', primaryPh: 'Course Title', secondaryPh: 'Which institution provided the course?', addLabel: 'course' },
     { type: 'certifications', title: 'Certifications', kind: 'courses', primaryPh: 'Certification', secondaryPh: 'Issuing organization', addLabel: 'certification' },
     { type: 'achievements', title: 'Key Achievements', kind: 'simple', ph: 'Describe a key achievement', addLabel: 'achievement' },
@@ -35,6 +35,7 @@ const FULL_ORDER = ['summary', 'experience', 'projects', 'skills', 'education', 
 export function blankItem(kind) {
     switch (kind) {
         case 'exp': return { id: nextId(), primary: '', secondary: '', location: '', period: '', bullets: [{ id: nextId(), text: '' }] };
+        case 'proj': return { id: nextId(), primary: '', secondary: '', githubUrl: '', liveUrl: '', period: '', bullets: [{ id: nextId(), text: '' }] };
         case 'edu': return { id: nextId(), school: '', degree: '', location: '', period: '' };
         case 'pair': return { id: nextId(), label: '', value: '' };
         case 'courses': return { id: nextId(), title: '', issuer: '' };
@@ -57,7 +58,15 @@ export function profileToResume(profile) {
     }));
 
     resume.experience = expFrom(p.experience, ['company', 'role']);
-    resume.projects = expFrom(p.projects, ['name', 'tech']);
+    resume.projects = (p.projects || []).map((it) => ({
+        id: nextId(),
+        primary: it.name || '',
+        secondary: it.tech || '',
+        githubUrl: it.githubUrl || '',
+        liveUrl: it.liveUrl || '',
+        period: it.period || '',
+        bullets: (Array.isArray(it.bullets) ? it.bullets : []).map((t) => ({ id: nextId(), text: t })),
+    }));
     resume.volunteer = expFrom(p.volunteer, ['company', 'role']);
     resume.education = (p.education || []).map((it) => ({ id: nextId(), school: it.school || '', degree: it.degree || '', location: it.location || '', period: it.period || '' }));
     resume.skills = (p.skills || []).map((it) => ({ id: nextId(), label: it.label || '', value: it.value || '' }));
@@ -87,7 +96,10 @@ export function resumeToProfile(resume) {
         bullets: (it.bullets || []).map((b) => b.text).filter(Boolean),
     }));
     if (resume.experience?.length) out.experience = exp(resume.experience, ['company', 'role']);
-    if (resume.projects?.length) out.projects = exp(resume.projects, ['name', 'tech']);
+    if (resume.projects?.length) out.projects = resume.projects.map((it) => ({
+        name: it.primary, tech: it.secondary, githubUrl: it.githubUrl, liveUrl: it.liveUrl, period: it.period,
+        bullets: (it.bullets || []).map((b) => b.text).filter(Boolean),
+    }));
     if (resume.volunteer?.length) out.volunteer = exp(resume.volunteer, ['company', 'role']);
     if (resume.education?.length) out.education = resume.education.map((it) => ({ school: it.school, degree: it.degree, location: it.location, period: it.period }));
     if (resume.skills?.length) out.skills = resume.skills.map((it) => ({ label: it.label, value: it.value }));

@@ -11,7 +11,7 @@ import docService from '../services/doc.service';
 import PricingModal from '../components/payment/PricingModal';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
-const ITEM_MARGIN = { exp: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
+const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
 
 const topLevelBlocks = (root) =>
     Array.from(root.querySelectorAll('[data-block]')).filter((b) => !b.parentElement?.closest('[data-block]'));
