@@ -66,7 +66,11 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                 ) : doc.pdfUrl ? (
-                    <iframe src={`${doc.pdfUrl}#toolbar=0&navpanes=0`} title={doc.name} className="pointer-events-none h-full w-full" />
+                    <iframe
+                        src={`${doc.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                        title={doc.name}
+                        className="pointer-events-none absolute left-0 top-0 h-[130%] w-full border-0"
+                    />
                 ) : (
                     <DocumentTextIcon className="h-12 w-12 text-slate-300" />
                 )}
