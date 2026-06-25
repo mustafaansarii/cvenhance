@@ -75,7 +75,6 @@ class UserDocServiceTest {
         t.setType(DocType.CV_AND_RESUME);
         t.setDescription("a resume");
         t.setLatexCode("\\documentclass{article}\\begin{document}hi\\end{document}");
-        t.setPdfUrl("https://store/doc-templates/5.pdf");
         t.setStatus(DocTemplateStatus.READY);
         return t;
     }
