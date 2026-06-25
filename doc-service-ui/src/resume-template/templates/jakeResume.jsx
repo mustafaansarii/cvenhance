@@ -74,7 +74,11 @@ const jakeResume = {
                             <span className="px-1.5 text-slate-500">|</span>
                             <Field value={item.secondary} onChange={(v) => update({ secondary: v })} ph={secondaryPh} className="italic text-slate-700" />
                         </p>
-                        <PeriodField value={item.period} onChange={(v) => update({ period: v })} className={periodCls} />
+                        <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                            <Field value={item.githubUrl} onChange={(v) => update({ githubUrl: v })} ph="GitHub URL" className="text-blue-600 underline" />
+                            <span className="text-slate-400">|</span>
+                            <Field value={item.liveUrl} onChange={(v) => update({ liveUrl: v })} ph="Live URL" className="text-red-600 underline" />
+                        </span>
                     </div>
                     <Bullets bullets={bullets} />
                 </>

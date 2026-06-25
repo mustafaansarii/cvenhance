@@ -80,17 +80,20 @@ const zayden = {
         if (kind === 'proj') {
             return (
                 <Row left={<span>Projects</span>}>
-                    <p>
-                        <Field value={item.primary} onChange={(v) => update({ primary: v })} ph={primaryPh} className="font-bold" />
-                        <span className="px-1">(</span>
-                        <Field value={item.secondary} onChange={(v) => update({ secondary: v })} ph={secondaryPh} className="italic text-slate-700" />
-                        <span>)</span>
-                    </p>
-                    <Bullets bullets={bullets} />
-                    <div className="flex flex-col">
-                        <Field value={item.githubUrl} onChange={(v) => update({ githubUrl: v })} ph="GitHub URL" className="text-[color:var(--rb-accent)] underline" />
-                        <Field value={item.liveUrl} onChange={(v) => update({ liveUrl: v })} ph="Live URL" className="text-[color:var(--rb-accent)] underline" />
+                    <div className="flex items-baseline justify-between gap-4">
+                        <p className="min-w-0 flex-1">
+                            <Field value={item.primary} onChange={(v) => update({ primary: v })} ph={primaryPh} className="font-bold" />
+                            <span className="px-1">(</span>
+                            <Field value={item.secondary} onChange={(v) => update({ secondary: v })} ph={secondaryPh} className="italic text-slate-700" />
+                            <span>)</span>
+                        </p>
+                        <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                            <Field value={item.githubUrl} onChange={(v) => update({ githubUrl: v })} ph="GitHub URL" className="text-[color:var(--rb-accent)] underline" />
+                            <span className="text-slate-400">|</span>
+                            <Field value={item.liveUrl} onChange={(v) => update({ liveUrl: v })} ph="Live URL" className="text-[color:var(--rb-accent)] underline" />
+                        </span>
                     </div>
+                    <Bullets bullets={bullets} />
                 </Row>
             );
         }

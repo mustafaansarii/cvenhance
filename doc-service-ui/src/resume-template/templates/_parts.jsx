@@ -41,6 +41,24 @@ export const renderItem = (kind, ctx) => {
             </>
         );
     }
+    if (kind === 'proj') {
+        return (
+            <>
+                <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                        <Field value={item.primary} onChange={(v) => update({ primary: v })} ph={primaryPh} className="block font-semibold" />
+                        <Field value={item.secondary} onChange={(v) => update({ secondary: v })} ph={secondaryPh} className="block text-slate-500" />
+                    </div>
+                    <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap text-right">
+                        <Field value={item.githubUrl} onChange={(v) => update({ githubUrl: v })} ph="GitHub URL" className="text-blue-600 underline" />
+                        <span className="text-slate-400">|</span>
+                        <Field value={item.liveUrl} onChange={(v) => update({ liveUrl: v })} ph="Live URL" className="text-red-600 underline" />
+                    </div>
+                </div>
+                <Bullets bullets={bullets} />
+            </>
+        );
+    }
     if (kind === 'edu') {
         return (
             <div className="flex items-start justify-between gap-4">
