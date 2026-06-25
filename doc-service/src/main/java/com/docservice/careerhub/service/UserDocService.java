@@ -216,7 +216,6 @@ public class UserDocService {
         doc.setType(template.getType());
         doc.setDescription(template.getDescription());
         doc.setLatexCode(merged);
-        doc.setPdfUrl(template.getPdfUrl());
         doc.setImageUrl(template.getImageUrl());
         doc.setStatus(DocTemplateStatus.READY);
         return userDocRepository.save(doc);

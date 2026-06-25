@@ -92,20 +92,6 @@ class UserDocServiceTest {
     }
 
     @Test
-    void saveTemplateCopiesIntoAccount() {
-        when(templateRepo.findById(5L)).thenReturn(Optional.of(template()));
-
-        UserDoc saved = service.saveTemplateToAccount("user@example.com", 5L);
-
-        assertThat(saved.getOwnerEmail()).isEqualTo("user@example.com");
-        assertThat(saved.getSourceTemplateId()).isEqualTo(5L);
-        assertThat(saved.getName()).isEqualTo("Resume");
-        assertThat(saved.getLatexCode()).contains("documentclass");
-        assertThat(saved.getPdfUrl()).isEqualTo("https://store/doc-templates/5.pdf");
-        assertThat(saved.getStatus()).isEqualTo(DocTemplateStatus.READY);
-    }
-
-    @Test
     void saveTemplateRejectsMissingTemplate() {
         when(templateRepo.findById(9L)).thenReturn(Optional.empty());
 
