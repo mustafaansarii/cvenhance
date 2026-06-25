@@ -32,11 +32,8 @@ public class DocTemplateService {
             if (!seenCodes.add(code)) {
                 throw ApiException.conflict("Duplicate templateCode in request: " + code);
             }
-            if (docTemplateRepository.existsByTemplateCode(code)) {
-                throw ApiException.conflict("Template code already exists: " + code);
-            }
         }
-        return requests.stream().map(this::newPending).toList();
+        return requests.stream().map(this::upsertPending).toList();
     }
 
     public DocTemplate getById(Long id) {
@@ -48,15 +45,21 @@ public class DocTemplateService {
         return docTemplateRepository.search(keyword, type, pageable);
     }
 
-    private DocTemplate newPending(CreateDocTemplateRequest request) {
-        DocTemplate template = new DocTemplate();
-        template.setTemplateCode(normalizeCode(request.getTemplateCode()));
+    private DocTemplate upsertPending(CreateDocTemplateRequest request) {
+        String code = normalizeCode(request.getTemplateCode());
+        DocTemplate template = (Objects.isNull(code) ? null
+                : docTemplateRepository.findFirstByTemplateCode(code).orElse(null));
+        if (Objects.isNull(template)) {
+            template = new DocTemplate();
+            template.setTemplateCode(code);
+        }
         template.setName(request.getName());
         template.setType(request.getType());
         template.setDescription(request.getDescription());
         template.setImageUrl(request.getImageUrl());
         template.setLatexCode(request.getLatexCode());
         template.setStatus(DocTemplateStatus.PENDING);
+        template.setErrorMessage(null);
         return docTemplateRepository.save(template);
     }
 

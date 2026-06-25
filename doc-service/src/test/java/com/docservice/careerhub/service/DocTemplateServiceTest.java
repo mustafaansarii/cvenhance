@@ -39,6 +39,7 @@ class DocTemplateServiceTest {
             }
             return t;
         });
+        when(repo.findFirstByTemplateCode(any())).thenReturn(Optional.empty());
     }
 
     private CreateDocTemplateRequest request(String name) {
@@ -83,14 +84,24 @@ class DocTemplateServiceTest {
     }
 
     @Test
-    void createRejectsCodeThatAlreadyExists() {
-        when(repo.existsByTemplateCode("modern")).thenReturn(true);
-        CreateDocTemplateRequest a = request("a");
+    void createUpsertsExistingCodeAndResetsToPending() {
+        DocTemplate existing = new DocTemplate();
+        existing.setId(7L);
+        existing.setTemplateCode("modern");
+        existing.setName("old name");
+        existing.setStatus(DocTemplateStatus.FAILED);
+        existing.setErrorMessage("boom");
+        when(repo.findFirstByTemplateCode("modern")).thenReturn(Optional.of(existing));
+
+        CreateDocTemplateRequest a = request("new name");
         a.setTemplateCode("modern");
 
-        assertThatThrownBy(() -> service.createAll(List.of(a)))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("already exists");
+        DocTemplate result = service.createAll(List.of(a)).get(0);
+
+        assertThat(result.getId()).isEqualTo(7L);
+        assertThat(result.getName()).isEqualTo("new name");
+        assertThat(result.getStatus()).isEqualTo(DocTemplateStatus.PENDING);
+        assertThat(result.getErrorMessage()).isNull();
     }
 
     @Test
