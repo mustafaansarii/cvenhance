@@ -229,6 +229,8 @@ export default function Templates({ mode = 'templates' }) {
 
     useEffect(() => { setInputValue(keyword); }, [keyword]);
 
+    useEffect(() => () => clearTimeout(debounceRef.current), []);
+
     useEffect(() => {
         setLoading(true);
         setError(null);

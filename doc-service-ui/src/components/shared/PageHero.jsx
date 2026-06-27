@@ -19,7 +19,7 @@ function PageHero({ title, description, breadcrumb }) {
                     {breadcrumb}
                 </span>
                 <h2 className="mt-2 text-4xl font-bold font-serif sm:text-5xl">{title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-3 text-sm leading-relaxed text-white">
                     {description}
                 </p>
             </div>
