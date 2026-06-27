@@ -526,7 +526,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 </div>
             )}
 
-            <div id="rb-canvas" ref={canvasRef} className="flex justify-center overflow-hidden px-4 py-8">
+            <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${panel === 'ats' ? 'md:mr-80' : ''}`}>
                 <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
                     {Array.from({ length: pageCount }).map((_, p) => (
