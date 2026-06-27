@@ -23,7 +23,7 @@ export default function ResumeExamplePage() {
             </div>
 
             <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-                <p className="text-center text-base leading-relaxed text-slate-600">
+                <p className="text-center text-base leading-relaxed text-muted-foreground">
                     Pick a role to explore matching templates, or jump straight in and let our AI generate a
                     tailored resume from your details.
                 </p>
@@ -33,7 +33,7 @@ export default function ResumeExamplePage() {
                         <Link
                             key={role}
                             to={`/templates?type=CV_AND_RESUME&keyword=${encodeURIComponent(role)}`}
-                            className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:bg-teal-50/50"
+                            className="rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-medium text-muted-foreground transition hover:border-accent hover:bg-accent/10"
                         >
                             {role}
                         </Link>
@@ -41,7 +41,7 @@ export default function ResumeExamplePage() {
                 </div>
 
                 <div className="mt-9 flex justify-center">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover">
                         Generate my resume
                     </Link>
                 </div>

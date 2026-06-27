@@ -76,17 +76,16 @@ export default function Hero() {
                         className="space-y-5 sm:space-y-6"
                     >
 
-                        <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-500" />
+                        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-accent/10 px-3 py-1.5 text-xs font-semibold  text-white">
                             ATS Check · AI Writer · One-Click Tailoring
                         </div>
 
-                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight tracking-tight">
+                        <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight tracking-tight">
                             Land more interviews with our{" "}
-                            <span className="italic text-teal-600">Resume Builder</span>
+                            <span className="italic text-accent">Resume Builder</span>
                         </h1>
 
-                        <p className="text-base sm:text-lg text-slate-500 leading-relaxed max-w-lg">
+                        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg dark:text-white/65">
                             ATS Check, AI Writer, and One-Click Job Tailoring make your resume stand out to recruiters.
                         </p>
 
@@ -102,10 +101,10 @@ export default function Hero() {
                                 ))}
                             </div>
                             <div>
-                                <div className="text-sm font-semibold text-slate-900">
-                                    <span className="text-teal-600">28,452</span> users landed interviews last month
+                                <div className="text-sm font-semibold text-foreground">
+                                    <span className="text-accent">28,452</span> users landed interviews last month
                                 </div>
-                                <div className="text-xs text-slate-400">5,268 Reviews · Start for free.</div>
+                                <div className="text-xs text-muted-foreground">5,268 Reviews · Start for free.</div>
                             </div>
                         </div>
 
@@ -113,8 +112,8 @@ export default function Hero() {
                             {heroCtas.map((cta) => {
                                 const className =
                                     cta.variant === "black"
-                                        ? "inline-flex flex-none w-fit items-center justify-center gap-1.5 rounded-md sm:rounded-none border border-black bg-black px-2 py-2 text-[11px] sm:text-sm font-semibold text-white transition hover:opacity-90"
-                                        : "inline-flex flex-none w-fit items-center justify-center gap-1.5 rounded-md sm:rounded-none border border-black bg-white px-2 py-2 text-[11px] sm:text-sm font-semibold text-black transition hover:opacity-90";
+                                        ? "inline-flex flex-none w-fit items-center justify-center gap-1.5 rounded-md sm:rounded-none border border-accent bg-accent hover:bg-accent-hover px-2 py-2 text-[11px] sm:text-sm font-semibold text-accent-foreground transition"
+                                        : "inline-flex flex-none w-fit items-center justify-center gap-1.5 rounded-md sm:rounded-none border border-border bg-card px-2 py-2 text-[11px] sm:text-sm font-semibold text-foreground transition hover:opacity-90";
 
                                 return (
                                     <Link key={cta.to} to={cta.to} className={className}>

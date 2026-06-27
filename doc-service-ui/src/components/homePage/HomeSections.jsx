@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import docService from '../../services/doc.service';
 
 const MotionDiv = motion.div;
 
@@ -13,10 +14,10 @@ const viewport = { once: true, amount: 0.2 };
 const TRUST_LOGOS = ['Google', 'Amazon', 'Microsoft', 'Meta', 'Netflix', 'Stripe'];
 
 const STATS = [
-    { value: '500K+', label: 'documents created', tint: 'bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300' },
-    { value: '40+', label: 'professional templates', tint: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300' },
-    { value: '6 years', label: 'helping job seekers', tint: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300' },
-    { value: '98%', label: 'pass ATS checks', tint: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' },
+    { value: '500K+', label: 'documents created', tint: 'bg-muted text-foreground' },
+    { value: '40+', label: 'professional templates', tint: 'bg-muted text-foreground' },
+    { value: '6 years', label: 'helping job seekers', tint: 'bg-muted text-foreground' },
+    { value: '98%', label: 'pass ATS checks', tint: 'bg-muted text-foreground' },
 ];
 
 const FEATURES = [
@@ -69,23 +70,23 @@ const FAQS = [
 
 function FaqItem({ item, isOpen, onToggle }) {
     return (
-        <div className="rounded-2xl border border-black/10 bg-white transition hover:border-teal-300 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-2xl border border-border bg-card transition hover:border-accent">
             <button
                 onClick={onToggle}
                 className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
                 aria-expanded={isOpen}
             >
-                <span className="text-sm font-semibold sm:text-base">{item.q}</span>
+                <span className="text-sm font-semibold sm:text-base text-foreground">{item.q}</span>
                 <svg
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                    className={`h-5 w-5 shrink-0 text-teal-600 transition-transform duration-300 dark:text-teal-400 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`h-5 w-5 shrink-0 text-accent transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
             <div className={`grid overflow-hidden px-5 transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] pb-5 opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                 <div className="overflow-hidden">
-                    <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{item.a}</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{item.a}</p>
                 </div>
             </div>
         </div>
@@ -95,11 +96,11 @@ function FaqItem({ item, isOpen, onToggle }) {
 function FaqSection() {
     const [open, setOpen] = useState(0);
     return (
-        <section className="border-t border-black/10 dark:border-white/10">
+        <section className="border-t border-border">
             <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
                 <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} className="text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently asked questions</h2>
-                    <p className="mt-4 text-base text-slate-500 dark:text-slate-400">Everything you need to know about building documents with CVEnhance.</p>
+                    <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Frequently asked questions</h2>
+                    <p className="mt-4 text-base text-muted-foreground">Everything you need to know about building documents with CVEnhance.</p>
                 </MotionDiv>
                 <div className="mt-12 space-y-3">
                     {FAQS.map((item, i) => (
@@ -113,7 +114,7 @@ function FaqSection() {
 
 function FeatureIcon({ path }) {
     return (
-        <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-300">
+        <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d={path} />
             </svg>
@@ -125,7 +126,7 @@ function Stars({ count = 5 }) {
     return (
         <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={`flex h-5 w-5 items-center justify-center rounded ${i < count ? 'bg-teal-500' : 'bg-slate-200 dark:bg-white/10'}`}>
+                <span key={i} className={`flex h-5 w-5 items-center justify-center rounded ${i < count ? 'bg-accent' : 'bg-muted'}`}>
                     <svg viewBox="0 0 20 20" fill="white" className="h-3 w-3">
                         <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.8L10 14.77l-5.2 2.75.99-5.8L1.58 7.62l5.82-.85L10 1.5z" />
                     </svg>
@@ -136,19 +137,67 @@ function Stars({ count = 5 }) {
 }
 
 export default function HomeSections() {
-    return (
-        <div className="text-slate-900">
+    const [liveTemplates, setLiveTemplates] = useState([]);
+    useEffect(() => {
+        let alive = true;
+        docService.listTemplates({ type: 'CV_AND_RESUME', page: 0, size: 8 })
+            .then((data) => {
+                if (!alive) return;
+                const cards = (data?.content || [])
+                    .filter((t) => t.imageUrl)
+                    .slice(0, 4)
+                    .map((t) => ({ src: t.imageUrl, name: t.name, to: `/resume-builder/${t.templateCode}` }));
+                setLiveTemplates(cards);
+            })
+            .catch(() => { /* keep fallback */ });
+        return () => { alive = false; };
+    }, []);
+    const templateCards = liveTemplates.length ? liveTemplates : TEMPLATES;
 
-            <section className="border-b border-black/10 dark:border-white/10">
+    return (
+        <div className="bg-background text-foreground">
+
+            <section className="border-b border-border">
                 <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-                    <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         Trusted by job seekers hired at
                     </p>
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
                         {TRUST_LOGOS.map((logo) => (
-                            <span key={logo} className="text-lg font-bold tracking-tight text-slate-400/80 dark:text-slate-500">{logo}</span>
+                            <span key={logo} className="text-lg font-bold tracking-tight text-muted-foreground">{logo}</span>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            <section className="relative overflow-hidden mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+                <div className="flex flex-col items-end justify-between gap-6 sm:flex-row">
+                    <div className="max-w-xl">
+                        <span className="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
+                            Templates
+                        </span>
+                        <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Templates that recruiters love</h2>
+                        <p className="mt-4 text-base text-muted-foreground">Field-tested, ATS-safe, and fully editable. Pick one and make it yours.</p>
+                    </div>
+                    <Link to="/templates" className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 px-5 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground">
+                        Browse all templates
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 transition-transform group-hover:translate-x-0.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
+                    </Link>
+                </div>
+
+                <div className="mx-auto mt-14 grid max-w-8xl grid-cols-2 gap-6 sm:grid-cols-4">
+                    {templateCards.map((t, i) => (
+                        <MotionDiv key={t.name + i} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
+                            <Link to={t.to || '/templates'} className="group block overflow-hidden bg-card shadow-md ring-1 ring-border transition hover:-translate-y-1 hover:shadow-lg" style={{ aspectRatio: '3/4' }}>
+                                <img
+                                    src={t.src}
+                                    alt={t.name}
+                                    className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
+                                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x800?text=Template'; }}
+                                />
+                            </Link>
+                        </MotionDiv>
+                    ))}
                 </div>
             </section>
 
@@ -172,16 +221,16 @@ export default function HomeSections() {
                     </div>
 
                     <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                        <h2 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                            Chosen by <span className="text-teal-600 dark:text-teal-400">thousands</span> of job applicants worldwide
+                        <h2 className="font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl text-foreground">
+                            Chosen by <span className="text-accent">thousands</span> of job applicants worldwide
                         </h2>
-                        <p className="mt-5 text-base leading-relaxed text-slate-500 dark:text-slate-400">
+                        <p className="mt-5 text-base leading-relaxed text-muted-foreground">
                             CVEnhance is a document builder that helps you create applications with impact and professionalism — trusted at every step of the job hunt to emphasize your experience, value, and skills.
                         </p>
-                        <p className="mt-4 text-base leading-relaxed text-slate-500 dark:text-slate-400">
+                        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
                             We pair flexible, ATS-friendly templates with an intuitive editor and a live PDF preview, so you can present a complete, polished application in minutes.
                         </p>
-                        <Link to="/templates" className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                        <Link to="/templates" className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-hover">
                             Explore templates
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
                         </Link>
@@ -189,19 +238,19 @@ export default function HomeSections() {
                 </div>
             </section>
 
-            <section className="border-y border-black/10 dark:border-white/10">
+            <section className="border-y border-border">
                 <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to get hired</h2>
-                        <p className="mt-4 text-base text-slate-500 dark:text-slate-400">The builder handles design and formatting, so you can focus on the words that land the job.</p>
+                        <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Everything you need to get hired</h2>
+                        <p className="mt-4 text-base text-muted-foreground">The builder handles design and formatting, so you can focus on the words that land the job.</p>
                     </div>
                     <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         {FEATURES.map((f, i) => (
                             <MotionDiv key={f.title} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                                className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/5">
+                                className="rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                                 <FeatureIcon path={f.path} />
-                                <h3 className="text-base font-semibold">{f.title}</h3>
-                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{f.desc}</p>
+                                <h3 className="text-base font-semibold text-foreground">{f.title}</h3>
+                                <p className="mt-2 text-sm text-muted-foreground">{f.desc}</p>
                             </MotionDiv>
                         ))}
                     </div>
@@ -209,18 +258,16 @@ export default function HomeSections() {
             </section>
 
             <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-indigo-900 to-teal-800 px-6 py-14 sm:px-12 lg:py-20">
-                    <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl" />
-                    <div className="pointer-events-none absolute -bottom-24 left-10 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
+                <div className="relative overflow-hidden rounded-[2rem] border border-border bg-muted px-6 py-14 sm:px-12 lg:py-20">
                     <div className="relative grid items-center gap-12 lg:grid-cols-2">
                         <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                            <h2 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
+                            <h2 className="font-serif text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
                                 Resumes optimized for Applicant Tracking Systems
                             </h2>
-                            <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-300">
+                            <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">
                                 Every template is tested against top ATS software for full compatibility — clean layouts, readable fonts, and standard section titles, so nothing gets lost.
                             </p>
-                            <Link to="/templates?type=CV_AND_RESUME" className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-400">
+                            <Link to="/templates?type=CV_AND_RESUME" className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-accent hover:bg-accent-hover px-6 py-3 text-sm font-semibold text-accent-foreground shadow-lg transition">
                                 Build an ATS-friendly resume
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
                             </Link>
@@ -229,11 +276,11 @@ export default function HomeSections() {
                         <div className="space-y-4">
                             {ATS_PILLS.map((p, i) => (
                                 <MotionDiv key={p.title} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                                    className={`flex items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm ${i === 1 ? 'lg:ml-12' : i === 2 ? 'lg:ml-6' : ''}`}>
-                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600">
+                                    className={`flex items-center gap-4 rounded-2xl border border-border bg-card p-4 ${i === 1 ? 'lg:ml-12' : i === 2 ? 'lg:ml-6' : ''}`}>
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6"><path strokeLinecap="round" strokeLinejoin="round" d={p.path} /></svg>
                                     </span>
-                                    <span className="text-sm font-semibold text-white">{p.title}</span>
+                                    <span className="text-sm font-semibold text-foreground">{p.title}</span>
                                 </MotionDiv>
                             ))}
                         </div>
@@ -243,69 +290,29 @@ export default function HomeSections() {
 
             <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From blank page to PDF in 3 steps</h2>
+                    <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">From blank page to PDF in 3 steps</h2>
                 </div>
                 <div className="mt-14 grid gap-8 md:grid-cols-3">
                     {STEPS.map((s, i) => (
                         <MotionDiv key={s.n} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                            <span className="text-5xl font-extrabold text-teal-500/25 dark:text-teal-400/25">{s.n}</span>
-                            <h3 className="mt-3 text-lg font-semibold">{s.title}</h3>
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{s.desc}</p>
+                            <span className="text-5xl font-extrabold text-accent/25">{s.n}</span>
+                            <h3 className="mt-3 text-lg font-semibold text-foreground">{s.title}</h3>
+                            <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
                         </MotionDiv>
                     ))}
                 </div>
             </section>
 
-            <section className="relative overflow-hidden mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="pointer-events-none absolute left-1/2 top-32 -z-10 h-72 w-[60%] -translate-x-1/2 rounded-full bg-teal-500/10 blur-3xl" />
-                <div className="flex flex-col items-end justify-between gap-6 sm:flex-row">
-                    <div className="max-w-xl">
-                        <span className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
-                            Templates
-                        </span>
-                        <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Templates that recruiters love</h2>
-                        <p className="mt-4 text-base text-slate-500 dark:text-slate-400">Field-tested, ATS-safe, and fully editable. Pick one and make it yours.</p>
-                    </div>
-                    <Link to="/templates" className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-teal-500/40 px-5 py-2.5 text-sm font-semibold text-teal-600 transition hover:bg-teal-500 hover:text-white dark:text-teal-400">
-                        Browse all templates
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 transition-transform group-hover:translate-x-0.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
-                    </Link>
-                </div>
-
-                <div className="mx-auto mt-14 grid max-w-8xl grid-cols-2 gap-6 sm:grid-cols-4">
-                    {TEMPLATES.map((t, i) => (
-                        <MotionDiv key={t.name} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                            <div className="overflow-hidden bg-white shadow-md ring-1 ring-black/5" style={{ aspectRatio: '3/4' }}>
-                                <img
-                                    src={t.src}
-                                    alt=""
-                                    className="h-full w-full object-cover object-top"
-                                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x800?text=Template'; }}
-                                />
-                            </div>
-                        </MotionDiv>
-                    ))}
-                </div>
-            </section>
-
-            <section className="relative overflow-hidden border-y border-black/10 dark:border-white/10">
-
-                <div
-                    className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[120%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-[45%] blur-[90px] opacity-70 dark:opacity-40"
-                    style={{ background: 'conic-gradient(from 140deg at 50% 50%, #fcd34d, #fb7185, #e879f9, #a78bfa, #818cf8, #38bdf8, #5eead4, #fcd34d)' }}
-                />
-
-                <div className="pointer-events-none absolute -left-24 bottom-0 -z-10 h-72 w-72 rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/20" />
-                <div className="pointer-events-none absolute -right-20 top-10 -z-10 h-72 w-72 rounded-full bg-rose-300/40 blur-3xl dark:bg-rose-500/20" />
+            <section className="relative overflow-hidden border-y border-border bg-muted">
                 <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
                     <div className="grid items-start gap-8 lg:grid-cols-[1fr_1.4fr]">
                         <div className="lg:sticky lg:top-24">
-                            <h2 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">Trusted by executives &amp; senior professionals</h2>
-                            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/80 px-5 py-4 shadow-sm backdrop-blur dark:bg-white/10">
+                            <h2 className="font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl text-foreground">Trusted by executives &amp; senior professionals</h2>
+                            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
                                 <Stars count={5} />
                                 <div>
-                                    <p className="text-lg font-bold">4.8 / 5</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">5,270+ happy customers</p>
+                                    <p className="text-lg font-bold text-foreground">4.8 / 5</p>
+                                    <p className="text-xs text-muted-foreground">5,270+ happy customers</p>
                                 </div>
                             </div>
                         </div>
@@ -313,11 +320,11 @@ export default function HomeSections() {
                         <div className="columns-1 gap-5 sm:columns-2 [&>*]:mb-5">
                             {REVIEWS.map((r, i) => (
                                 <MotionDiv key={r.name} custom={i % 3} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                                    className="break-inside-avoid rounded-2xl border border-black/5 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+                                    className="break-inside-avoid rounded-2xl border border-border bg-card p-5 shadow-sm">
                                     <Stars count={r.stars} />
-                                    <p className="mt-2 text-xs text-slate-400">{r.when}</p>
-                                    <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{r.text}</p>
-                                    <p className="mt-4 text-sm font-semibold">— {r.name}</p>
+                                    <p className="mt-2 text-xs text-muted-foreground">{r.when}</p>
+                                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.text}</p>
+                                    <p className="mt-4 text-sm font-semibold text-foreground">— {r.name}</p>
                                 </MotionDiv>
                             ))}
                         </div>

@@ -6,7 +6,7 @@ export default function DocTemplates() {
     return (
         <>
 
-            <div className="relative w-full overflow-hidden bg-top bg-no-repeat home-page-hero-bg border-b border-black/50 dark:border-white/50"
+            <div className="relative w-full overflow-hidden bg-top bg-no-repeat home-page-hero-bg border-b border-border"
                 style={{ backgroundImage: "url('/assest/home_page.png')" }}>
                 <Navbar />
                 <PageHero

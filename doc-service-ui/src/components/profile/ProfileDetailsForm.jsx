@@ -6,8 +6,8 @@ const EMPTY = {
     experience: [], education: [], projects: [], skills: [], achievements: [],
 };
 
-const input = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20';
-const label = 'mb-1 block text-xs font-medium text-slate-600';
+const input = 'w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40';
+const label = 'mb-1 block text-xs font-medium text-muted-foreground';
 
 function Field({ label: l, value, onChange, placeholder, full }) {
     return (
@@ -31,13 +31,13 @@ function ListSection({ title, items, onAdd, onRemove, addLabel, renderRow }) {
     return (
         <section>
             <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-bold uppercase tracking-wide text-slate-700">{title}</h3>
-                <button type="button" onClick={onAdd} className="text-xs font-semibold text-teal-600 hover:text-teal-700">+ {addLabel}</button>
+                <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">{title}</h3>
+                <button type="button" onClick={onAdd} className="text-xs font-semibold text-accent hover:text-accent-hover">+ {addLabel}</button>
             </div>
             <div className="space-y-4">
-                {items.length === 0 && <p className="text-xs text-slate-400">None added yet.</p>}
+                {items.length === 0 && <p className="text-xs text-muted-foreground">None added yet.</p>}
                 {items.map((it, i) => (
-                    <div key={i} className="rounded-xl border border-slate-200 p-4">
+                    <div key={i} className="rounded-xl border border-border p-4">
                         <div className="mb-2 flex justify-end">
                             <button type="button" onClick={() => onRemove(i)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
                         </div>
@@ -73,7 +73,7 @@ export default function ProfileDetailsForm({ initial, onCancel, onSave }) {
         <div className="space-y-8">
 
             <section>
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">Basic details</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Basic details</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Field label="Full name" value={data.name} onChange={(v) => set('name', v)} full />
                     <Field label="Location" value={data.location} onChange={(v) => set('location', v)} />
@@ -143,7 +143,7 @@ export default function ProfileDetailsForm({ initial, onCancel, onSave }) {
             />
 
             <section>
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">Achievements</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Achievements</h3>
                 <textarea
                     className={`${input} h-24 resize-y`}
                     value={bullets(data.achievements)}
@@ -152,9 +152,9 @@ export default function ProfileDetailsForm({ initial, onCancel, onSave }) {
                 />
             </section>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
-                <button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancel</button>
-                <button type="button" onClick={submit} disabled={saving} className="rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 disabled:opacity-60">
+            <div className="flex items-center justify-end gap-3 border-t border-border pt-5">
+                <button type="button" onClick={onCancel} disabled={saving} className="rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-60">Cancel</button>
+                <button type="button" onClick={submit} disabled={saving} className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm hover:bg-accent-hover disabled:opacity-60">
                     {saving ? 'Saving…' : 'Save details'}
                 </button>
             </div>

@@ -14,19 +14,19 @@ export default function ComingSoon({ breadcrumb, title, description }) {
             </div>
 
             <main className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
-                <span className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                     Coming soon
                 </span>
-                <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-slate-600">
+                <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">
                     We&rsquo;re building this. In the meantime, get your resume ready so you&rsquo;re set the
                     moment it launches.
                 </p>
                 <div className="mt-7 flex flex-wrap justify-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover">
                         Build my resume
                     </Link>
-                    <Link to="/" className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                    <Link to="/" className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-muted">
                         Back home
                     </Link>
                 </div>

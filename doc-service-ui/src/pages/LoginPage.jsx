@@ -6,7 +6,7 @@ export default function LoginPage() {
         <AuthLayout
             breadcrumb="Login"
             badge="Welcome back"
-            title={<>Sign in to <span className="italic text-teal-400">CVEnhance</span></>}
+            title={<span className="font-serif">Sign in to <span className="italic text-accent">CVEnhance</span></span>}
             description="Access your personalized dashboard, saved roles, and application pipeline. Continue where you left off."
             features={[
                 'Track applications across companies in one place',

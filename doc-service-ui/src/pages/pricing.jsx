@@ -13,7 +13,7 @@ function Pricing() {
         <Navbar />
         <PageHero
           breadcrumb="Pricing"
-          title="We offer a variety of pricing plans to suit your needs."
+          title={<span className="font-serif">We offer a variety of pricing plans to suit your needs.</span>}
           description="Start for free and upgrade whenever you're ready. Transparent pricing, no hidden fees—just what you need to grow."
         />
       </div>

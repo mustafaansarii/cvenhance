@@ -47,7 +47,7 @@ export const PLAN_DETAILS = {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 shrink-0 text-teal-500">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 shrink-0 text-accent">
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );
@@ -70,38 +70,38 @@ export function PricingCard({ plan, isPopular, isCurrent, isIncluded, busy, onBu
 
       {details.badge && (
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-black/50 bg-white px-3 py-0.5 text-[11px] font-bold uppercase tracking-widest text-slate-900">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-500" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-0.5 text-[11px] font-bold uppercase tracking-widest text-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
             {details.badge}
           </span>
         </div>
       )}
 
       <div className="px-7 pt-10 pb-6">
-        <p className={`text-[11px] font-bold uppercase tracking-widest ${isPopular ? 'text-teal-500' : 'text-slate-400'}`}>
+        <p className={`text-[11px] font-bold uppercase tracking-widest ${isPopular ? 'text-accent' : 'text-muted-foreground'}`}>
           {plan.title}
         </p>
         <div className="mt-4 flex items-end gap-1">
-          <span className="text-sm font-semibold text-slate-400 mb-2">₹</span>
-          <span className={`text-6xl font-black tracking-tighter leading-none ${isPopular ? 'text-teal-600' : 'text-slate-900'}`}>
+          <span className="text-sm font-semibold text-muted-foreground mb-2">₹</span>
+          <span className={`text-6xl font-black tracking-tighter leading-none ${isPopular ? 'text-accent' : 'text-foreground'}`}>
             {plan.price}
           </span>
-          <span className="text-sm text-slate-400 mb-2">one-time</span>
+          <span className="text-sm text-muted-foreground mb-2">one-time</span>
         </div>
-        <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
           {details.tagline}
         </p>
       </div>
 
       <ul className="flex-1 px-7 py-6 space-y-3">
         {details.features.map((f) => (
-          <li key={f} className="flex items-start gap-3 text-sm text-slate-700">
+          <li key={f} className="flex items-start gap-3 text-sm text-foreground">
             <CheckIcon />
             <span>{f}</span>
           </li>
         ))}
         {details.excluded.map((f) => (
-          <li key={f} className="flex items-start gap-3 text-sm text-slate-400 line-through">
+          <li key={f} className="flex items-start gap-3 text-sm text-muted-foreground line-through">
             <CrossIcon />
             <span>{f}</span>
           </li>
@@ -115,8 +115,8 @@ export function PricingCard({ plan, isPopular, isCurrent, isIncluded, busy, onBu
           className={[
             'flex w-full items-center justify-center gap-2 border px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60',
             isPopular
-              ? 'border-black bg-black text-white hover:opacity-80'
-              : 'border-black/30 text-slate-800 hover:border-black',
+              ? 'border-accent bg-accent text-accent-foreground hover:bg-accent-hover'
+              : 'border-border text-foreground hover:border-accent',
           ].join(' ')}
         >
           {label}
@@ -136,10 +136,10 @@ export function PlanGrid({ entitlement, busy, onBuy }) {
   const currentLevel = currentPlanLevel(entitlement);
   return (
     <div className="relative mx-auto max-w-5xl">
-      <div className="pointer-events-none absolute left-0   top-0 bottom-0 w-px bg-black/50 hidden md:block" />
-      <div className="pointer-events-none absolute left-1/3 top-0 bottom-0 w-px bg-black/50 hidden md:block" />
-      <div className="pointer-events-none absolute left-2/3 top-0 bottom-0 w-px bg-black/50 hidden md:block" />
-      <div className="pointer-events-none absolute right-0  top-0 bottom-0 w-px bg-black/50 hidden md:block" />
+      <div className="pointer-events-none absolute left-0   top-0 bottom-0 w-px bg-border hidden md:block" />
+      <div className="pointer-events-none absolute left-1/3 top-0 bottom-0 w-px bg-border hidden md:block" />
+      <div className="pointer-events-none absolute left-2/3 top-0 bottom-0 w-px bg-border hidden md:block" />
+      <div className="pointer-events-none absolute right-0  top-0 bottom-0 w-px bg-border hidden md:block" />
 
       <div className="grid grid-cols-1 md:grid-cols-3">
         {PLANS.map((plan) => (

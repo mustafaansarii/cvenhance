@@ -55,8 +55,8 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
     const choose = (m) => { setMenuOpen(false); onAction(doc, m); };
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-            <div className="relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100" style={{ aspectRatio: '3/4' }}>
+        <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+            <div className="relative flex items-center justify-center overflow-hidden bg-muted" style={{ aspectRatio: '3/4' }}>
                 {doc.imageUrl ? (
                     <img
                         src={doc.imageUrl}
@@ -65,10 +65,10 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                 ) : (
-                    <DocumentTextIcon className="h-12 w-12 text-slate-300" />
+                    <DocumentTextIcon className="h-12 w-12 text-muted-foreground" />
                 )}
                 {doc.status && doc.status !== 'READY' && (
-                    <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[doc.status] || 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[doc.status] || 'bg-muted text-muted-foreground'}`}>
                         {doc.status}
                     </span>
                 )}
@@ -76,7 +76,7 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                     <button
                         onClick={() => choose('form')}
                         disabled={isBusy}
-                        className="flex items-center gap-1.5 rounded-full bg-teal-600 px-4 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-foreground shadow transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {isBusy ? 'Opening…' : actionLabel}
                     </button>
@@ -84,20 +84,20 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
             </div>
 
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-                <p className="truncate text-sm font-medium text-slate-800" title={doc.name}>{doc.name}</p>
+                <p className="truncate text-sm font-medium text-foreground" title={doc.name}>{doc.name}</p>
 
                 <div ref={menuRef} className="relative shrink-0">
                     <button
                         onClick={() => setMenuOpen((v) => !v)}
                         title="More options"
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:border-teal-400 hover:text-teal-600"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:border-accent hover:text-accent"
                     >
                         <EllipsisHorizontalIcon className="h-4 w-4" />
                     </button>
                     {menuOpen && (
-                        <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                            <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><PencilSquareIcon className="h-4 w-4 text-slate-400" /> Edit with form</button>
-                            <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"><CodeBracketIcon className="h-4 w-4 text-slate-400" /> Edit with LaTeX editor</button>
+                        <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
+                            <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><PencilSquareIcon className="h-4 w-4 text-muted-foreground" /> Edit with form</button>
+                            <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><CodeBracketIcon className="h-4 w-4 text-muted-foreground" /> Edit with LaTeX editor</button>
                         </div>
                     )}
                 </div>
@@ -108,11 +108,11 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
 
 function SkeletonCard() {
     return (
-        <div className="flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white animate-pulse">
-            <div className="bg-slate-100" style={{ aspectRatio: '3/4' }} />
+        <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card animate-pulse">
+            <div className="bg-muted" style={{ aspectRatio: '3/4' }} />
             <div className="flex items-center justify-between px-3 py-2.5">
-                <div className="h-3 w-28 rounded bg-slate-200" />
-                <div className="h-7 w-7 rounded-full bg-slate-200" />
+                <div className="h-3 w-28 rounded bg-muted" />
+                <div className="h-7 w-7 rounded-full bg-muted" />
             </div>
         </div>
     );
@@ -138,37 +138,37 @@ function Pagination({ page, totalPages, pageSize, onPageChange, onPageSizeChange
 
     return (
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Rows per page:</span>
                 <select value={pageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 focus:border-teal-400 focus:outline-none">
+                    className="rounded-lg border border-border bg-card px-2 py-1 text-sm text-muted-foreground focus:border-accent focus:outline-none">
                     {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
             </div>
 
             <div className="flex items-center gap-1.5">
                 <button onClick={() => onPageChange(page - 1)} disabled={page === 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-teal-400 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-40">
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">
                     <ChevronLeftIcon className="h-4 w-4" />
                 </button>
                 {buildPages().map((p, idx) =>
                     p === '...' ? (
-                        <span key={`e-${idx}`} className="flex h-8 w-8 items-center justify-center text-sm text-slate-400">…</span>
+                        <span key={`e-${idx}`} className="flex h-8 w-8 items-center justify-center text-sm text-muted-foreground">…</span>
                     ) : (
                         <button key={p} onClick={() => onPageChange(p)}
-                            className={`flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-medium transition ${p === page ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-200 text-slate-600 hover:border-teal-400 hover:text-teal-600'}`}>
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-medium transition ${p === page ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:border-accent hover:text-accent'}`}>
                             {p}
                         </button>
                     )
                 )}
                 <button onClick={() => onPageChange(page + 1)} disabled={page >= safeTotal}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-teal-400 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-40">
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">
                     <ChevronRightIcon className="h-4 w-4" />
                 </button>
             </div>
 
-            <p className="text-sm text-slate-500">
-                Page <span className="font-medium text-slate-700">{page}</span> of <span className="font-medium text-slate-700">{safeTotal}</span>
+            <p className="text-sm text-muted-foreground">
+                Page <span className="font-medium text-foreground">{page}</span> of <span className="font-medium text-foreground">{safeTotal}</span>
             </p>
         </div>
     );
@@ -278,12 +278,12 @@ export default function Templates({ mode = 'templates' }) {
 
     return (
         <div className="min-h-screen">
-            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 border-l border-r border-black/50 dark:border-white/50">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 border-l border-r border-border">
                 <div className="mb-8 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                     <div className="flex gap-2 pb-1 sm:flex-wrap">
                         {CATEGORIES.map((cat) => (
                             <button key={cat.key} onClick={() => handleCategoryChange(cat.key)}
-                                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${activeCategory === cat.key ? 'bg-teal-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-teal-400 hover:text-teal-700'}`}>
+                                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200 ${activeCategory === cat.key ? 'bg-accent text-accent-foreground shadow-sm' : 'border border-border bg-card text-muted-foreground hover:border-accent hover:text-accent'}`}>
                                 {cat.label}
                             </button>
                         ))}
@@ -293,31 +293,31 @@ export default function Templates({ mode = 'templates' }) {
                 <div className="mb-8">
                     <div className="mx-auto w-full max-w-md">
                         <div className="relative">
-                            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <input type="text" value={inputValue} onChange={handleSearchChange}
                                 placeholder={isUserDocs ? 'Search my documents…' : 'Search templates…'}
-                                className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20" />
+                                className="w-full rounded-full border border-border bg-card py-2.5 pl-9 pr-4 text-sm text-foreground placeholder-muted-foreground shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40" />
                         </div>
                     </div>
                 </div>
 
                 {data && !loading && (
-                    <p className="mb-5 text-sm text-slate-500">
+                    <p className="mb-5 text-sm text-muted-foreground">
                         {totalElements} {isUserDocs ? 'document' : 'template'}{totalElements !== 1 ? 's' : ''} in{' '}
-                        <span className="font-medium text-slate-700">{CATEGORIES.find((c) => c.key === activeCategory)?.label}</span>
+                        <span className="font-medium text-foreground">{CATEGORIES.find((c) => c.key === activeCategory)?.label}</span>
                     </p>
                 )}
 
                 {error && (
                     <div className="flex flex-col items-center gap-3 py-24 text-center">
-                        <p className="text-sm text-slate-500">{error}</p>
+                        <p className="text-sm text-muted-foreground">{error}</p>
                         <button onClick={() => setSearchParams(buildParams({ page: 1 }))}
-                            className="mt-1 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">Retry</button>
+                            className="mt-1 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover">Retry</button>
                     </div>
                 )}
 
                 {!loading && !error && templates.length === 0 && (
-                    <div className="py-24 text-center text-slate-400">
+                    <div className="py-24 text-center text-muted-foreground">
                         {isUserDocs ? 'You have not saved any documents yet.' : 'No templates available in this category yet.'}
                     </div>
                 )}
@@ -332,14 +332,14 @@ export default function Templates({ mode = 'templates' }) {
                     <>
                         {unlockedDocs.length > 0 && (
                             <section className="mb-8">
-                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Your resumes</h3>
+                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">Your resumes</h3>
                                 {docGrid(unlockedDocs)}
                             </section>
                         )}
                         {recentDocs.length > 0 && (
                             <section>
-                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">
-                                    Recently used <span className="font-normal normal-case text-slate-400">— locked, unlock to download</span>
+                                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                                    Recently used <span className="font-normal normal-case text-muted-foreground">— locked, unlock to download</span>
                                 </h3>
                                 {docGrid(recentDocs)}
                             </section>

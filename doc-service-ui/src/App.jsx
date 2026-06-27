@@ -69,14 +69,7 @@ function App() {
         <Route path="/resume-builder" element={<ResumeBuilder />} />
         <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
 
-        <Route
-          path="/templates"
-          element={
-            <PrivateRoute>
-              <DocTemplates />
-            </PrivateRoute>
-          }
-        />
+        <Route path="/templates" element={<DocTemplates />} />
         <Route
           path="/my-templates"
           element={

@@ -4,8 +4,8 @@ import PageHero from '../components/shared/PageHero';
 function Section({ title, children }) {
     return (
         <section className="mt-7">
-            <h2 className="text-base font-bold text-slate-900">{title}</h2>
-            <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">{children}</div>
+            <h2 className="text-base font-bold text-foreground">{title}</h2>
+            <div className="mt-2 space-y-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
         </section>
     );
 }
@@ -26,9 +26,9 @@ export default function TermsPage() {
             </div>
 
             <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-                <p className="text-sm text-slate-400">Last updated on 13-06-2026</p>
+                <p className="text-sm text-muted-foreground">Last updated on 13-06-2026</p>
 
-                <p className="mt-6 text-sm leading-relaxed text-slate-700">
+                <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
                     These Terms &amp; Conditions (&ldquo;Terms&rdquo;) govern your access to and use of CVEnhance
                     (the &ldquo;Service&rdquo;), operated by CVEnhance (&ldquo;we&rdquo;,
                     &ldquo;us&rdquo;, &ldquo;our&rdquo;). By creating an account or using the Service, you agree

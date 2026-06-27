@@ -153,27 +153,27 @@ export default function DocEditor() {
     };
 
     return (
-        <div className="flex flex-col bg-slate-950 h-screen">
+        <div className="flex flex-col bg-muted h-screen">
 
-            <div className="editor-header-bg grid h-12 shrink-0 grid-cols-3 items-center border-b border-slate-200 px-2 sm:px-4">
+            <div className="editor-header-bg grid h-12 shrink-0 grid-cols-3 items-center border-b border-border px-2 sm:px-4">
 
                 <div className="flex min-w-0 items-center gap-2">
                     <Link
                         to="/templates?type=CV_AND_RESUME&page=1&size=50"
-                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-slate-600 transition hover:bg-white/50 hover:text-slate-900"
+                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-card/50 hover:text-foreground"
                     >
                         <ChevronLeftIcon className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">Templates</span>
                     </Link>
-                    <div className="hidden h-3.5 w-px bg-slate-300 sm:block" />
+                    <div className="hidden h-3.5 w-px bg-border sm:block" />
                     <Link
                         to="/my-templates?type=CV_AND_RESUME&page=1&size=50"
-                        className="hidden rounded px-1.5 py-1 text-xs text-slate-600 transition hover:bg-white/50 hover:text-slate-900 sm:block"
+                        className="hidden rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-card/50 hover:text-foreground sm:block"
                     >
                         My Templates
                     </Link>
-                    <div className="hidden h-3.5 w-px bg-slate-300 md:block" />
-                    <span className="hidden truncate text-xs font-medium text-slate-600 md:inline">
+                    <div className="hidden h-3.5 w-px bg-border md:block" />
+                    <span className="hidden truncate text-xs font-medium text-muted-foreground md:inline">
                         {loadingDoc ? 'Loading…' : (doc?.name ?? 'Document Editor')}
                     </span>
                 </div>
@@ -183,7 +183,7 @@ export default function DocEditor() {
                         onClick={handleCompile}
                         disabled={compiling || loadingDoc}
                         title="Compile (Ctrl + Enter)"
-                        className="group relative flex items-center gap-1.5 rounded-md bg-slate-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="group relative flex items-center gap-1.5 rounded-md bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
                     >
                         {compiling ? (
                             <>
@@ -194,10 +194,10 @@ export default function DocEditor() {
                             <>
                                 <PlayIcon className="h-3.5 w-3.5" />
                                 Compile
-                                <span className="absolute -right-1 -top-2 flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1 py-px opacity-0 transition-opacity group-hover:opacity-100 shadow-sm">
-                                    <kbd className="text-[9px] font-normal text-slate-400">Ctrl</kbd>
-                                    <span className="text-[9px] text-slate-300">+</span>
-                                    <kbd className="text-[9px] font-normal text-slate-400">↵</kbd>
+                                <span className="absolute -right-1 -top-2 flex items-center gap-0.5 rounded border border-border bg-card px-1 py-px opacity-0 transition-opacity group-hover:opacity-100 shadow-sm">
+                                    <kbd className="text-[9px] font-normal text-muted-foreground">Ctrl</kbd>
+                                    <span className="text-[9px] text-muted-foreground">+</span>
+                                    <kbd className="text-[9px] font-normal text-muted-foreground">↵</kbd>
                                 </span>
                             </>
                         )}
@@ -208,7 +208,7 @@ export default function DocEditor() {
                     <ResumeUploadButton
                         label="Upload CV"
                         confirm="Import a resume and rewrite this document with the new details?"
-                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-slate-500 transition hover:bg-white/50 hover:text-slate-900 disabled:opacity-40"
+                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-card/50 hover:text-foreground disabled:opacity-40"
                         onDone={async () => {
                             try {
                                 const updated = await docService.refreshDoc(id);
@@ -224,7 +224,7 @@ export default function DocEditor() {
                             onClick={handleUnlock}
                             disabled={unlocking || loadingDoc}
                             title="Unlock this resume (uses one credit)"
-                            className="flex items-center gap-1 rounded bg-slate-900 px-2 py-1 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex items-center gap-1 rounded bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             {unlocking ? (
                                 <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
@@ -238,7 +238,7 @@ export default function DocEditor() {
                             onClick={handleDownload}
                             disabled={downloading || loadingDoc}
                             title="Download PDF"
-                            className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             {downloading ? (
                                 <ArrowPathIcon className="h-3.5 w-3.5 animate-spin" />
@@ -253,10 +253,10 @@ export default function DocEditor() {
 
             <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
 
-                <div ref={editorContainerRef} className="flex h-1/2 w-full flex-col border-b border-slate-700 lg:h-full lg:w-1/2 lg:border-b-0 lg:border-r">
+                <div ref={editorContainerRef} className="flex h-1/2 w-full flex-col border-b border-border lg:h-full lg:w-1/2 lg:border-b-0 lg:border-r">
                     {loadingDoc ? (
-                        <div className="flex flex-1 items-center justify-center bg-slate-950">
-                            <ArrowPathIcon className="h-6 w-6 animate-spin text-teal-500" />
+                        <div className="flex flex-1 items-center justify-center bg-muted">
+                            <ArrowPathIcon className="h-6 w-6 animate-spin text-accent" />
                         </div>
                     ) : (
                         <Editor
@@ -312,7 +312,7 @@ export default function DocEditor() {
                     )}
                 </div>
 
-                <div className="flex h-1/2 w-full flex-col bg-slate-800 lg:h-full lg:w-1/2">
+                <div className="flex h-1/2 w-full flex-col bg-muted lg:h-full lg:w-1/2">
                     {locked && pdfUrl && (
                         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-50 px-4 py-2">
                             <p className="text-xs text-amber-800">
@@ -336,9 +336,9 @@ export default function DocEditor() {
                                 className="h-full w-full border-none"
                             />
                         ) : (
-                            <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-500">
+                            <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
                                 <DocumentTextIcon className="h-10 w-10 opacity-40" />
-                                <p className="text-sm text-slate-400">Hit <span className="font-semibold text-teal-400">Compile</span> to generate a PDF preview</p>
+                                <p className="text-sm text-muted-foreground">Hit <span className="font-semibold text-accent">Compile</span> to generate a PDF preview</p>
                             </div>
                         )}
                     </div>

@@ -18,7 +18,7 @@ export default function AuthLayout({ badge, title, description, features = [], b
                     AUTH
                 </span>
 
-                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-accent/10 blur-3xl pointer-events-none" />
 
                 <header className="relative z-10 border-b border-white/10 shrink-0">
                     <div className="flex h-14 items-center px-10">
@@ -42,15 +42,15 @@ export default function AuthLayout({ badge, title, description, features = [], b
                                 Home
                             </button>
                             <span className="text-white/20">/</span>
-                            <span className="text-teal-400/80">{breadcrumb}</span>
+                            <span className="text-accent/80">{breadcrumb}</span>
                         </div>
                     )}
 
                     {badge && (
-                        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-teal-400/25 bg-teal-500/10 px-3.5 py-1 text-xs font-semibold text-teal-300 backdrop-blur-sm">
+                        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3.5 py-1 text-xs font-semibold text-accent backdrop-blur-sm">
                             <span className="relative flex h-1.5 w-1.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-50" />
-                                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-teal-400" />
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-50" />
+                                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
                             </span>
                             {badge}
                         </div>
@@ -62,7 +62,7 @@ export default function AuthLayout({ badge, title, description, features = [], b
                         </h1>
                     )}
 
-                    <div className="w-10 h-0.5 rounded-full bg-teal-400/60" />
+                    <div className="w-10 h-0.5 rounded-full bg-accent/60" />
 
                     {description && (
                         <p className="max-w-sm text-[0.84rem] leading-relaxed text-white/50">
@@ -74,8 +74,8 @@ export default function AuthLayout({ badge, title, description, features = [], b
                         <ul className="space-y-3 pt-1">
                             {features.map((feat, i) => (
                                 <li key={i} className="flex items-start gap-3 text-sm text-white/60">
-                                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-500/15 ring-1 ring-teal-400/20">
-                                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 text-teal-400">
+                                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/15 ring-1 ring-accent/20">
+                                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 text-accent">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     </span>
@@ -87,7 +87,7 @@ export default function AuthLayout({ badge, title, description, features = [], b
                 </div>
             </div>
 
-            <div className="hidden lg:block w-px bg-black/50 dark:bg-white shrink-0" />
+            <div className="hidden lg:block w-px bg-border shrink-0" />
 
             <div className="flex flex-1 flex-col">
 
@@ -109,7 +109,7 @@ export default function AuthLayout({ badge, title, description, features = [], b
                                     Home
                                 </button>
                                 <span className="text-black/30">/</span>
-                                <span className="text-teal-600">{breadcrumb}</span>
+                                <span className="text-accent">{breadcrumb}</span>
                             </div>
                         )}
                     </div>

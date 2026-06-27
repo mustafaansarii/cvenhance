@@ -4,7 +4,7 @@ import PageHero from '../components/shared/PageHero';
 function Clause({ children }) {
     return (
         <li className="flex gap-3">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
             <span>{children}</span>
         </li>
     );
@@ -26,15 +26,15 @@ export default function RefundPolicyPage() {
             </div>
 
             <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-                <p className="text-sm text-slate-400">Last updated on 13 June 2026</p>
+                <p className="text-sm text-muted-foreground">Last updated on 13 June 2026</p>
 
-                <p className="mt-6 text-sm leading-relaxed text-slate-700">
+                <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
                     CVEnhance provides a digital resume- and document-building service. Plans are one-time
                     purchases that unlock resume downloads and are valid for one year. Because the service is
                     digital and delivered instantly, the following cancellation and refund terms apply:
                 </p>
 
-                <ul className="mt-5 space-y-4 text-sm leading-relaxed text-slate-700">
+                <ul className="mt-5 space-y-4 text-sm leading-relaxed text-muted-foreground">
                     <Clause>
                         <strong>Cancellations.</strong> A plan can be cancelled before any download credit has
                         been used. Once you have used a credit to unlock or download a resume, that purchase is
@@ -55,7 +55,7 @@ export default function RefundPolicyPage() {
                     </Clause>
                     <Clause>
                         <strong>How to request.</strong> For any billing issue or refund request, reach us through
-                        the <a href="/contact-us" className="font-semibold text-teal-600 hover:underline">Contact Us</a> page.
+                        the <a href="/contact-us" className="font-semibold text-accent hover:underline">Contact Us</a> page.
                         We aim to respond within 2 business days.
                     </Clause>
                 </ul>

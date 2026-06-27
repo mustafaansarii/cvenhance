@@ -39,7 +39,7 @@ export default function ResumeUploadButton({ label = 'Upload resume / CV', confi
                 type="button"
                 onClick={pick}
                 disabled={busy}
-                className={className || 'inline-flex items-center gap-1.5 rounded-full border border-teal-300 px-4 py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-50 disabled:opacity-60'}
+                className={className || 'inline-flex items-center gap-1.5 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-60'}
             >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                 {busy ? 'Reading…' : label}

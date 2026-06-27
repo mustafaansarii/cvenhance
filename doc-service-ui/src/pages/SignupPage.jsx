@@ -6,7 +6,7 @@ export default function SignupPage() {
         <AuthLayout
             breadcrumb="Sign Up"
             badge="Free to join"
-            title={<>Build your <span className="italic text-teal-400">career profile</span></>}
+            title={<span className="font-serif">Build your <span className="italic text-accent">career profile</span></span>}
             description="It takes less than two minutes. Share a few details and we'll start matching you with roles that fit your skills and goals."
             features={[
                 'Build a single, polished professional profile',

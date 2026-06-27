@@ -3,9 +3,9 @@ import SectionHeader from '../shared/SectionHeader';
 
 function Card({ title, description, children }) {
     return (
-        <div className="rounded-3xl border border-black/10 bg-white p-6 dark:border-white/10 dark:bg-[#0b0b0b] sm:p-7">
-            <h4 className="text-base font-bold text-slate-900 dark:text-white">{title}</h4>
-            {description && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-7">
+            <h4 className="text-base font-bold text-foreground">{title}</h4>
+            {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
             <div className="mt-5">{children}</div>
         </div>
     );
@@ -14,10 +14,10 @@ function Card({ title, description, children }) {
 function Field({ label, ...props }) {
     return (
         <label className="block">
-            <span className="block text-xs font-medium text-slate-700 dark:text-slate-300">{label}</span>
+            <span className="block text-xs font-medium text-muted-foreground">{label}</span>
             <input
                 {...props}
-                className="mt-1.5 w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500"
+                className="mt-1.5 w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
         </label>
     );
@@ -25,18 +25,18 @@ function Field({ label, ...props }) {
 
 function Toggle({ label, description, checked, onChange }) {
     return (
-        <div className="flex items-center justify-between gap-4 border-b border-black/5 py-3 last:border-b-0 dark:border-white/5">
+        <div className="flex items-center justify-between gap-4 border-b border-border py-3 last:border-b-0">
             <div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+                <p className="text-sm font-medium text-foreground">{label}</p>
+                <p className="text-xs text-muted-foreground">{description}</p>
             </div>
             <button
                 type="button"
                 onClick={onChange}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-teal-500' : 'bg-black/15 dark:bg-white/20'}`}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-muted'}`}
                 aria-pressed={checked}
             >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-card shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
         </div>
     );
@@ -68,7 +68,7 @@ export default function Settings() {
                         <Field label="Location" placeholder="City, Country" />
                     </div>
                     <div className="mt-5 flex justify-end">
-                        <button type="button" className="rounded-md bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-400">
+                        <button type="button" className="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover">
                             Save changes
                         </button>
                     </div>
@@ -83,7 +83,7 @@ export default function Settings() {
                         </div>
                     </div>
                     <div className="mt-5 flex justify-end">
-                        <button type="button" className="rounded-md bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-400">
+                        <button type="button" className="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover">
                             Update password
                         </button>
                     </div>
@@ -98,20 +98,20 @@ export default function Settings() {
                 <Card title="Active sessions" description="Devices currently signed in to your account.">
                     <div className="space-y-3">
                         {sessions.map((s) => (
-                            <div key={s.device} className="flex items-center justify-between gap-4 rounded-xl border border-black/10 px-4 py-3 dark:border-white/10">
+                            <div key={s.device} className="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3">
                                 <div className="min-w-0">
-                                    <p className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
+                                    <p className="flex items-center gap-2 text-sm font-medium text-foreground">
                                         {s.device}
                                         {s.current && (
-                                            <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
+                                            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">
                                                 This device
                                             </span>
                                         )}
                                     </p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{s.location}</p>
+                                    <p className="text-xs text-muted-foreground">{s.location}</p>
                                 </div>
                                 {!s.current && (
-                                    <button type="button" className="shrink-0 rounded-md border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-black/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10">
+                                    <button type="button" className="shrink-0 rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted">
                                         Sign out
                                     </button>
                                 )}

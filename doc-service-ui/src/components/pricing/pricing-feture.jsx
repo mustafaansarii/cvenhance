@@ -51,9 +51,9 @@ export default function PricingFeature() {
     <section className="w-full">
 
       <div className="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
-        <p className="text-sm font-semibold text-slate-700">One-time payment · valid for 1 year · no auto-renewal</p>
+        <p className="text-sm font-semibold text-muted-foreground">One-time payment · valid for 1 year · no auto-renewal</p>
         {entitlement?.active && (
-          <p className="text-xs text-teal-600">
+          <p className="text-xs text-accent">
             You're on the <span className="font-bold">{entitlement.unlimited ? 'Unlimited' : entitlement.plan}</span> plan
             {!entitlement.unlimited && typeof entitlement.creditsRemaining === 'number' && entitlement.creditsRemaining >= 0
               ? ` — ${entitlement.creditsRemaining} download${entitlement.creditsRemaining === 1 ? '' : 's'} left`
@@ -62,14 +62,14 @@ export default function PricingFeature() {
         )}
       </div>
 
-      <div className="w-full h-px bg-black/50" />
+      <div className="w-full h-px bg-border" />
 
       <PlanGrid entitlement={entitlement} busy={busy} onBuy={buy} />
 
-      <div className="w-full h-px bg-black/50" />
+      <div className="w-full h-px bg-border" />
 
       <div className="py-8 text-center px-4">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted-foreground">
           Secure checkout via Cashfree. Free users can build and preview resumes — payment unlocks watermark-free downloads.
         </p>
       </div>

@@ -23,7 +23,7 @@ export default function ResumeBuilder() {
     }, []);
 
     if (state.loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-slate-200/70 text-sm text-slate-500">Loading…</div>;
+        return <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">Loading…</div>;
     }
 
     return <ResumeWorkspace key={`${design.code}:${state.authed}`} design={design} initialProfile={state.profile} authed={state.authed} />;

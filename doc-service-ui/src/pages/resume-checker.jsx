@@ -27,25 +27,25 @@ export default function ResumeCheckerPage() {
             </div>
 
             <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-                <p className="text-center text-base leading-relaxed text-slate-600">
+                <p className="text-center text-base leading-relaxed text-muted-foreground">
                     Upload your existing resume to import it into CVEnhance, then review it against the checklist
                     below and improve it with our AI-assisted builder.
                 </p>
 
                 <ul className="mx-auto mt-8 max-w-xl space-y-3">
                     {CHECKS.map((c) => (
-                        <li key={c} className="flex items-start gap-3 text-sm text-slate-700">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 h-4 w-4 shrink-0 text-teal-500"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <li key={c} className="flex items-start gap-3 text-sm text-muted-foreground">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 h-4 w-4 shrink-0 text-accent"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                             <span>{c}</span>
                         </li>
                     ))}
                 </ul>
 
                 <div className="mt-9 flex flex-wrap justify-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover">
                         Build &amp; improve my resume
                     </Link>
-                    <Link to="/profile" className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                    <Link to="/profile" className="rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-muted-foreground transition hover:bg-muted">
                         Upload my resume
                     </Link>
                 </div>
