@@ -3,6 +3,7 @@ package com.docservice.careerhub.service;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.exception.ApiException;
+import com.docservice.careerhub.util.ParseProfileDataHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -40,25 +41,26 @@ public class ResumeImportService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ParseProfileDataHelper parseProfileDataHelper;
+
     private String profileSchema = "{}";
 
     @PostConstruct
     void loadProfileSchema() {
         try (InputStream in = new ClassPathResource("sample-resume.json").getInputStream()) {
             profileSchema = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (Exception ignored) {
-            // fall back to the empty schema
-        }
+        } catch (Exception ignored) {}
     }
 
     public Map<String, Object> importFromFile(String ownerEmail, MultipartFile file) {
         String resumeText = extractText(file);
-        Map<String, Object> profile = parseProfileWithAi(resumeText);
+        Map<String, Object> profile = parseProfile(resumeText);
         saveProfile(ownerEmail, profile);
         return profile;
     }
 
-    // ── text extraction ─────────────────────────────────────────────────
+//-----------------Private Methods------------------------------
 
     private String extractText(MultipartFile file) {
         if (Objects.isNull(file) || file.isEmpty()) {
@@ -111,7 +113,14 @@ public class ResumeImportService {
         }
     }
 
-    // ── AI normalisation ────────────────────────────────────────────────
+    private Map<String, Object> parseProfile(String resumeText) {
+        try {
+            return parseProfileWithAi(resumeText);
+        } catch (Exception e) {
+            logger.error("AI parsing failed, falling back to manual parsing", e);
+            return parseProfileDataHelper.parseProfileWithManual(resumeText, objectMapper, profileSchema);
+        }
+    }
 
     private Map<String, Object> parseProfileWithAi(String resumeText) {
         AiRequest request = new AiRequest(buildUserPrompt(resumeText), buildSystemInstruction(), EXTRACT_TEMPERATURE);
@@ -152,8 +161,6 @@ public class ResumeImportService {
         }
         return trimmed.trim();
     }
-
-    // ── persistence ─────────────────────────────────────────────────────
 
     private void saveProfile(String ownerEmail, Map<String, Object> profile) {
         try {
