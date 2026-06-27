@@ -170,14 +170,14 @@ export default function HomeSections() {
                 </div>
             </section>
 
-            <section className="relative overflow-hidden mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="flex flex-col items-end justify-between gap-6 sm:flex-row">
+            <section className="relative overflow-hidden border-b border-border mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+                <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
                     <div className="max-w-xl">
                         <span className="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
                             Templates
                         </span>
-                        <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Templates that recruiters love</h2>
-                        <p className="mt-4 text-base text-muted-foreground">Field-tested, ATS-safe, and fully editable. Pick one and make it yours.</p>
+                        <h2 className="mt-4 font-serif text-2xl font-bold tracking-tight sm:text-4xl text-foreground">Templates that recruiters love</h2>
+                        <p className="mt-3 text-sm text-muted-foreground sm:mt-4 sm:text-base">Field-tested, ATS-safe, and fully editable. Pick one and make it yours.</p>
                     </div>
                     <Link to="/templates" className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-accent/40 px-5 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground">
                         Browse all templates
@@ -185,7 +185,7 @@ export default function HomeSections() {
                     </Link>
                 </div>
 
-                <div className="mx-auto mt-14 grid max-w-8xl grid-cols-2 gap-6 sm:grid-cols-4">
+                <div className="mx-auto mt-10 grid max-w-8xl grid-cols-2 gap-4 sm:mt-14 sm:grid-cols-4 sm:gap-6">
                     {templateCards.map((t, i) => (
                         <MotionDiv key={t.name + i} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
                             <Link to={t.to || '/templates'} className="group block overflow-hidden bg-card shadow-md ring-1 ring-border transition hover:-translate-y-1 hover:shadow-lg" style={{ aspectRatio: '3/4' }}>
