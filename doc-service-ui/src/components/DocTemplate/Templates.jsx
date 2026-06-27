@@ -20,16 +20,13 @@ const CATEGORIES = [
     { key: 'CV_AND_RESUME', label: 'CV & Resume' },
     { key: 'COVER_LETTER', label: 'Cover Letter' },
     { key: 'JOURNAL_ARTICLES', label: 'Journal Articles' },
-    { key: 'BIBLIOGRAPHIES', label: 'Bibliographies' },
     { key: 'BOOKS', label: 'Books' },
     { key: 'CALENDARS', label: 'Calendars' },
     { key: 'FORMAL_LETTERS', label: 'Formal Letters' },
     { key: 'ASSIGNMENTS', label: 'Assignments' },
     { key: 'NEWSLETTERS', label: 'Newsletters' },
-    { key: 'POSTERS', label: 'Posters' },
     { key: 'PRESENTATIONS', label: 'Presentations' },
     { key: 'REPORTS', label: 'Reports' },
-    { key: 'THESIS', label: 'Thesis' },
 ];
 
 const PAGE_SIZE_OPTIONS = [50, 80, 100];
