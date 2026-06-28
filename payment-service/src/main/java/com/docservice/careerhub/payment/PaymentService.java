@@ -34,7 +34,7 @@ public class PaymentService {
     @Value("${cashfree.api-version:2023-08-01}")
     private String apiVersion;
 
-    @Value("${cashfree.return-url:https://www.cvenhance.in/payment/status?order_id={order_id}}")
+    @Value("${cashfree.return-url:https://cvenhance.in/payment/status?order_id={order_id}}")
     private String returnUrl;
 
     public OrderResponse createOrder(CreateOrderRequest request) {
