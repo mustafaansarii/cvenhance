@@ -1,4 +1,13 @@
 spring:
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: ${GEMINI_MODEL:gemini-flash-latest}
+    retry:
+      max-attempts: 3
   threads:
     virtual:
       enabled: ${USE_VIRTUAL_THREADS:true}
@@ -75,10 +84,6 @@ google:
 github:
   clientId: ${GITHUB_CLIENT_ID:}
   clientSecret: ${GITHUB_CLIENT_SECRET:}
-
-openai:
-  apiKey: ${OPENAI_API_KEY:}
-  modelName: ${OPENAI_MODEL_NAME:gemini-flash-latest}
 
 supabase:
   bucket:
