@@ -138,6 +138,13 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         const measureApply = () => {
             sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
             const s = scaleRef.current || 1;   // sheet may be visually scaled to fit; normalize to layout px
+            // Two-column layouts flow continuously (per-block page-pushing would desync the columns);
+            // just size the page count to the rendered height and let the PDF slice by page height.
+            if (design.layout?.type === 'two-column') {
+                const h = sheet.getBoundingClientRect().height / s;
+                setPageCount(Math.max(1, Math.ceil((h - 1) / PAGE)));
+                return;
+            }
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
             const blocks = breakUnits(sheet, usable, s);
@@ -219,7 +226,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         }
     };
 
-    // Builds the exact PDF that gets downloaded — reused by both Preview and Download. Returns a jsPDF.
     const buildPdf = async () => {
         if (authed) {
             try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ }
@@ -373,10 +379,10 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
-    const renderBody = (type) => {
+    const renderBody = (type, col = 'main') => {
         const meta = META[type];
         if (meta.kind === 'text') {
-            return <div data-block>{design.renderText(resume[type] || '', (v) => setField(type, v), meta.ph)}</div>;
+            return <div data-block>{design.renderText(resume[type] || '', (v) => setField(type, v), meta.ph, col)}</div>;
         }
         const items = resume[type] || [];
         return (
@@ -396,6 +402,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             primaryPh: meta.primaryPh,
                             secondaryPh: meta.secondaryPh,
                             ph: meta.ph,
+                            col,
                         })}
                     </div>
                 ))}
@@ -403,6 +410,36 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             </>
         );
     };
+
+    const renderSection = (type, col = 'main') => (
+        <div
+            key={type}
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOverType(type); }}
+            onDrop={(e) => { e.preventDefault(); moveSection(dragType, type); setDragType(null); setOverType(null); }}
+            style={{ marginTop: settings.spacing }}
+            className={`group/sec relative transition-opacity ${dragType === type ? 'opacity-40' : ''}`}
+        >
+            {overType === type && dragType && dragType !== type && (
+                <div className="no-print pointer-events-none absolute -top-2 left-0 right-0 z-20 h-0.5 rounded bg-teal-500" />
+            )}
+            <div
+                data-block draggable
+                onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', type); setDragType(type); }}
+                onDragEnd={() => { setDragType(null); setOverType(null); }}
+                title="Drag this heading to move the whole section"
+                className="relative cursor-grab select-none rounded-md transition active:cursor-grabbing group-hover/sec:bg-teal-50/40"
+            >
+                <span className="no-print absolute left-1 top-1 z-10 text-slate-300 opacity-0 transition group-hover/sec:opacity-100">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
+                </span>
+                {design.renderTitle(META[type].title, col)}
+            </div>
+            <button onMouseDown={(e) => e.preventDefault()} onClick={() => removeSection(type)} title="Remove this section" className="no-print absolute -right-9 top-6 hidden h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-500 group-hover/sec:flex group-focus-within/sec:flex">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            {renderBody(type, col)}
+        </div>
+    );
 
     const available = SECTION_CATALOG.filter((s) => !order.includes(s.type));
     const stackHeight = pageCount * PAGE + (pageCount - 1) * GAP;
@@ -433,22 +470,22 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         }
       `}</style>
 
-            <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-slate-200 px-3 shadow-sm sm:px-6">
+            <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border px-3 shadow-sm sm:px-6">
                 <div className="flex min-w-0 items-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex items-center gap-2 text-slate-600 transition hover:text-slate-900">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex items-center gap-2 text-muted-foreground transition hover:text-foreground">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                         <span className="text-sm font-medium">Templates</span>
                     </Link>
-                    <div className="hidden h-4 w-px bg-slate-300 md:block" />
-                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 md:inline">My Templates</Link>
-                    {design?.name && <span className="hidden rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 sm:inline">{design.name}</span>}
+                    <div className="hidden h-4 w-px bg-border md:block" />
+                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-sm font-medium text-muted-foreground transition hover:text-foreground md:inline">My Templates</Link>
+                    {design?.name && <span className="hidden rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent sm:inline">{design.name}</span>}
                 </div>
                 <div className="flex items-center gap-1">
                     {authed && (
                         <ResumeUploadButton
                             label="Upload CV"
                             confirm="Replace your current resume details with the uploaded file?"
-                            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 sm:inline-flex"
+                            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:inline-flex"
                             onDone={(p) => {
                                 const r = profileToResume(p);
                                 setResume(r);
@@ -460,7 +497,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     <button
                         onClick={() => setPanel(panel === 'ats' ? null : 'ats')}
                         title="ATS Check"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'ats' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'ats' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
                         <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">ATS</span>
                         <span className="hidden sm:inline">Check</span>
@@ -468,7 +505,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
                         title="Design & Font"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'design' ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'design' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 3a9 9 0 000 18" fill="currentColor" stroke="none" opacity="0.5" /></svg>
                         <span className="hidden sm:inline">Design &amp; Font</span>
@@ -477,7 +514,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         onClick={preview}
                         disabled={saving}
                         title="Preview the PDF before downloading"
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 sm:px-3"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" /><circle cx="12" cy="12" r="3" /></svg>
                         <span className="hidden sm:inline">Preview</span>
@@ -487,7 +524,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             onClick={unlock}
                             disabled={saving}
                             title="Unlock this resume (uses one credit)"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:opacity-60"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-sm transition hover:opacity-90 disabled:opacity-60"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -501,7 +538,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             onClick={download}
                             disabled={saving}
                             title="Download PDF"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-400 disabled:opacity-60"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -546,37 +583,33 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             '--rb-accent': settings.accent,
                         }}
                     >
-                        <header data-block>{design.renderHeader(resume, setField)}</header>
-
-                        {order.map((type) => (
-                            <div
-                                key={type}
-                                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setOverType(type); }}
-                                onDrop={(e) => { e.preventDefault(); moveSection(dragType, type); setDragType(null); setOverType(null); }}
-                                style={{ marginTop: settings.spacing }}
-                                className={`group/sec relative transition-opacity ${dragType === type ? 'opacity-40' : ''}`}
-                            >
-                                {overType === type && dragType && dragType !== type && (
-                                    <div className="no-print pointer-events-none absolute -top-2 left-0 right-0 z-20 h-0.5 rounded bg-teal-500" />
-                                )}
-                                <div
-                                    data-block draggable
-                                    onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', type); setDragType(type); }}
-                                    onDragEnd={() => { setDragType(null); setOverType(null); }}
-                                    title="Drag this heading to move the whole section"
-                                    className="relative cursor-grab select-none rounded-md transition active:cursor-grabbing group-hover/sec:bg-teal-50/40"
-                                >
-                                    <span className="no-print absolute left-1 top-1 z-10 text-slate-300 opacity-0 transition group-hover/sec:opacity-100">
-                                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
-                                    </span>
-                                    {design.renderTitle(META[type].title)}
-                                </div>
-                                <button onMouseDown={(e) => e.preventDefault()} onClick={() => removeSection(type)} title="Remove this section" className="no-print absolute -right-9 top-6 hidden h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-500 group-hover/sec:flex group-focus-within/sec:flex">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                                {renderBody(type)}
-                            </div>
-                        ))}
+                        {design.layout?.type === 'two-column' ? (() => {
+                            const lay = design.layout;
+                            const skip = lay.skipSections || [];
+                            const inSidebar = (t) => lay.sidebar?.includes(t);
+                            const sideTypes = order.filter((t) => inSidebar(t) && !skip.includes(t));
+                            const mainTypes = order.filter((t) => !inSidebar(t) && !skip.includes(t));
+                            return (
+                                <>
+                                    {!lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
+                                    <div className={`flex ${lay.gap || 'gap-8'} ${lay.splitHeader ? '' : 'mt-2'}`}>
+                                        <div className={`shrink-0 ${lay.sidebarClass || ''}`} style={{ width: lay.sidebarWidth || '34%' }}>
+                                            {lay.splitHeader && design.renderSidebarHeader && <div data-block>{design.renderSidebarHeader(resume, setField)}</div>}
+                                            {sideTypes.map((t) => renderSection(t, 'sidebar'))}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            {lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
+                                            {mainTypes.map((t) => renderSection(t, 'main'))}
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })() : (
+                            <>
+                                <header data-block>{design.renderHeader(resume, setField)}</header>
+                                {order.map((type) => renderSection(type, 'main'))}
+                            </>
+                        )}
 
                         <div className="no-print mt-8">
                             {!adding ? (

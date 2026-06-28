@@ -15,9 +15,14 @@ import ramanSingh from './templates/ramanSingh';
 import michaelRodriguez from './templates/michaelRodriguez';
 import priyaSharma from './templates/priyaSharma';
 import kumarMukesh from './templates/kumarMukesh';
+import timeline from './templates/timeline';
+import violetRodriguez from './templates/violetRodriguez';
+import ankitaTiwari from './templates/ankitaTiwari';
+import margaritaPerez from './templates/margaritaPerez';
 
 const TEMPLATES = [
-    classic, modern, minimal, elegant, compact, bold, professional,
+    classic, modern, minimal, elegant, compact, bold, professional, timeline,
+    violetRodriguez, ankitaTiwari, margaritaPerez,
     williamLucas, jakeResume, zayden, drSameer, mrAbrahm, drEmilyChen,
     ramanSingh, michaelRodriguez, priyaSharma, kumarMukesh,
 ];

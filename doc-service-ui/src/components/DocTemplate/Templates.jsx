@@ -52,13 +52,16 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
     const choose = (m) => { setMenuOpen(false); onAction(doc, m); };
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        <div
+            onClick={() => !isBusy && choose('form')}
+            className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:shadow-lg hover:ring-1 hover:ring-accent"
+        >
             <div className="relative flex items-center justify-center overflow-hidden bg-muted" style={{ aspectRatio: '3/4' }}>
                 {doc.imageUrl ? (
                     <img
                         src={doc.imageUrl}
                         alt={doc.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.03]"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                 ) : (
@@ -69,21 +72,17 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
                         {doc.status}
                     </span>
                 )}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                    <button
-                        onClick={() => choose('form')}
-                        disabled={isBusy}
-                        className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-foreground shadow transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        {isBusy ? 'Opening…' : actionLabel}
-                    </button>
-                </div>
+                {isBusy && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-semibold text-white">
+                        Opening…
+                    </div>
+                )}
             </div>
 
             <div className="flex items-center justify-between gap-2 px-3 py-2.5">
                 <p className="truncate text-sm font-medium text-foreground" title={doc.name}>{doc.name}</p>
 
-                <div ref={menuRef} className="relative shrink-0">
+                <div ref={menuRef} onClick={(e) => e.stopPropagation()} className="relative shrink-0">
                     <button
                         onClick={() => setMenuOpen((v) => !v)}
                         title="More options"
@@ -105,7 +104,7 @@ function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
 
 function SkeletonCard() {
     return (
-        <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card animate-pulse">
+        <div className="flex flex-col overflow-hidden rounded-md border border-border bg-card animate-pulse">
             <div className="bg-muted" style={{ aspectRatio: '3/4' }} />
             <div className="flex items-center justify-between px-3 py-2.5">
                 <div className="h-3 w-28 rounded bg-muted" />
@@ -268,7 +267,7 @@ export default function Templates({ mode = 'templates' }) {
     const recentDocs = isUserDocs ? templates.filter((d) => !d.unlocked) : [];
 
     const docGrid = (items) => (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((doc) => (
                 <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} actionLabel="Open" onAction={handleAction} />
             ))}
@@ -322,7 +321,7 @@ export default function Templates({ mode = 'templates' }) {
                 )}
 
                 {!error && loading && (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {Array.from({ length: pageSize }).map((_, i) => <SkeletonCard key={i} />)}
                     </div>
                 )}
@@ -347,7 +346,7 @@ export default function Templates({ mode = 'templates' }) {
                 )}
 
                 {!error && !loading && !isUserDocs && (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {templates.map((doc) => (
                             <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id}
                                 actionLabel="Start Editing" onAction={handleAction} />

@@ -27,7 +27,7 @@ export const SECTION_CATALOG = [
     { type: 'references', title: 'References', kind: 'text', ph: 'Available upon request.' },
 ];
 export const META = Object.fromEntries(SECTION_CATALOG.map((s) => [s.type, s]));
-export const TEXT_FIELDS = ['name', 'title', 'location', 'phone', 'email', 'linkedin', 'linkedinUrl', 'github', 'githubUrl', 'summary', 'references'];
+export const TEXT_FIELDS = ['name', 'title', 'location', 'phone', 'email', 'linkedin', 'linkedinUrl', 'github', 'githubUrl', 'summary', 'references', 'photo'];
 const LIST_TYPES = SECTION_CATALOG.filter((s) => s.kind !== 'text').map((s) => s.type);
 const DEFAULT_ORDER = ['summary', 'experience', 'skills', 'courses', 'education'];
 const FULL_ORDER = ['summary', 'experience', 'projects', 'skills', 'education', 'courses', 'certifications', 'achievements', 'awards', 'languages', 'volunteer', 'publications', 'interests', 'references'];
@@ -109,6 +109,43 @@ export function resumeToProfile(resume) {
         if (resume[t]?.length) out[t] = resume[t].map((it) => it.text).filter(Boolean);
     });
     return out;
+}
+
+export function PhotoField({ value, onChange, className = '' }) {
+    const ref = useRef(null);
+    const onFile = (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const max = 360;
+                const scale = Math.min(1, max / Math.max(img.width, img.height));
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                onChange(canvas.toDataURL('image/jpeg', 0.85));
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    };
+    return (
+        <button type="button" onClick={() => ref.current?.click()} title="Upload a photo"
+            className={`group relative flex items-center justify-center overflow-hidden bg-black/10 ${className}`}>
+            {value ? (
+                <img src={value} alt="" className="h-full w-full object-cover" />
+            ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-1/3 w-1/3 opacity-40"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" /></svg>
+            )}
+            <span className="no-print absolute inset-0 hidden items-center justify-center bg-black/45 text-[10px] font-semibold text-white group-hover:flex">Change</span>
+            <input ref={ref} type="file" accept="image/*" className="hidden" onChange={onFile} />
+        </button>
+    );
 }
 
 export function Field({ as: Tag = 'span', value, onChange, ph, className = '' }) {
