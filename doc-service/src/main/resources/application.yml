@@ -122,7 +122,7 @@ cashfree:
     key: ${CASHFREE_SECRET_KEY:}
   environment: ${CASHFREE_ENV:PRODUCTION}
   api-version: ${CASHFREE_API_VERSION:2023-08-01}
-  return-url: ${CASHFREE_RETURN_URL:https://www.careerhubs.info/payment/status?order_id={order_id}}
+  return-url: ${CASHFREE_RETURN_URL:https://www.cvenhance.in/payment/status?order_id={order_id}}
 
 latex:
   compiler: ${LATEX_COMPILER:docker}

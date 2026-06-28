@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Switch to 'production' once you're live with production Cashfree keys (must match CASHFREE_ENV on the backend).
-export const CASHFREE_MODE = 'sandbox';
+export const CASHFREE_MODE = import.meta.env.VITE_CASHFREE_MODE || 'production';
 
 export const PLANS = [
     { code: 'BASIC', price: 99, title: 'Starter', perk: 'Download 1 resume', highlight: false, level: 1 },
