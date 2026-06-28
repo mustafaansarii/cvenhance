@@ -2,6 +2,7 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
+import com.docservice.careerhub.dto.ai.Profile;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.util.ParseProfileDataHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -124,13 +125,11 @@ public class ResumeImportService {
 
     private Map<String, Object> parseProfileWithAi(String resumeText) {
         AiRequest request = new AiRequest(buildUserPrompt(resumeText), buildSystemInstruction(), EXTRACT_TEMPERATURE);
-        String json = stripCodeFences(aiService.generate(request));
-        try {
-            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() { });
-        } catch (Exception e) {
-            logger.error("AI resume parsing failed", e);
+        Profile profile = aiService.generate(request, Profile.class);
+        if (profile == null) {
             throw ApiException.badData("Could not turn that file into profile data. Please try a clearer resume file.");
         }
+        return objectMapper.convertValue(profile, new TypeReference<Map<String, Object>>() { });
     }
 
     private String buildSystemInstruction() {
@@ -142,24 +141,7 @@ public class ResumeImportService {
     }
 
     private String buildUserPrompt(String resumeText) {
-        return "TARGET JSON SHAPE (follow these keys and structure):\n" + profileSchema
-                + "\n\nRESUME TEXT:\n" + resumeText;
-    }
-
-    private String stripCodeFences(String text) {
-        if (Objects.isNull(text)) {
-            return "";
-        }
-        String trimmed = text.trim();
-        if (trimmed.startsWith("```json")) {
-            trimmed = trimmed.substring(7);
-        } else if (trimmed.startsWith("```")) {
-            trimmed = trimmed.substring(3);
-        }
-        if (trimmed.endsWith("```")) {
-            trimmed = trimmed.substring(0, trimmed.length() - 3);
-        }
-        return trimmed.trim();
+        return "RESUME TEXT:\n" + resumeText;
     }
 
     private void saveProfile(String ownerEmail, Map<String, Object> profile) {
