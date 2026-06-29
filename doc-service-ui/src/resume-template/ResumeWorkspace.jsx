@@ -462,6 +462,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             secondaryPh: meta.secondaryPh,
                             ph: meta.ph,
                             col,
+                            type,
                         })}
                     </div>
                 ))}
@@ -491,7 +492,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 <span className="no-print absolute left-1 top-1 z-10 text-slate-300 opacity-0 transition group-hover/sec:opacity-100">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><circle cx="9" cy="6" r="1.4" /><circle cx="15" cy="6" r="1.4" /><circle cx="9" cy="12" r="1.4" /><circle cx="15" cy="12" r="1.4" /><circle cx="9" cy="18" r="1.4" /><circle cx="15" cy="18" r="1.4" /></svg>
                 </span>
-                {design.renderTitle(META[type].title, col)}
+                {design.renderTitle(META[type].title, col, type)}
             </div>
             <button onMouseDown={(e) => e.preventDefault()} onClick={() => removeSection(type)} title="Remove this section" className="no-print absolute -right-9 top-6 hidden h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-red-50 hover:text-red-500 group-hover/sec:flex group-focus-within/sec:flex">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -531,15 +532,15 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
             <div className="no-print editor-header-bg sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border px-3 shadow-sm sm:px-6">
                 <div className="flex min-w-0 items-center gap-3">
-                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex items-center gap-2 text-muted-foreground transition hover:text-foreground">
+                    <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex shrink-0 items-center gap-2 text-muted-foreground transition hover:text-foreground">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                        <span className="text-sm font-medium">Templates</span>
+                        <span className="hidden text-sm font-medium sm:inline">Templates</span>
                     </Link>
                     <div className="hidden h-4 w-px bg-border md:block" />
                     <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-sm font-medium text-muted-foreground transition hover:text-foreground md:inline">My Templates</Link>
-                    {design?.name && <span className="hidden rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent sm:inline">{design.name}</span>}
+                    {design?.name && <span className="hidden truncate rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent sm:inline">{design.name}</span>}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                     {authed && (
                         <ResumeUploadButton
                             label="Upload CV"
@@ -583,7 +584,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             onClick={unlock}
                             disabled={saving}
                             title="Unlock this resume (uses one credit)"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-sm transition hover:opacity-90 disabled:opacity-60"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-2 text-sm font-semibold text-background shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:px-4"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -597,7 +598,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             onClick={download}
                             disabled={saving}
                             title="Download PDF"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60 sm:px-4"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -678,18 +679,25 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             const inSidebar = (t) => lay.sidebar?.includes(t);
                             const sideTypes = order.filter((t) => inSidebar(t) && !skip.includes(t));
                             const mainTypes = order.filter((t) => !inSidebar(t) && !skip.includes(t));
+                            const sidebarCol = (
+                                <div data-rb-col className={`shrink-0 ${lay.sidebarClass || ''}`} style={{ width: lay.sidebarWidth || '34%' }}>
+                                    {lay.splitHeader && design.renderSidebarHeader && <div data-block>{design.renderSidebarHeader(resume, setField)}</div>}
+                                    {sideTypes.map((t) => renderSection(t, 'sidebar'))}
+                                </div>
+                            );
+                            const mainCol = (
+                                <div data-rb-col className="min-w-0 flex-1">
+                                    {lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
+                                    {mainTypes.map((t) => renderSection(t, 'main'))}
+                                </div>
+                            );
                             return (
                                 <>
                                     {!lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
                                     <div className={`flex items-start ${lay.gap || 'gap-8'} ${lay.splitHeader ? '' : 'mt-2'}`}>
-                                        <div data-rb-col className={`shrink-0 ${lay.sidebarClass || ''}`} style={{ width: lay.sidebarWidth || '34%' }}>
-                                            {lay.splitHeader && design.renderSidebarHeader && <div data-block>{design.renderSidebarHeader(resume, setField)}</div>}
-                                            {sideTypes.map((t) => renderSection(t, 'sidebar'))}
-                                        </div>
-                                        <div data-rb-col className="min-w-0 flex-1">
-                                            {lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
-                                            {mainTypes.map((t) => renderSection(t, 'main'))}
-                                        </div>
+                                        {lay.sidebarSide === 'right'
+                                            ? <>{mainCol}{sidebarCol}</>
+                                            : <>{sidebarCol}{mainCol}</>}
                                     </div>
                                 </>
                             );
