@@ -442,7 +442,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     );
 
     const available = SECTION_CATALOG.filter((s) => !order.includes(s.type));
-    const stackHeight = pageCount * PAGE + (pageCount - 1) * GAP;
+    const isTwoCol = design.layout?.type === 'two-column';
+    const stackHeight = isTwoCol ? pageCount * PAGE : pageCount * PAGE + (pageCount - 1) * GAP;
     const checks = atsChecks(resume);
     const passed = checks.filter((c) => c.ok).length;
 
@@ -566,9 +567,13 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${panel === 'ats' ? 'md:mr-80' : ''}`}>
                 <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
-                    {Array.from({ length: pageCount }).map((_, p) => (
-                        <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
-                    ))}
+                    {isTwoCol ? (
+                        <div className="no-print absolute inset-x-0 top-0 rounded-sm bg-white shadow-xl" style={{ height: stackHeight }} />
+                    ) : (
+                        Array.from({ length: pageCount }).map((_, p) => (
+                            <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
+                        ))
+                    )}
 
                     <div
                         key={dataVersion}
