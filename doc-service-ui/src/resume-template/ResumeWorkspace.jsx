@@ -84,6 +84,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const scaleRef = useRef(1);
     const scheduleRef = useRef(() => {});
     const settingsRef = useRef(settings);
+    const savedRangeRef = useRef(null);
+    const pickingRef = useRef(false);
     useEffect(() => { settingsRef.current = settings; }, [settings]);
 
     // Fit the fixed-width (Letter) sheet to the viewport: keep the 816px layout (so pagination & PDF
@@ -138,25 +140,40 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         const measureApply = () => {
             sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
             const s = scaleRef.current || 1;   // sheet may be visually scaled to fit; normalize to layout px
-            // Two-column layouts flow continuously (per-block page-pushing would desync the columns);
-            // just size the page count to the rendered height and let the PDF slice by page height.
-            if (design.layout?.type === 'two-column') {
-                const h = sheet.getBoundingClientRect().height / s;
-                setPageCount(Math.max(1, Math.ceil((h - 1) / PAGE)));
-                return;
-            }
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
-            const blocks = breakUnits(sheet, usable, s);
             const sheetTop = sheet.getBoundingClientRect().top;
-            const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: (r.top - sheetTop) / s, h: r.height / s }; });
-            let page = 0, push = 0;
-            for (const d of data) {
-                const curTop = d.top + push;
-                const pageBottom = page * STRIDE + (PAGE - M);
-                if (d.h <= usable && curTop + d.h > pageBottom + 1) { page += 1; const delta = page * STRIDE + M - curTop; d.el.style.marginTop = `${delta}px`; push += delta; }
+
+            // Push blocks down so none straddle a page boundary; returns the last page index used.
+            const paginate = (root) => {
+                const blocks = breakUnits(root, usable, s);
+                const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: (r.top - sheetTop) / s, h: r.height / s }; });
+                let page = 0, push = 0;
+                for (const d of data) {
+                    const curTop = d.top + push;
+                    const pageBottom = page * STRIDE + (PAGE - M);
+                    if (d.h <= usable && curTop + d.h > pageBottom + 1) {
+                        page += 1;
+                        const delta = page * STRIDE + M - curTop;
+                        d.el.style.marginTop = `${delta}px`;
+                        push += delta;
+                    }
+                }
+                return page;
+            };
+
+            // Two-column: paginate each column independently against the same page boundaries so
+            // blocks don't cross a page break and both columns stay aligned to the same pages.
+            if (design.layout?.type === 'two-column') {
+                let maxPage = 0;
+                sheet.querySelectorAll('[data-rb-col]').forEach((col) => {
+                    maxPage = Math.max(maxPage, paginate(col));
+                });
+                setPageCount(maxPage + 1);
+                return;
             }
-            setPageCount(page + 1);
+
+            setPageCount(paginate(sheet) + 1);
         };
         const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { if (ro) ro.disconnect(); measureApply(); raf = requestAnimationFrame(() => { if (ro) ro.observe(sheet); }); }); };
         scheduleRef.current = schedule;
@@ -172,8 +189,10 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
     useEffect(() => { scheduleRef.current(); }, [order, resume, design, settings]);
 
+
     useEffect(() => {
         const onSelect = () => {
+            if (pickingRef.current) return;
             const sel = window.getSelection();
             if (!sel || sel.isCollapsed || sel.rangeCount === 0) { setToolbar(null); return; }
             const node = sel.anchorNode;
@@ -200,6 +219,46 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         document.execCommand('createLink', false, href);
         sheetRef.current?.querySelectorAll('a:not([target])').forEach((a) => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
     };
+
+    const restoreSelection = () => {
+        const range = savedRangeRef.current;
+        if (!range) return false;
+        const node = range.commonAncestorContainer;
+        const el = node.nodeType === 3 ? node.parentElement : node;
+        el?.closest?.('.editable')?.focus({ preventScroll: true });
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return !sel.isCollapsed;
+    };
+
+    const wrapSelectionStyle = (mutate) => {
+        if (!restoreSelection()) return;
+        const sel = window.getSelection();
+        const range = sel.getRangeAt(0);
+        const span = document.createElement('span');
+        mutate(span, range);
+        try {
+            range.surroundContents(span);
+        } catch {
+            span.appendChild(range.extractContents());
+            range.insertNode(span);
+        }
+        sel.removeAllRanges();
+        const r = document.createRange();
+        r.selectNodeContents(span);
+        sel.addRange(r);
+        savedRangeRef.current = r.cloneRange();
+        span.closest('.editable')?.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const applyColor = (color) => wrapSelectionStyle((span) => { span.style.color = color; });
+
+    const stepFontSize = (delta) => wrapSelectionStyle((span, range) => {
+        const start = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
+        const current = parseFloat(window.getComputedStyle(start).fontSize) || 14;
+        span.style.fontSize = `${Math.min(48, Math.max(8, Math.round(current + delta)))}px`;
+    });
 
     const unlock = async () => {
         if (!authed) {
@@ -442,8 +501,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     );
 
     const available = SECTION_CATALOG.filter((s) => !order.includes(s.type));
-    const isTwoCol = design.layout?.type === 'two-column';
-    const stackHeight = isTwoCol ? pageCount * PAGE : pageCount * PAGE + (pageCount - 1) * GAP;
+    const stackHeight = pageCount * PAGE + (pageCount - 1) * GAP;
     const checks = atsChecks(resume);
     const passed = checks.filter((c) => c.ok).length;
 
@@ -553,10 +611,40 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             </div>
 
             {toolbar && (
-                <div className="no-print fixed z-[100000] flex -translate-x-1/2 gap-0.5 rounded-lg bg-slate-900 px-1 py-1 shadow-lg" style={{ top: toolbar.top, left: toolbar.left }} onMouseDown={(e) => e.preventDefault()}>
+                <div
+                    className="no-print fixed z-[100000] flex items-center -translate-x-1/2 gap-0.5 rounded-lg bg-slate-900 px-1 py-1 shadow-lg"
+                    style={{ top: toolbar.top, left: toolbar.left }}
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        const sel = window.getSelection();
+                        if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                    }}
+                >
                     <button onClick={() => format('bold')} title="Bold" className="h-7 w-7 rounded text-sm font-bold text-white transition hover:bg-white/15">B</button>
                     <button onClick={() => format('italic')} title="Italic" className="h-7 w-7 rounded text-sm italic text-white transition hover:bg-white/15">I</button>
                     <button onClick={() => format('underline')} title="Underline" className="h-7 w-7 rounded text-sm text-white underline transition hover:bg-white/15">U</button>
+                    <span className="my-1 w-px bg-white/20" />
+                    <label
+                        title="Text color"
+                        className="relative flex h-7 w-7 cursor-pointer flex-col items-center justify-center rounded text-white transition hover:bg-white/15"
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            pickingRef.current = true;
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                        }}
+                    >
+                        <span className="text-sm font-semibold leading-none">A</span>
+                        <span className="mt-0.5 h-1 w-4 rounded bg-gradient-to-r from-red-500 via-emerald-500 to-blue-500" />
+                        <input
+                            type="color"
+                            onChange={(e) => applyColor(e.target.value)}
+                            onBlur={() => { pickingRef.current = false; }}
+                            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        />
+                    </label>
+                    <button onClick={() => stepFontSize(-2)} title="Decrease font size" className="h-7 w-7 rounded text-xs font-bold text-white transition hover:bg-white/15">A−</button>
+                    <button onClick={() => stepFontSize(2)} title="Increase font size" className="h-7 w-7 rounded text-sm font-bold text-white transition hover:bg-white/15">A+</button>
                     <span className="my-1 w-px bg-white/20" />
                     <button onClick={addLink} title="Add link" className="flex h-7 w-7 items-center justify-center rounded text-white transition hover:bg-white/15">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
@@ -567,13 +655,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
             <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${panel === 'ats' ? 'md:mr-80' : ''}`}>
                 <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
-                    {isTwoCol ? (
-                        <div className="no-print absolute inset-x-0 top-0 rounded-sm bg-white shadow-xl" style={{ height: stackHeight }} />
-                    ) : (
-                        Array.from({ length: pageCount }).map((_, p) => (
-                            <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
-                        ))
-                    )}
+                    {Array.from({ length: pageCount }).map((_, p) => (
+                        <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
+                    ))}
 
                     <div
                         key={dataVersion}
@@ -597,12 +681,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                             return (
                                 <>
                                     {!lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
-                                    <div className={`flex ${lay.gap || 'gap-8'} ${lay.splitHeader ? '' : 'mt-2'}`}>
-                                        <div className={`shrink-0 ${lay.sidebarClass || ''}`} style={{ width: lay.sidebarWidth || '34%' }}>
+                                    <div className={`flex items-start ${lay.gap || 'gap-8'} ${lay.splitHeader ? '' : 'mt-2'}`}>
+                                        <div data-rb-col className={`shrink-0 ${lay.sidebarClass || ''}`} style={{ width: lay.sidebarWidth || '34%' }}>
                                             {lay.splitHeader && design.renderSidebarHeader && <div data-block>{design.renderSidebarHeader(resume, setField)}</div>}
                                             {sideTypes.map((t) => renderSection(t, 'sidebar'))}
                                         </div>
-                                        <div className="min-w-0 flex-1">
+                                        <div data-rb-col className="min-w-0 flex-1">
                                             {lay.splitHeader && <header data-block>{design.renderHeader(resume, setField)}</header>}
                                             {mainTypes.map((t) => renderSection(t, 'main'))}
                                         </div>
