@@ -52,6 +52,12 @@ public class AppProperties {
     @Value("${spring.mail.username:}")
     private String mailFrom;
 
+    @Value("${resend.api-key:}")
+    private String resendApiKey;
+
+    @Value("${mail.from:}")
+    private String mailFromAddress;
+
     @Value("${google.clientId:}")
     private String googleClientId;
 
