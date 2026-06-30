@@ -305,7 +305,7 @@ function ProfileMenu({ onLogout }) {
             <button
                 ref={btnRef}
                 onClick={() => setOpen((v) => !v)}
-                className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-white/40 bg-white/10 text-white backdrop-blur-sm transition hover:border-white/70 hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-accent/70 bg-accent/15 text-white backdrop-blur-sm transition hover:border-accent hover:bg-accent/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                 aria-label="Profile menu"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 opacity-90 transition-opacity group-hover:opacity-100">
