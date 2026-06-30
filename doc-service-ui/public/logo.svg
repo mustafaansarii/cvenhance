@@ -1,24 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00D4FF"/>
-      <stop offset="35%" stop-color="#2563EB"/>
-      <stop offset="70%" stop-color="#14B8A6"/>
-      <stop offset="100%" stop-color="#10B981"/>
+    <linearGradient id="tile" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4764f"/>
+      <stop offset="100%" stop-color="#c25a3c"/>
     </linearGradient>
   </defs>
 
+  <!-- Warm coral tile -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#tile)"/>
+
+  <!-- CV monogram in cream -->
   <text
     x="50%"
-    y="52%"
+    y="53%"
     text-anchor="middle"
-    dominant-baseline="middle"
-    font-family="Manrope, Inter, Arial, sans-serif"
-    font-size="34"
-    font-weight="900"
-    letter-spacing="-2"
-    fill="url(#grad)"
-  >
-    CV
-  </text>
+    dominant-baseline="central"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="32"
+    font-weight="700"
+    letter-spacing="-1.5"
+    fill="#f5f4ee"
+  >CV</text>
+
+  <!-- "Enhance" sparkle -->
+  <path d="M47 13c.7 2.6 1.4 3.3 4 4-2.6.7-3.3 1.4-4 4-.7-2.6-1.4-3.3-4-4 2.6-.7 3.3-1.4 4-4z" fill="#f5f4ee"/>
 </svg>

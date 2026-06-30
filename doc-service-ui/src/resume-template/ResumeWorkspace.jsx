@@ -507,7 +507,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const passed = checks.filter((c) => c.ok).length;
 
     return (
-        <div id="rb-root" className="min-h-screen bg-slate-200/70">
+        <div id="rb-root" className="min-h-screen bg-slate-200">
             <style>{`
         .editable { outline: none; cursor: text; min-width: 1ch; border-radius: 3px; }
         .editable:hover { box-shadow: 0 0 0 2px rgba(13,148,136,0.12); }
@@ -658,6 +658,10 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
                     {Array.from({ length: pageCount }).map((_, p) => (
                         <div key={p} className="no-print absolute inset-x-0 rounded-sm bg-white shadow-xl" style={{ top: p * STRIDE, height: PAGE }} />
+                    ))}
+
+                    {Array.from({ length: Math.max(0, pageCount - 1) }).map((_, p) => (
+                        <div key={`gap-${p}`} className="no-print pointer-events-none absolute inset-x-0 z-20 bg-slate-200" style={{ top: p * STRIDE + PAGE, height: GAP }} />
                     ))}
 
                     <div

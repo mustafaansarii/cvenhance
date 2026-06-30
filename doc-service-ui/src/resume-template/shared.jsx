@@ -136,11 +136,14 @@ export function PhotoField({ value, onChange, className = '' }) {
     };
     return (
         <button type="button" onClick={() => ref.current?.click()} title="Upload a photo"
-            className={`group relative flex items-center justify-center overflow-hidden bg-black/10 ${className}`}>
+            className={`group relative flex items-center justify-center overflow-hidden bg-slate-100 text-slate-500 ${className}`}>
             {value ? (
                 <img src={value} alt="" className="h-full w-full object-cover" />
             ) : (
-                <svg viewBox="0 0 24 24" fill="currentColor" className="h-1/3 w-1/3 opacity-40"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" /></svg>
+                <span className="no-print flex flex-col items-center justify-center gap-1 px-2 text-center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-2/5 w-2/5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8a2 2 0 012-2h2l1.5-2h7L18 6h2a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" /><circle cx="12" cy="12.5" r="3.2" /></svg>
+                    <span className="text-[10px] font-semibold leading-none">Add photo</span>
+                </span>
             )}
             <span className="no-print absolute inset-0 hidden items-center justify-center bg-black/45 text-[10px] font-semibold text-white group-hover:flex">Change</span>
             <input ref={ref} type="file" accept="image/*" className="hidden" onChange={onFile} />
