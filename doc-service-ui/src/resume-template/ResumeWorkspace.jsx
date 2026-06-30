@@ -545,7 +545,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         <ResumeUploadButton
                             label="Upload CV"
                             labelClassName="hidden sm:inline"
-                            confirm="Replace your current resume details with the uploaded file?"
+                            confirm="We'll read your uploaded file and automatically fill in your resume for you. This replaces the details currently on screen."
                             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
                             onDone={(p) => {
                                 const r = profileToResume(p);

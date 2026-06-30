@@ -50,9 +50,9 @@ export default function ResumeUploadButton({ label = 'Upload resume / CV', label
             </button>
             <ConfirmDialog
                 open={confirming}
-                title="Replace resume details?"
-                message={typeof confirm === 'string' ? confirm : 'Replace your current resume details with the uploaded file?'}
-                confirmLabel="Yes, upload"
+                title="Auto-fill your resume?"
+                message={typeof confirm === 'string' ? confirm : "We'll read your uploaded file and automatically fill in your resume details for you. This replaces what's currently filled in."}
+                confirmLabel="Auto-fill"
                 cancelLabel="Cancel"
                 onCancel={() => setConfirming(false)}
                 onConfirm={() => { setConfirming(false); inputRef.current?.click(); }}

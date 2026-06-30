@@ -94,7 +94,7 @@ export default function ProfilePage() {
                                     {!editing && (
                                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                                             <ResumeUploadButton
-                                                confirm={details ? 'Replace your current details with the uploaded resume?' : null}
+                                                confirm={details ? "We'll read your uploaded file and automatically fill in your details for you. This replaces your current details." : null}
                                                 onDone={(p) => { setProfile((prev) => ({ ...prev, profileData: p })); setEditing(false); }}
                                             />
                                             <button onClick={() => setEditing(true)} className="border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">

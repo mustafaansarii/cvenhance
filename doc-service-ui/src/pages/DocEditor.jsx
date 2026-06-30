@@ -207,7 +207,7 @@ export default function DocEditor() {
                 <div className="flex items-center justify-end gap-1">
                     <ResumeUploadButton
                         label="Upload CV"
-                        confirm="Import a resume and rewrite this document with the new details?"
+                        confirm="We'll read your uploaded file and automatically fill in this document for you. This replaces the current details."
                         className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-card/50 hover:text-foreground disabled:opacity-40"
                         onDone={async () => {
                             try {
