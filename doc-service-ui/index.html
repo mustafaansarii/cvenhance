@@ -9,9 +9,10 @@
   <meta name="theme-color" content="#c96442" />
 
   <!-- Primary SEO -->
-  <title>CVEnhance — AI Resume Builder, ATS Templates & Interview Prep</title>
+  <title>CVEnhance (CV Enhance) — AI Resume Builder, ATS Templates & Interview Prep</title>
   <meta name="description"
-    content="CVEnhance helps you build an ATS-friendly resume in minutes with AI, pick from professional templates, import your old CV, and prepare for interviews. Free to start." />
+    content="CV Enhance (CVEnhance) helps you build an ATS-friendly resume in minutes with AI, pick from professional templates, import your old CV, and prepare for interviews. Free to start." />
+  <meta name="application-name" content="CVEnhance" />
   <meta name="keywords"
     content="resume builder, AI resume builder, ATS resume, CV maker, online resume, resume templates, cover letter, interview preparation, interview prep, career tools, job application" />
   <meta name="author" content="CVEnhance" />
@@ -46,24 +47,52 @@
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "CVEnhance",
-      "url": "https://www.cvenhance.in/",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "AI resume builder with ATS-friendly templates, CV import, and interview preparation.",
-      "featureList": [
-        "AI resume builder",
-        "ATS-friendly resume templates",
-        "Resume / CV import (PDF, DOCX)",
-        "Interview preparation",
-        "PDF download"
-      ],
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "INR"
-      }
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.cvenhance.in/#organization",
+          "name": "CVEnhance",
+          "alternateName": ["CV Enhance", "CV Enhance.in", "cvenhance.in"],
+          "url": "https://www.cvenhance.in/",
+          "logo": "https://www.cvenhance.in/logo.svg",
+          "description": "CV Enhance (CVEnhance) is an AI resume builder with ATS-friendly templates, CV import, and interview preparation."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.cvenhance.in/#website",
+          "name": "CVEnhance",
+          "alternateName": ["CV Enhance", "cv enhance"],
+          "url": "https://www.cvenhance.in/",
+          "publisher": { "@id": "https://www.cvenhance.in/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.cvenhance.in/templates?type=CV_AND_RESUME&page=1&size=50&search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "name": "CVEnhance",
+          "alternateName": "CV Enhance",
+          "url": "https://www.cvenhance.in/",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "publisher": { "@id": "https://www.cvenhance.in/#organization" },
+          "description": "CV Enhance (CVEnhance) — AI resume builder with ATS-friendly templates, CV import, and interview preparation.",
+          "featureList": [
+            "AI resume builder",
+            "ATS-friendly resume templates",
+            "Resume / CV import (PDF, DOCX)",
+            "Interview preparation",
+            "PDF download"
+          ],
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+          }
+        }
+      ]
     }
   </script>
 </head>

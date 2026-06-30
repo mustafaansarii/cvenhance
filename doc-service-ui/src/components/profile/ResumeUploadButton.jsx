@@ -1,20 +1,28 @@
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import userService from '../../services/user.service';
+import ConfirmDialog from '../shared/ConfirmDialog';
 
 export default function ResumeUploadButton({ label = 'Upload resume / CV', labelClassName = '', confirm, onDone, className }) {
     const inputRef = useRef(null);
     const [busy, setBusy] = useState(false);
+    const [confirming, setConfirming] = useState(false);
 
     const pick = () => {
-        if (confirm && !window.confirm(confirm)) return;
+        if (confirm) { setConfirming(true); return; }
         inputRef.current?.click();
     };
+
+    const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
     const onChange = async (e) => {
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
+        if (file.size > MAX_BYTES) {
+            toast.error('File is too large. Please upload a resume under 2 MB.');
+            return;
+        }
         setBusy(true);
         const id = toast.loading('Reading your resume…');
         try {
@@ -40,6 +48,15 @@ export default function ResumeUploadButton({ label = 'Upload resume / CV', label
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                 <span className={labelClassName}>{busy ? 'Reading…' : label}</span>
             </button>
+            <ConfirmDialog
+                open={confirming}
+                title="Replace resume details?"
+                message={typeof confirm === 'string' ? confirm : 'Replace your current resume details with the uploaded file?'}
+                confirmLabel="Yes, upload"
+                cancelLabel="Cancel"
+                onCancel={() => setConfirming(false)}
+                onConfirm={() => { setConfirming(false); inputRef.current?.click(); }}
+            />
         </>
     );
 }
