@@ -26,9 +26,6 @@ public class MailService {
         String body = "Your verification code is " + otp + ". It expires in 5 minutes.";
         String html = """
             <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #333; line-height: 1.6;">
-                <h2 style="margin-bottom: 10px; color: #2c3e50;">CVEnhance</h2>
-
-                <p>Hello,</p>
 
                 <p>Your verification code is:</p>
 
@@ -41,9 +38,7 @@ public class MailService {
                 <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
 
                 <p>
-                    Regards,<br>
-                    <strong>CVEnhance Team</strong><br>
-                    🌐 <a href="https://cvenhance.in"
+                     <a href="https://cvenhance.in"
                         style="color: #2563eb; text-decoration: none;"
                         target="_blank">
                         https://cvenhance.in
