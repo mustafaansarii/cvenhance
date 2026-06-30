@@ -1,5 +1,6 @@
 import AuthLayout from '../components/shared/AuthLayout';
 import SignupForm from '../components/AuthComp/SignupForm';
+import GoogleOneTap from '../components/AuthComp/GoogleOneTap';
 
 export default function SignupPage() {
     return (
@@ -14,6 +15,7 @@ export default function SignupPage() {
                 'Control your visibility and communication preferences',
             ]}
         >
+            <GoogleOneTap />
             <SignupForm />
         </AuthLayout>
     );
