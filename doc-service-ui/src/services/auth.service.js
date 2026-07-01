@@ -22,6 +22,7 @@ axiosInstance.interceptors.response.use(
             localStorage.removeItem('isAuthenticated');
             if (window.location.pathname !== '/login') {
                 toast.error('Session expired. Please sign in again.');
+                sessionStorage.setItem('postLoginFrom', window.location.pathname + window.location.search + window.location.hash);
                 window.location.href = '/login';
             }
         }

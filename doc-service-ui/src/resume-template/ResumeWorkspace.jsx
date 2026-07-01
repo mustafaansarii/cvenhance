@@ -263,7 +263,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const unlock = async () => {
         if (!authed) {
             toast.error('Sign in to unlock your resume');
-            navigate('/login');
+            navigate('/login', { state: { from: window.location.pathname + window.location.search } });
             return;
         }
         setSaving(true);
@@ -396,7 +396,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const ensureUnlocked = () => {
         if (!authed) {
             toast.error('Sign in to download your resume');
-            navigate('/login');
+            navigate('/login', { state: { from: window.location.pathname + window.location.search } });
             return false;
         }
         if (locked) {

@@ -21,7 +21,7 @@ export default function PricingFeature() {
   const buy = async (code) => {
     if (!authed) {
       toast('Sign in to upgrade');
-      navigate('/login');
+      navigate('/login', { state: { from: window.location.pathname + window.location.search } });
       return;
     }
     setBusy(code);

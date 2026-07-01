@@ -204,7 +204,7 @@ export default function Templates({ mode = 'templates' }) {
             } else {
                 if (!authService.isAuthenticated()) {
                     toast('Sign in to edit LaTeX');
-                    navigate('/login');
+                    navigate('/login', { state: { from: window.location.pathname + window.location.search } });
                     return;
                 }
                 const saved = await docService.saveTemplateToAccount(doc.id);

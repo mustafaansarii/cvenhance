@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import authService from '../../services/auth.service';
 import OAuthButtons from './OAuthButtons';
@@ -9,6 +9,8 @@ const inputClass =
 
 export default function AuthLoginPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || sessionStorage.getItem('postLoginFrom') || '/';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -19,7 +21,8 @@ export default function AuthLoginPage() {
         try {
             await authService.signin(email, password);
             toast.success('Signed in successfully');
-            navigate('/');
+            sessionStorage.removeItem('postLoginFrom');
+            navigate(from, { replace: true });
         } catch (err) {
             const message =
                 err?.response?.data?.message || err?.message || 'Unable to sign in. Please try again.';
