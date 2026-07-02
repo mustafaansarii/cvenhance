@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import authService from '../../services/auth.service';
+import { isInAppBrowser } from '../../utils/inAppBrowser';
 
 const GSI_SRC = 'https://accounts.google.com/gsi/client';
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -26,7 +27,7 @@ function loadGsi() {
 
 export default function GoogleOneTap() {
     useEffect(() => {
-        if (!CLIENT_ID || authService.isAuthenticated()) return undefined;
+        if (!CLIENT_ID || authService.isAuthenticated() || isInAppBrowser()) return undefined;
 
         let cancelled = false;
         loadGsi()

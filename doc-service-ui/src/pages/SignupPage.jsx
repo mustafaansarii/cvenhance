@@ -1,6 +1,7 @@
 import AuthLayout from '../components/shared/AuthLayout';
 import SignupForm from '../components/AuthComp/SignupForm';
 import GoogleOneTap from '../components/AuthComp/GoogleOneTap';
+import InAppBrowserNotice from '../components/AuthComp/InAppBrowserNotice';
 
 export default function SignupPage() {
     return (
@@ -16,6 +17,7 @@ export default function SignupPage() {
             ]}
         >
             <GoogleOneTap />
+            <InAppBrowserNotice />
             <SignupForm />
         </AuthLayout>
     );

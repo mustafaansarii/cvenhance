@@ -1,6 +1,7 @@
 import AuthLayout from '../components/shared/AuthLayout';
 import AuthLoginPage from '../components/AuthComp/LoginPage';
 import GoogleOneTap from '../components/AuthComp/GoogleOneTap';
+import InAppBrowserNotice from '../components/AuthComp/InAppBrowserNotice';
 
 export default function LoginPage() {
     return (
@@ -16,6 +17,7 @@ export default function LoginPage() {
             ]}
         >
             <GoogleOneTap />
+            <InAppBrowserNotice />
             <AuthLoginPage />
         </AuthLayout>
     );
