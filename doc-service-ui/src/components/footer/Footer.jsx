@@ -15,6 +15,7 @@ export default function Footer() {
         company: [
             { name: 'Contact Us', url: '/contact-us' },
             { name: 'Terms & Conditions', url: '/terms' },
+            { name: 'Privacy Policy', url: '/privacy-policy' },
             { name: 'Cancellation & Refund', url: '/refund-policy' },
         ],
     };

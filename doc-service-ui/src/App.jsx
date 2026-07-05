@@ -17,6 +17,7 @@ import ContactUsPage from './pages/contact-us';
 import PricingPage from './pages/pricing';
 import TermsPage from './pages/terms';
 import RefundPolicyPage from './pages/refund-policy';
+import PrivacyPolicyPage from './pages/privacy-policy';
 import ResumeCheckerPage from './pages/resume-checker';
 import ResumeExamplePage from './pages/resume-example';
 import ComingSoon from './pages/ComingSoon';
@@ -61,6 +62,7 @@ function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/resume-checker" element={<ResumeCheckerPage />} />
         <Route path="/resume-example" element={<ResumeExamplePage />} />
         <Route path="/interview-prep" element={<ComingSoon breadcrumb="Job Search" title="Interview Prep" description="Practice with AI mock interviews and get instant feedback." />} />
