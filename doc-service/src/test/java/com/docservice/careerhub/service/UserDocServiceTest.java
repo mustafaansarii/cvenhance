@@ -2,7 +2,6 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
-import com.docservice.careerhub.entity.DocTemplate;
 import com.docservice.careerhub.entity.UserDoc;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.repo.DocTemplateRepository;
@@ -30,8 +29,6 @@ class UserDocServiceTest {
     private DocTemplateRepository templateRepo;
     private LatexCompiler compiler;
     private StorageService storage;
-    private LatexMergeService mergeService;
-    private ResumeDataResolver resolver;
     private EntitlementService entitlementService;
     private WatermarkService watermarkService;
     private UserDocService service;
@@ -42,8 +39,6 @@ class UserDocServiceTest {
         templateRepo = mock(DocTemplateRepository.class);
         compiler = mock(LatexCompiler.class);
         storage = mock(StorageService.class);
-        mergeService = mock(LatexMergeService.class);
-        resolver = mock(ResumeDataResolver.class);
         entitlementService = mock(EntitlementService.class);
         watermarkService = mock(WatermarkService.class);
         service = new UserDocService();
@@ -51,12 +46,8 @@ class UserDocServiceTest {
         ReflectionTestUtils.setField(service, "docTemplateRepository", templateRepo);
         ReflectionTestUtils.setField(service, "latexCompiler", compiler);
         ReflectionTestUtils.setField(service, "storageService", storage);
-        ReflectionTestUtils.setField(service, "latexMergeService", mergeService);
-        ReflectionTestUtils.setField(service, "resumeDataResolver", resolver);
         ReflectionTestUtils.setField(service, "entitlementService", entitlementService);
         ReflectionTestUtils.setField(service, "watermarkService", watermarkService);
-        when(resolver.forUser(anyString())).thenReturn(java.util.Map.of());
-        when(mergeService.merge(anyString(), any())).thenAnswer(inv -> inv.getArgument(0));
         when(entitlementService.isUnlocked(anyString(), any())).thenReturn(true);
         when(watermarkService.buildPreview(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userDocRepo.save(any(UserDoc.class))).thenAnswer(inv -> {
@@ -66,17 +57,6 @@ class UserDocServiceTest {
             }
             return d;
         });
-    }
-
-    private DocTemplate template() {
-        DocTemplate t = new DocTemplate();
-        t.setId(5L);
-        t.setName("Resume");
-        t.setType(DocType.CV_AND_RESUME);
-        t.setDescription("a resume");
-        t.setLatexCode("\\documentclass{article}\\begin{document}hi\\end{document}");
-        t.setStatus(DocTemplateStatus.READY);
-        return t;
     }
 
     private UserDoc ownedDoc() {

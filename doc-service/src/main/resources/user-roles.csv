@@ -1,7 +1,3 @@
-# Role-based access rules for protected endpoints.
-# Format: method,path,roles   (roles are '|'-separated; bare role names, no ROLE_ prefix)
-# PUBLIC = permitAll. Public endpoints (signup, register, signin, logout, oauth, swagger) are also permitAll in SecurityConfig.
-# '*' matches one path segment, '**' matches multiple.
 method,path,roles
 GET,/api/auth/me,USER|ADMIN
 PATCH,/api/auth/profile,USER|ADMIN

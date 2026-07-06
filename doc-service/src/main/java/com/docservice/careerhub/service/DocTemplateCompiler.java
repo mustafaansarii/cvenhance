@@ -28,12 +28,6 @@ public class DocTemplateCompiler {
     @Autowired
     private LatexCompiler latexCompiler;
 
-    @Autowired
-    private LatexMergeService latexMergeService;
-
-    @Autowired
-    private ResumeDataResolver resumeDataResolver;
-
     public void compilePending() {
         List<DocTemplate> batch = docTemplateRepository.findCompilable(
                 DocTemplateStatus.PENDING,
@@ -45,28 +39,20 @@ public class DocTemplateCompiler {
         }
     }
 
-    // Orchestrates the three independent steps: claim (persist) → render (compile) → persist outcome.
     private void process(DocTemplate template) {
         claim(template);
         RenderResult result = render(template);
         persistOutcome(template, result);
     }
 
-    /** Persistence only: mark the template as being worked on. */
     private void claim(DocTemplate template) {
         template.setStatus(DocTemplateStatus.COMPILING);
         docTemplateRepository.save(template);
     }
 
-    /**
-     * Rendering only: merge sample data and compile to verify the template's LaTeX is valid.
-     * The compiled PDF is intentionally NOT stored — a template only needs to be validated; the
-     * downloadable PDF lives on the user's own document (UserDoc). No DB writes.
-     */
     private RenderResult render(DocTemplate template) {
         try {
-            String filled = latexMergeService.merge(template.getLatexCode(), resumeDataResolver.sample());
-            latexCompiler.compile(filled);
+            latexCompiler.compile(template.getLatexCode());
             return RenderResult.ok();
         } catch (RuntimeException exception) {
             LOGGER.warn("Template {} ({}) failed to compile: {}", template.getId(), template.getName(),

@@ -12,7 +12,6 @@ import {
 import { PlayIcon } from '@heroicons/react/24/solid';
 import docService from '../services/doc.service';
 import paymentService from '../services/payment.service';
-import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 import PricingModal from '../components/payment/PricingModal';
 
 export default function DocEditor() {
@@ -205,20 +204,6 @@ export default function DocEditor() {
                 </div>
 
                 <div className="flex items-center justify-end gap-1">
-                    <ResumeUploadButton
-                        label="Upload CV"
-                        confirm="We'll read your uploaded file and automatically fill in this document for you. This replaces the current details."
-                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-card/50 hover:text-foreground disabled:opacity-40"
-                        onDone={async () => {
-                            try {
-                                const updated = await docService.refreshDoc(id);
-                                setCode(updated.latexCode || '');
-                                toast.success('Document updated with your new details');
-                            } catch (err) {
-                                toast.error(err?.response?.data?.message || 'Could not refresh the document');
-                            }
-                        }}
-                    />
                     {locked ? (
                         <button
                             onClick={handleUnlock}

@@ -43,12 +43,6 @@ public class UserDocService {
     private StorageService storageService;
 
     @Autowired
-    private LatexMergeService latexMergeService;
-
-    @Autowired
-    private ResumeDataResolver resumeDataResolver;
-
-    @Autowired
     private EntitlementService entitlementService;
 
     @Autowired
@@ -74,18 +68,6 @@ public class UserDocService {
         if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
-    }
-
-    @Transactional
-    public UserDoc refreshFromProfile(String ownerEmail, Long id) {
-        UserDoc doc = getOwned(ownerEmail, id);
-        if (Objects.isNull(doc.getSourceTemplateId())) {
-            throw ApiException.badData("This document has no source template to refresh from");
-        }
-        DocTemplate template = docTemplateRepository.findById(doc.getSourceTemplateId())
-                .orElseThrow(() -> ApiException.notFound("Source template not found: " + doc.getSourceTemplateId()));
-        doc.setLatexCode(latexMergeService.merge(template.getLatexCode(), resumeDataResolver.forUser(ownerEmail)));
-        return userDocRepository.save(doc);
     }
 
     @Transactional(readOnly = true)
@@ -206,8 +188,6 @@ public class UserDocService {
             }
         }
 
-        String merged = latexMergeService.merge(template.getLatexCode(), resumeDataResolver.forUser(ownerEmail));
-
         UserDoc doc = new UserDoc();
         doc.setOwnerEmail(ownerEmail);
         doc.setSourceTemplateId(template.getId());
@@ -215,7 +195,7 @@ public class UserDocService {
         doc.setName(template.getName());
         doc.setType(template.getType());
         doc.setDescription(template.getDescription());
-        doc.setLatexCode(merged);
+        doc.setLatexCode(template.getLatexCode());
         doc.setImageUrl(template.getImageUrl());
         doc.setStatus(DocTemplateStatus.READY);
         return userDocRepository.save(doc);

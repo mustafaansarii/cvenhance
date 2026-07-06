@@ -21,24 +21,16 @@ class DocTemplateCompilerTest {
 
     private DocTemplateRepository repo;
     private LatexCompiler compiler;
-    private LatexMergeService mergeService;
-    private ResumeDataResolver resolver;
     private DocTemplateCompiler worker;
 
     @BeforeEach
     void setUp() {
         repo = mock(DocTemplateRepository.class);
         compiler = mock(LatexCompiler.class);
-        mergeService = mock(LatexMergeService.class);
-        resolver = mock(ResumeDataResolver.class);
         worker = new DocTemplateCompiler();
         ReflectionTestUtils.setField(worker, "docTemplateRepository", repo);
         ReflectionTestUtils.setField(worker, "latexCompiler", compiler);
-        ReflectionTestUtils.setField(worker, "latexMergeService", mergeService);
-        ReflectionTestUtils.setField(worker, "resumeDataResolver", resolver);
         when(repo.save(any(DocTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(resolver.sample()).thenReturn(java.util.Map.of());
-        when(mergeService.merge(anyString(), any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
     private DocTemplate pending(long id) {

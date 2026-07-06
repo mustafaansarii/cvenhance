@@ -10,5 +10,3 @@
             🚀  C V E N H A N C E  ·  AI Resume Builder  🚀
                           https://cvenhance.in
 
-    :: Spring Boot ::  ${spring-boot.formatted-version}
-

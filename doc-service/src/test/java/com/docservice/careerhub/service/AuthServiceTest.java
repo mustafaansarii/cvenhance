@@ -39,7 +39,7 @@ class AuthServiceTest {
     private AuthUserRepository userRepo;
     private UserSessionRepository sessionRepo;
     private PasswordEncoder encoder;
-    private MailService mailService;
+    private OtpMailer otpMailer;
     private JwtService jwtService;
     private AuthService service;
 
@@ -48,7 +48,7 @@ class AuthServiceTest {
         userRepo = mock(AuthUserRepository.class);
         sessionRepo = mock(UserSessionRepository.class);
         encoder = new BCryptPasswordEncoder();
-        mailService = mock(MailService.class);
+        otpMailer = mock(OtpMailer.class);
         AppProperties props = new AppProperties();
         props.setJwtSecret("0123456789012345678901234567890123456789");
         props.setJwtExpiryMs(3600000L);
@@ -59,7 +59,7 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(service, "authUserRepository", userRepo);
         ReflectionTestUtils.setField(service, "userSessionRepository", sessionRepo);
         ReflectionTestUtils.setField(service, "passwordEncoder", encoder);
-        ReflectionTestUtils.setField(service, "mailService", mailService);
+        ReflectionTestUtils.setField(service, "otpMailer", otpMailer);
         ReflectionTestUtils.setField(service, "jwtService", jwtService);
         ReflectionTestUtils.setField(service, "appProperties", props);
     }
@@ -122,7 +122,7 @@ class AuthServiceTest {
         assertThat(saved.getOtpExpiresAt()).isAfter(Instant.now());
         assertThat(saved.getRoles()).containsExactly(Role.USER);
         assertThat(response.getMessage()).contains("OTP sent");
-        verify(mailService).sendOtp(eq("user@example.com"), anyString());
+        verify(otpMailer).send(eq("user@example.com"), anyString());
     }
 
     @Test
@@ -132,7 +132,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> service.signup(signupRequest()))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("already registered");
-        verify(mailService, never()).sendOtp(anyString(), anyString());
+        verify(otpMailer, never()).send(anyString(), anyString());
     }
 
     @Test

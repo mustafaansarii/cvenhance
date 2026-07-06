@@ -45,10 +45,6 @@ public class UserDocDtoApi extends AbstractDtoUtil {
         userDocService.claim(ownerEmail, id);
     }
 
-    public UserDocResponse refresh(String ownerEmail, Long id) {
-        UserDoc doc = userDocService.refreshFromProfile(ownerEmail, id);
-        return toResponse(doc, entitlementService.unlockViewFor(ownerEmail));
-    }
 
     public PageResponse<UserDocMetadata> list(String ownerEmail, PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);

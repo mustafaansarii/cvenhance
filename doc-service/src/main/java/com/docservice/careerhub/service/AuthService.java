@@ -40,7 +40,7 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private MailService mailService;
+    private OtpMailer otpMailer;
 
     @Autowired
     private JwtService jwtService;
@@ -66,7 +66,7 @@ public class AuthService {
         String otp = OtpGenerator.sixDigit();
         prepareForSignup(user, request, otp);
         authUserRepository.save(user);
-        mailService.sendOtp(request.getEmail(), otp);
+        otpMailer.send(request.getEmail(), otp);
         return MessageResponse.of("OTP sent to " + request.getEmail());
     }
 
