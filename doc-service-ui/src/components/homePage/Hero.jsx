@@ -12,9 +12,9 @@ const userAvatars = [
 ];
 
 const Doc_templates_images = [
-    "https://i.ibb.co/v4dWrK1j/Vishnu-Singh.jpg",
-    "http://raw.githubusercontent.com/jakegut/resume/refs/heads/master/resume.png",
-    "https://i.ibb.co/7HgSdbL/William-Lucas.jpg",
+    "./assest/resume.png",
+    "./assest/resume.png",
+    "./assest/professional-cv-template.png",
 ];
 
 const title_desc= {
