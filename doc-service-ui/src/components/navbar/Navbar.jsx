@@ -51,12 +51,12 @@ const navItems = [
         mega: {
             columns: [
                 {
-                    kind: 'cards', heading: 'Job Search',
+                    kind: 'cards', heading: 'Tools',
                     items: [
-                        { icon: 'builder', title: 'Interview prep', desc: 'Practice with AI mock interviews', to: '/interview-prep' },
-                        { icon: 'folder', title: 'Job Tracker', desc: 'Organize your applications', to: '/job-tracker' },
-                        { icon: 'grid', title: 'Job Board', desc: 'Find roles that match you', to: '/job-board' },
-                        { icon: 'mail', title: 'Cover letter', desc: 'Match your resume design', to: '/templates?type=COVER_LETTER&page=1&size=50' },
+                        { icon: 'builder', title: 'AI Mock Interview', desc: 'Practice with an AI interviewer', to: 'https://interview.careerhubs.info/' },
+                        { icon: 'grid', title: 'Job Board', desc: 'Find roles that match you', to: 'https://jobs.careerhubs.info/' },
+                        { icon: 'folder', title: 'Code Collab', desc: 'Share & pair-program live', to: 'https://code.careerhubs.info/' },
+                        { icon: 'mail', title: 'Meetings', desc: 'Video calls in your browser', to: 'https://meet.careerhubs.info/' },
                     ],
                 },
             ],
@@ -100,7 +100,7 @@ function DropdownNavItem({ item, isOpen, onOpen, onCloseSelf, onClose }) {
     const reposition = useCallback(() => {
         if (!btnRef.current) return;
         const r = btnRef.current.getBoundingClientRect();
-        setPos({ top: r.bottom });
+        setPos({ top: r.bottom, left: r.left });
     }, []);
 
     useEffect(() => {
@@ -139,93 +139,55 @@ function DropdownNavItem({ item, isOpen, onOpen, onCloseSelf, onClose }) {
             </button>
 
             <div
-                style={{ position: 'fixed', top: pos.top, left: 0, right: 0, zIndex: 99999, transform: `translateY(${isOpen ? '0px' : '-6px'})` }}
+                style={{ position: 'fixed', top: pos.top + 8, left: pos.left, zIndex: 99999, transform: `translateY(${isOpen ? '0px' : '-6px'})` }}
                 onMouseEnter={enter}
                 onMouseLeave={leave}
-                className={`px-4 pt-3 transition-[opacity,transform] duration-200 sm:px-6 lg:px-8 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                className={`transition-[opacity,transform] duration-150 ease-out ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
             >
-                <div className="mx-auto max-w-7xl">
-                    <MegaPanel mega={item.mega} onClose={onClose} />
-                </div>
+                <MegaPanel mega={item.mega} onClose={onClose} />
             </div>
         </div>
     );
 }
 
-function MegaColumn({ col, onClose }) {
-    if (col.kind === 'cards') {
+// Renders a real external anchor for absolute URLs (other careerhubs subdomains), else an in-app NavLink.
+function SmartLink({ to, children, className, onClick, ...rest }) {
+    const external = typeof to === 'string' && /^https?:\/\//.test(to);
+    if (external) {
+        const cls = typeof className === 'function' ? className({ isActive: false }) : className;
         return (
-            <div className="space-y-1">
-                {col.heading && <p className="mb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{col.heading}</p>}
-                {col.items.map((it) => (
-                    <NavLink key={it.to + it.title} to={it.to} onClick={onClose} className="group/item flex items-start gap-3 rounded-xl p-3 transition hover:bg-muted">
-                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover/item:bg-accent/20">{ICONS[it.icon]}</span>
-                        <span className="min-w-0">
-                            <span className="block text-sm font-semibold text-foreground">{it.title}</span>
-                            <span className="block text-xs leading-snug text-muted-foreground">{it.desc}</span>
-                        </span>
-                    </NavLink>
-                ))}
-            </div>
-        );
-    }
-    if (col.kind === 'links') {
-        return (
-            <div>
-                <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{col.heading}</p>
-                <div className="space-y-0.5">
-                    {col.items.map((it) => (
-                        <NavLink key={it.to + it.title} to={it.to} onClick={onClose} className="block rounded-xl px-3 py-2 transition hover:bg-muted">
-                            <span className="block text-sm font-semibold text-foreground">{it.title}</span>
-                            {it.desc && <span className="block text-xs leading-snug text-muted-foreground">{it.desc}</span>}
-                        </NavLink>
-                    ))}
-                </div>
-            </div>
+            <a href={to} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick} {...rest}>
+                {children}
+            </a>
         );
     }
     return (
-        <div>
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{col.heading}</p>
-            <ul className="space-y-0.5">
-                {col.items.map((it) => (
-                    <li key={it.to + it.label}>
-                        <NavLink to={it.to} onClick={onClose} className="block rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-accent">{it.label}</NavLink>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-}
-
-function MegaPromo({ promo, onClose }) {
-    return (
-        <div className="relative flex w-full shrink-0 flex-col justify-between overflow-hidden rounded-2xl bg-muted p-5 lg:w-72">
-            <div className="relative">
-                <h4 className="text-base font-bold text-foreground">{promo.title}</h4>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{promo.desc}</p>
-            </div>
-            <NavLink to={promo.to} onClick={onClose} className="relative mt-5 inline-flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover">
-                {promo.cta}
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
-            </NavLink>
-        </div>
+        <NavLink to={to} className={className} onClick={onClick} {...rest}>
+            {children}
+        </NavLink>
     );
 }
 
 function MegaPanel({ mega, onClose }) {
+    const items = (mega.columns || []).flatMap((col) => col.items || []);
     return (
-        <div className="mx-auto w-fit max-w-full overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-slate-900/10 ring-1 ring-black/5">
-            <div className="flex flex-col gap-6 p-6 lg:flex-row">
-                <div className="flex flex-col gap-x-6 gap-y-4 sm:flex-row">
-                    {mega.columns.map((col, i) => (
-                        <div key={i} className="w-full sm:w-60">
-                            <MegaColumn col={col} onClose={onClose} />
-                        </div>
-                    ))}
-                </div>
-                {mega.promo && <MegaPromo promo={mega.promo} onClose={onClose} />}
-            </div>
+        <div className="w-[340px] max-w-[92vw] rounded-2xl border border-border bg-card p-1.5 shadow-lg shadow-black/5">
+            {items.map((it) => (
+                <SmartLink
+                    key={it.to + it.title}
+                    to={it.to}
+                    onClick={onClose}
+                    className="group/item flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted"
+                >
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition-colors group-hover/item:bg-accent/15">
+                        {ICONS[it.icon]}
+                    </span>
+                    <span className="min-w-0">
+                        <span className="block text-sm font-medium text-foreground">{it.title}</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">{it.desc}</span>
+                    </span>
+                </SmartLink>
+            ))}
         </div>
     );
 }
@@ -380,7 +342,7 @@ function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, 
                             {openSection === item.label && (
                                 <div className="mb-1 ml-2 space-y-0.5 border-l-2 border-border pl-3">
                                     {megaLinks(item).map((child) => (
-                                        <NavLink
+                                        <SmartLink
                                             key={child.to + child.label}
                                             to={child.to}
                                             className={({ isActive }) =>
@@ -388,7 +350,7 @@ function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, 
                                             }
                                         >
                                             {child.label}
-                                        </NavLink>
+                                        </SmartLink>
                                     ))}
                                 </div>
                             )}
