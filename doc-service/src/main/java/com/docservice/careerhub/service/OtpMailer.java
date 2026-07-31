@@ -18,7 +18,7 @@ public class OtpMailer {
 
     public void send(String toEmail, String otp) {
         String text = "Your verification code is " + otp + ". It expires in 5 minutes.";
-        String html = mailService.render("otp.html", Map.of("otp", otp));
+        String html = mailService.renderEmail("otp.html", Map.of("otp", otp));
         if (!mailService.sendHtml(toEmail, SUBJECT, text, html)) {
             LOGGER.warn("Mail not sent — OTP for {} is {}", toEmail, otp);
         }

@@ -22,6 +22,7 @@ public class MailService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
     private static final String TEMPLATE_PATH = "templates/emails/";
+    private static final String LAYOUT = "layout.html";
 
     private final Mustache.Compiler templateCompiler = Mustache.compiler().defaultValue("");
 
@@ -32,11 +33,20 @@ public class MailService {
     private AppProperties appProperties;
 
     public boolean send(String toEmail, String subject, String text) {
-        return dispatch(toEmail, subject, text, null);
+        return dispatch(toEmail, subject, text, null, null);
     }
 
     public boolean sendHtml(String toEmail, String subject, String text, String html) {
-        return dispatch(toEmail, subject, text, html);
+        return dispatch(toEmail, subject, text, html, null);
+    }
+
+    public boolean sendHtml(String toEmail, String subject, String text, String html, String replyTo) {
+        return dispatch(toEmail, subject, text, html, replyTo);
+    }
+
+    public String renderEmail(String bodyTemplate, Map<String, Object> data) {
+        String body = render(bodyTemplate, data);
+        return render(LAYOUT, Map.of("body", body));
     }
 
     public String render(String templateName, Map<String, Object> data) {
@@ -48,25 +58,25 @@ public class MailService {
         }
     }
 
-// -----------------Helper emthods--------------------
+// -----------------Helper methods--------------------
 
-    private boolean dispatch(String toEmail, String subject, String text, String html) {
+    private boolean dispatch(String toEmail, String subject, String text, String html, String replyTo) {
         String from = fromAddress();
         if (!StringUtils.hasText(from)) {
             LOGGER.warn("No sender address configured — email to {} not sent", toEmail);
             return false;
         }
         if (StringUtils.hasText(appProperties.getResendApiKey())) {
-            return sendViaResend(from, toEmail, subject, text, html);
+            return sendViaResend(from, toEmail, subject, text, html, replyTo);
         }
         if (mailSender != null) {
-            return sendViaSmtp(from, toEmail, subject, text);
+            return sendViaSmtp(from, toEmail, subject, text, replyTo);
         }
         LOGGER.warn("No email provider configured — email to {} not sent", toEmail);
         return false;
     }
 
-    private boolean sendViaResend(String from, String toEmail, String subject, String text, String html) {
+    private boolean sendViaResend(String from, String toEmail, String subject, String text, String html, String replyTo) {
         try {
             CreateEmailOptions.Builder options = CreateEmailOptions.builder()
                     .from(from)
@@ -76,6 +86,9 @@ public class MailService {
             if (StringUtils.hasText(html)) {
                 options.html(html);
             }
+            if (StringUtils.hasText(replyTo)) {
+                options.replyTo(replyTo);
+            }
             new Resend(appProperties.getResendApiKey()).emails().send(options.build());
             return true;
         } catch (Exception exception) {
@@ -84,13 +97,16 @@ public class MailService {
         }
     }
 
-    private boolean sendViaSmtp(String from, String toEmail, String subject, String text) {
+    private boolean sendViaSmtp(String from, String toEmail, String subject, String text, String replyTo) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(from);
             message.setTo(toEmail);
             message.setSubject(subject);
             message.setText(text);
+            if (StringUtils.hasText(replyTo)) {
+                message.setReplyTo(replyTo);
+            }
             mailSender.send(message);
             return true;
         } catch (Exception exception) {

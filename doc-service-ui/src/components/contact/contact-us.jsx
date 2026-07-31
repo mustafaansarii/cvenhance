@@ -1,24 +1,32 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import contactService from '../../services/contact.service';
 
 const SUPPORT_EMAIL = 'support.cvenhance@gmail.com';
 const SUPPORT_PHONE = '+91 62037 57233';
 
 export default function ContactUs() {
     const [form, setForm] = useState({ name: '', email: '', message: '' });
+    const [sending, setSending] = useState(false);
 
     const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-    const onSubmit = (e) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
-        if (!form.message.trim()) {
-            toast.error('Please write your query');
+        if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+            toast.error('Please fill in your name, email, and query');
             return;
         }
-        const subject = encodeURIComponent(`Query from ${form.name || 'a CVEnhance user'}`);
-        const body = encodeURIComponent(`${form.message}\n\nFrom: ${form.name || '—'} (${form.email || 'no email'})`);
-        window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
-        toast.success('Opening your email app to send the query…');
+        setSending(true);
+        try {
+            const res = await contactService.submit(form);
+            toast.success(res?.message || 'Your message has been sent. We’ll get back to you soon.');
+            setForm({ name: '', email: '', message: '' });
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Could not send your message. Please try again.');
+        } finally {
+            setSending(false);
+        }
     };
 
     const inputClass = 'w-full rounded-xl border border-border px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/40';
@@ -44,9 +52,9 @@ export default function ContactUs() {
                         <label className="mb-1 block text-xs font-semibold text-muted-foreground">Your query</label>
                         <textarea value={form.message} onChange={set('message')} rows={5} placeholder="How can we help?" className={`${inputClass} resize-y`} />
                     </div>
-                    <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover">
-                        Send query
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    <button type="submit" disabled={sending} className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60">
+                        {sending ? 'Sending…' : 'Send query'}
+                        {!sending && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M13 6l6 6-6 6" /></svg>}
                     </button>
                 </form>
             </section>

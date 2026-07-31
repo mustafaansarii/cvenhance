@@ -58,6 +58,9 @@ public class AppProperties {
     @Value("${mail.from:}")
     private String mailFromAddress;
 
+    @Value("${mail.support:support.cvenhance@gmail.com}")
+    private String mailSupportAddress;
+
     @Value("${google.clientId:}")
     private String googleClientId;
 

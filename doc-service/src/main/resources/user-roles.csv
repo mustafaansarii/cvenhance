@@ -16,5 +16,6 @@ GET,/api/me/entitlement,USER|ADMIN
 POST,/api/payments/create-order,USER|ADMIN
 POST,/api/payments/verify,USER|ADMIN
 POST,/api/payments/webhook,PUBLIC
+POST,/api/contact,PUBLIC
 POST,/api/ai/generate,USER|ADMIN
 POST,/api/profile/import-resume,USER|ADMIN
