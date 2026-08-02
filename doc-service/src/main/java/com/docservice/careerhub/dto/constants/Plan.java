@@ -4,7 +4,7 @@ package com.docservice.careerhub.dto.constants;
 public enum Plan {
     BASIC(99.0, 1, 1),
     STANDARD(199.0, 5, 2),
-    UNLIMITED(399.0, null, 3);
+    UNLIMITED(2999.0, null, 3);
 
     private final double priceInr;
     private final Integer credits;

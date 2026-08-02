@@ -5,7 +5,7 @@ export const CASHFREE_MODE = import.meta.env.VITE_CASHFREE_MODE || 'production';
 export const PLANS = [
     { code: 'BASIC', price: 99, title: 'Starter', perk: 'Download 1 resume', highlight: false, level: 1 },
     { code: 'STANDARD', price: 199, title: 'Pro', perk: 'Download up to 5 resumes', highlight: true, level: 2 },
-    { code: 'UNLIMITED', price: 399, title: 'Unlimited', perk: 'Unlimited resumes & downloads', highlight: false, level: 3 },
+    { code: 'UNLIMITED', price: 2999, title: 'Unlimited', perk: 'Unlimited resumes & downloads', highlight: false, level: 3 },
 ];
 
 export const PLAN_LEVEL = { BASIC: 1, STANDARD: 2, UNLIMITED: 3 };

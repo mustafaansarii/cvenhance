@@ -9,11 +9,13 @@ import {
     LockClosedIcon,
     ArrowDownTrayIcon,
     DocumentTextIcon,
+    SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { PlayIcon } from '@heroicons/react/24/solid';
 import docService from '../services/doc.service';
 import paymentService from '../services/payment.service';
 import PricingModal from '../components/payment/PricingModal';
+import AiAssistPanel from '../components/ai/AiAssistPanel';
 
 export default function DocEditor() {
     const { id } = useParams();
@@ -34,6 +36,10 @@ export default function DocEditor() {
         () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches,
     );
     const blobUrlRef = useRef(null);
+    const editorRef = useRef(null);
+    const aiRangeRef = useRef(null);
+    const [aiOpen, setAiOpen] = useState(false);
+    const [aiText, setAiText] = useState('');
     const handleCompileRef = useRef(null);
     const lockedRef = useRef(true);
     useEffect(() => { lockedRef.current = locked; }, [locked]);
@@ -116,6 +122,28 @@ export default function DocEditor() {
     };
 
     handleCompileRef.current = handleCompile;
+
+    const openAi = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        const sel = editor.getSelection();
+        const text = sel ? editor.getModel().getValueInRange(sel) : '';
+        if (!text || !text.trim()) {
+            toast.error('Select some LaTeX text to improve first');
+            return;
+        }
+        aiRangeRef.current = sel;
+        setAiText(text);
+        setAiOpen(true);
+    };
+
+    const applyAi = (suggestion) => {
+        const editor = editorRef.current;
+        const range = aiRangeRef.current;
+        if (!editor || !range) return;
+        editor.executeEdits('ai', [{ range, text: suggestion }]);
+        editor.focus();
+    };
 
     const handleUnlock = async () => {
         if (unlocking) return;
@@ -215,6 +243,15 @@ export default function DocEditor() {
                 </div>
 
                 <div className="flex items-center justify-end gap-1">
+                    <button
+                        onClick={openAi}
+                        disabled={loadingDoc}
+                        title="Improve selection with AI (Ctrl/Cmd + I)"
+                        className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition hover:bg-muted hover:text-accent disabled:opacity-40"
+                    >
+                        <SparklesIcon className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">AI</span>
+                    </button>
                     {locked ? (
                         <button
                             onClick={handleUnlock}
@@ -265,10 +302,19 @@ export default function DocEditor() {
                                 registerLaTeXLanguage(monaco);
                             }}
                             onMount={(editor, monaco) => {
+                                editorRef.current = editor;
                                 editor.addCommand(
                                     monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
                                     () => handleCompileRef.current()
                                 );
+                                editor.addAction({
+                                    id: 'ai-improve',
+                                    label: 'Improve with AI',
+                                    contextMenuGroupId: 'ai',
+                                    contextMenuOrder: 1,
+                                    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+                                    run: () => openAi(),
+                                });
                                 // Free (locked) plan: block copy / cut / select-all from the keyboard…
                                 editor.onKeyDown((e) => {
                                     if (!lockedRef.current) return;
@@ -342,6 +388,15 @@ export default function DocEditor() {
                 onClose={() => setPricingOpen(false)}
                 onSuccess={() => { setPricingOpen(false); handleUnlock(); }}
                 title="Upgrade to download this resume"
+            />
+
+            <AiAssistPanel
+                open={aiOpen}
+                section="LaTeX resume snippet"
+                currentText={aiText}
+                format="latex"
+                onAccept={applyAi}
+                onClose={() => setAiOpen(false)}
             />
         </div>
     );

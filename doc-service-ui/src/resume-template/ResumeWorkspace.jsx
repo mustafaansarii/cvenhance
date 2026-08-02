@@ -9,6 +9,7 @@ import {
 import userService from '../services/user.service';
 import docService from '../services/doc.service';
 import PricingModal from '../components/payment/PricingModal';
+import AiAssistPanel from '../components/ai/AiAssistPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
@@ -86,15 +87,88 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const settingsRef = useRef(settings);
     const savedRangeRef = useRef(null);
     const pickingRef = useRef(false);
+    const activeEditableRef = useRef(null);
+    const aiTargetRef = useRef(null);
+    const [aiBtn, setAiBtn] = useState(null);   // floating "✨ AI" button position
+    const [aiOpen, setAiOpen] = useState(false);
+    const [aiText, setAiText] = useState('');
+    const [aiSection, setAiSection] = useState('resume text');
     useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-    // Fit the fixed-width (Letter) sheet to the viewport: keep the 816px layout (so pagination & PDF
-    // stay correct) but visually scale it down on smaller screens.
+    useEffect(() => {
+        const sheet = sheetRef.current;
+        if (!sheet) return undefined;
+        const place = () => {
+            const el = activeEditableRef.current;
+            if (!el) { setAiBtn(null); return; }
+            const r = el.getBoundingClientRect();
+            setAiBtn({ top: r.top - 4, left: r.right - 4 });
+        };
+        const onFocusIn = (e) => {
+            const el = e.target?.closest?.('.editable');
+            if (el && sheet.contains(el)) { activeEditableRef.current = el; place(); }
+        };
+        const onFocusOut = () => {
+            setTimeout(() => {
+                const a = document.activeElement;
+                if (a?.closest?.('.editable') || a?.closest?.('[data-ai-btn]')) return;
+                activeEditableRef.current = null;
+                setAiBtn(null);
+            }, 120);
+        };
+        sheet.addEventListener('focusin', onFocusIn);
+        sheet.addEventListener('focusout', onFocusOut);
+        window.addEventListener('scroll', place, true);
+        window.addEventListener('resize', place);
+        return () => {
+            sheet.removeEventListener('focusin', onFocusIn);
+            sheet.removeEventListener('focusout', onFocusOut);
+            window.removeEventListener('scroll', place, true);
+            window.removeEventListener('resize', place);
+        };
+    }, []);
+
+    const openAiAssist = () => {
+        const el = activeEditableRef.current;
+        if (!el) { toast.error('Click a field first'); return; }
+        aiTargetRef.current = el;
+        const sel = window.getSelection();
+        let selectedText = '';
+        if (sel && sel.rangeCount && !sel.isCollapsed && el.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+            selectedText = sel.toString();
+            savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+        } else {
+            savedRangeRef.current = null;
+        }
+        setAiText(selectedText || el.textContent || '');
+        setAiSection(el.getAttribute('data-ph') || 'resume text');
+        setAiOpen(true);
+    };
+
+    // Write the accepted suggestion back into the field via the DOM + a bubbling `input` event,
+    // so the Field's own onChange persists it to state (no profile save here — deferred as usual).
+    const applyAiText = (text) => {
+        const el = aiTargetRef.current;
+        if (!el) return;
+        el.focus({ preventScroll: true });
+        const range = savedRangeRef.current;
+        if (range && !range.collapsed && el.contains(range.commonAncestorContainer)) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(text));
+        } else {
+            el.textContent = text;
+        }
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
     useEffect(() => {
         const el = canvasRef.current;
         if (!el) return undefined;
         const compute = () => {
-            const avail = el.clientWidth - 32; // px-4 padding both sides
+            const avail = el.clientWidth - 32; 
             const s = Math.min(1, Math.max(0.25, avail / PAGE_W));
             scaleRef.current = s;
             setFitScale(s);
@@ -648,6 +722,19 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                     <button onClick={() => stepFontSize(-2)} title="Decrease font size" className="h-7 w-7 rounded text-xs font-bold text-white transition hover:bg-white/15">A−</button>
                     <button onClick={() => stepFontSize(2)} title="Increase font size" className="h-7 w-7 rounded text-sm font-bold text-white transition hover:bg-white/15">A+</button>
                     <span className="my-1 w-px bg-white/20" />
+                    <button
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+                        }}
+                        onClick={openAiAssist}
+                        title="Improve with AI"
+                        className="flex h-7 items-center gap-1 rounded px-1.5 text-xs font-semibold text-white transition hover:bg-white/15"
+                    >
+                        ✨ AI
+                    </button>
+                    <span className="my-1 w-px bg-white/20" />
                     <button onClick={addLink} title="Add link" className="flex h-7 w-7 items-center justify-center rounded text-white transition hover:bg-white/15">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
                     </button>
@@ -878,6 +965,28 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 onClose={() => setPricingOpen(false)}
                 onSuccess={() => { setPricingOpen(false); unlock(); }}
                 title="Upgrade to download your resume"
+            />
+
+            {aiBtn && !aiOpen && (
+                <button
+                    data-ai-btn
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={openAiAssist}
+                    title="Improve with AI"
+                    style={{ position: 'fixed', top: aiBtn.top, left: aiBtn.left, zIndex: 100001, transform: 'translate(-100%, -100%)' }}
+                    className="no-print flex h-6 items-center gap-1 rounded-full bg-accent px-2 text-[11px] font-semibold text-accent-foreground shadow-md transition hover:bg-accent-hover"
+                >
+                    ✨ AI
+                </button>
+            )}
+
+            <AiAssistPanel
+                open={aiOpen}
+                section={aiSection}
+                currentText={aiText}
+                format="plain"
+                onAccept={applyAiText}
+                onClose={() => setAiOpen(false)}
             />
 
             {previewUrl && (

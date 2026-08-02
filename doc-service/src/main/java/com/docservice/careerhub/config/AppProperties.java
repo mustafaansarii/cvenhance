@@ -61,6 +61,12 @@ public class AppProperties {
     @Value("${mail.support:support.cvenhance@gmail.com}")
     private String mailSupportAddress;
 
+    @Value("${upstash.redis.rest-url:}")
+    private String upstashRedisRestUrl;
+
+    @Value("${upstash.redis.rest-token:}")
+    private String upstashRedisRestToken;
+
     @Value("${google.clientId:}")
     private String googleClientId;
 

@@ -105,6 +105,11 @@ mail:
   from: ${MAIL_FROM:}
   support: ${MAIL_SUPPORT:support.cvenhance@gmail.com}
 
+upstash:
+  redis:
+    rest-url: ${UPSTASH_REDIS_REST_URL:}
+    rest-token: ${UPSTASH_REDIS_REST_TOKEN:}
+
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
 
