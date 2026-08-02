@@ -13,7 +13,7 @@ const CHIPS = [
  * Shared AI writing assistant. `onAccept(text)` receives the chosen suggestion; the parent decides
  * how to write it back (contentEditable input-dispatch in the form builder, executeEdits in Monaco).
  */
-export default function AiAssistPanel({ open, section, currentText = '', format = 'plain', onAccept, onClose }) {
+export default function AiAssistPanel({ open, section, currentText = '', format = 'plain', onAccept, onClose, onPaymentRequired }) {
     const [instruction, setInstruction] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null); // { questions:[], suggestions:[] }
@@ -48,7 +48,13 @@ export default function AiAssistPanel({ open, section, currentText = '', format 
             setResult({ questions, suggestions });
             if (questions.length) setAnswers(questions.map(() => ''));
         } catch (err) {
-            toast.error(err?.response?.data?.message || 'AI request failed. Please try again.');
+            if (err?.response?.status === 402) {
+                toast.error(err?.response?.data?.message || 'Subscribe to a plan to use the AI writing assistant.');
+                onClose?.();
+                onPaymentRequired?.();
+            } else {
+                toast.error(err?.response?.data?.message || 'AI request failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }

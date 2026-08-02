@@ -397,6 +397,7 @@ export default function DocEditor() {
                 format="latex"
                 onAccept={applyAi}
                 onClose={() => setAiOpen(false)}
+                onPaymentRequired={() => setPricingOpen(true)}
             />
         </div>
     );

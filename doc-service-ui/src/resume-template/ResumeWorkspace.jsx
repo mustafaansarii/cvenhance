@@ -987,6 +987,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 format="plain"
                 onAccept={applyAiText}
                 onClose={() => setAiOpen(false)}
+                onPaymentRequired={() => setPricingOpen(true)}
             />
 
             {previewUrl && (

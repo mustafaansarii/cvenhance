@@ -41,7 +41,13 @@ public class ResumeAiService {
     @Autowired
     private RedisRateLimiter redisRateLimiter;
 
+    @Autowired
+    private EntitlementService entitlementService;
+
     public AiAssistResult assist(String userEmail, AiAssistRequest request) {
+        if (!entitlementService.hasActivePlan(userEmail)) {
+            throw ApiException.paymentRequired("Subscribe to a plan to use the AI writing assistant.");
+        }
         redisRateLimiter.checkDailyLimit(userEmail);
         validate(request);
 
