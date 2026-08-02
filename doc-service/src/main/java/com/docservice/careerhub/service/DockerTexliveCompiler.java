@@ -24,7 +24,6 @@ public class DockerTexliveCompiler implements LatexCompiler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerTexliveCompiler.class);
     private static final String TEX_FILE = "main.tex";
     private static final String PDF_FILE = "main.pdf";
-    private static final int LOG_TAIL_CHARS = 1500;
 
     @Autowired
     private AppProperties appProperties;
@@ -44,7 +43,8 @@ public class DockerTexliveCompiler implements LatexCompiler {
             }
             Path pdf = workDir.resolve(PDF_FILE);
             if (!Files.exists(pdf)) {
-                throw ApiException.badData("LaTeX compilation produced no PDF.\n" + tail(output));
+                LOGGER.error("LaTeX produced no PDF:\n{}", output);
+                throw ApiException.badData(LatexCompiler.summarizeError(output));
             }
             return Files.readAllBytes(pdf);
         } catch (IOException exception) {
@@ -74,7 +74,8 @@ public class DockerTexliveCompiler implements LatexCompiler {
                         + appProperties.getLatexCompileTimeoutSeconds() + "s");
             }
             if (process.exitValue() != 0) {
-                throw ApiException.badData("LaTeX compilation error.\n" + tail(output));
+                LOGGER.error("pdflatex failed (exit {}):\n{}", process.exitValue(), output);
+                throw ApiException.badData(LatexCompiler.summarizeError(output));
             }
             return output;
         } catch (IOException exception) {
@@ -115,12 +116,5 @@ public class DockerTexliveCompiler implements LatexCompiler {
         } catch (IOException ignored) {
             LOGGER.debug("Could not clean temp dir {}", dir);
         }
-    }
-
-    private String tail(String output) {
-        if (output == null || output.length() <= LOG_TAIL_CHARS) {
-            return output == null ? "" : output;
-        }
-        return output.substring(output.length() - LOG_TAIL_CHARS);
     }
 }

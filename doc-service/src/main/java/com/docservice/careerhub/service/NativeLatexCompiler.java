@@ -24,7 +24,6 @@ public class NativeLatexCompiler implements LatexCompiler {
     private static final Logger LOGGER = LoggerFactory.getLogger(NativeLatexCompiler.class);
     private static final String TEX_FILE = "main.tex";
     private static final String PDF_FILE = "main.pdf";
-    private static final int LOG_TAIL_CHARS = 1500;
 
     @Autowired
     private AppProperties appProperties;
@@ -73,7 +72,8 @@ public class NativeLatexCompiler implements LatexCompiler {
                         + appProperties.getLatexCompileTimeoutSeconds() + "s");
             }
             if (process.exitValue() != 0) {
-                throw ApiException.badData("LaTeX compilation error.\n" + tail(output));
+                LOGGER.error("pdflatex failed (exit {}):\n{}", process.exitValue(), output);
+                throw ApiException.badData(LatexCompiler.summarizeError(output));
             }
             return output;
         } catch (IOException e) {
@@ -104,10 +104,5 @@ public class NativeLatexCompiler implements LatexCompiler {
         } catch (IOException ignored) {
             LOGGER.debug("Could not clean temp dir {}", dir);
         }
-    }
-
-    private String tail(String output) {
-        if (output == null || output.length() <= LOG_TAIL_CHARS) return output == null ? "" : output;
-        return output.substring(output.length() - LOG_TAIL_CHARS);
     }
 }
