@@ -1,5 +1,6 @@
 package com.docservice.careerhub.controller;
 
+import com.docservice.careerhub.dto.request.MailRequest;
 import com.docservice.careerhub.dto.request.ContactRequest;
 import com.docservice.careerhub.dto.response.MessageResponse;
 import com.docservice.careerhub.dtoApi.ContactDtoApi;
@@ -19,5 +20,10 @@ public class ContactController {
     @PostMapping
     public MessageResponse submit(@RequestBody ContactRequest request) {
         return contactDtoApi.submit(request);
+    }
+
+    @PostMapping("/admin/send")
+    public MessageResponse adminSend(@RequestBody MailRequest request) {
+        return contactDtoApi.sendAdminMail(request);
     }
 }
