@@ -1,6 +1,7 @@
 import ContactUs from '../components/contact/contact-us';
 import Navbar from '../components/navbar/Navbar';
 import PageHero from '../components/shared/PageHero';
+import WhatsAppFab from '../components/shared/WhatsAppFab';
 
 function ContactUsPage() {
   return (
@@ -17,6 +18,7 @@ function ContactUsPage() {
         />
       </div>
       <ContactUs />
+      <WhatsAppFab />
     </>
   )
 }
