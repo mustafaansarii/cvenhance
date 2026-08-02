@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
+import { registerLaTeXLanguage } from 'monaco-latex';
 import toast from 'react-hot-toast';
 import {
     ChevronLeftIcon,
@@ -29,6 +30,9 @@ export default function DocEditor() {
     const [unlocking, setUnlocking] = useState(false);
     const [pricingOpen, setPricingOpen] = useState(false);
     const [locked, setLocked] = useState(true);
+    const [isDark, setIsDark] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches,
+    );
     const blobUrlRef = useRef(null);
     const handleCompileRef = useRef(null);
     const lockedRef = useRef(true);
@@ -55,6 +59,13 @@ export default function DocEditor() {
         return () => {
             if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
         };
+    }, []);
+
+    useEffect(() => {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const onChange = (e) => setIsDark(e.matches);
+        mq.addEventListener?.('change', onChange);
+        return () => mq.removeEventListener?.('change', onChange);
     }, []);
 
     const editorContainerRef = useRef(null);
@@ -246,16 +257,12 @@ export default function DocEditor() {
                     ) : (
                         <Editor
                             height="100%"
-                            language="javascript"
+                            language="latex"
                             value={code}
                             onChange={(val) => setCode(val ?? '')}
-                            theme="vs-dark"
+                            theme={isDark ? 'vs-dark' : 'vs'}
                             beforeMount={(monaco) => {
-                                monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-                                    noSemanticValidation: true,
-                                    noSyntaxValidation: true,
-                                    noSuggestionDiagnostics: true,
-                                });
+                                registerLaTeXLanguage(monaco);
                             }}
                             onMount={(editor, monaco) => {
                                 editor.addCommand(
