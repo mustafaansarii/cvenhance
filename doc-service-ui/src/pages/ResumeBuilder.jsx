@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import ResumeWorkspace from '../resume-template/ResumeWorkspace';
 import { getTemplate } from '../resume-template/registry';
 import userService from '../services/user.service';
+import ResumeBuilderSkeleton from '../components/shared/ResumeBuilderSkeleton';
 
 export default function ResumeBuilder() {
     const { code } = useParams();
@@ -23,7 +24,7 @@ export default function ResumeBuilder() {
     }, []);
 
     if (state.loading) {
-        return <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">Loading…</div>;
+        return <ResumeBuilderSkeleton />;
     }
 
     return <ResumeWorkspace key={`${design.code}:${state.authed}`} design={design} initialProfile={state.profile} authed={state.authed} />;
