@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-/** Composes and sends a contact-form query to the support inbox (reply-to = the user). */
 @Service
 public class ContactMailer {
 
@@ -21,8 +23,13 @@ public class ContactMailer {
     @Autowired
     private AppProperties appProperties;
 
+    private static final DateTimeFormatter SUBJECT_TIME =
+            DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm:ss");
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+
     public boolean send(ContactRequest request) {
-        String subject = "New contact query from " + request.getName();
+        String subject = "New contact query from " + request.getName()
+                + " (" + request.getEmail() + ") · " + LocalDateTime.now(IST).format(SUBJECT_TIME);
         String text = "From: " + request.getName() + " (" + request.getEmail() + ")\n\n" + request.getMessage();
         String html = mailService.renderEmail("contact.html", Map.of(
                 "name", request.getName(),
