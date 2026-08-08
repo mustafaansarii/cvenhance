@@ -5,10 +5,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.stereotype.Service;
 
-/**
- * Thin façade over Spring AI's {@link ChatClient} (Google GenAI / Gemini). Callers depend only on
- * this class, not on the underlying model/provider.
- */
+
 @Service
 public class AiService {
 
