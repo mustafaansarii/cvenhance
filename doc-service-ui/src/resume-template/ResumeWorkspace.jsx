@@ -3,13 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
     PAGE_W, PAGE, GAP, STRIDE, MARGIN,
-    SECTION_CATALOG, META, blankItem, profileToResume, resumeToProfile,
+    SECTION_CATALOG, META, blankItem, nextId, profileToResume, resumeToProfile,
     AddButton, RemoveButton,
 } from './shared';
 import userService from '../services/user.service';
 import docService from '../services/doc.service';
 import PricingModal from '../components/payment/PricingModal';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
+import AtsAnalysisPanel from '../components/ai/AtsAnalysisPanel';
+import JdTailorPanel from '../components/ai/JdTailorPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
@@ -39,18 +41,6 @@ const FONT_OPTIONS = [
 ];
 const ACCENTS = ['#0f172a', '#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#db2777', '#0891b2'];
 
-function atsChecks(r) {
-    return [
-        { label: 'Name and contact details', ok: !!r.name && (!!r.email || !!r.phone) },
-        { label: 'Professional summary', ok: !!(r.summary && r.summary.trim()) },
-        { label: 'At least one experience entry', ok: (r.experience || []).some((e) => e.primary || e.secondary) },
-        { label: 'Experience has bullet points', ok: (r.experience || []).some((e) => (e.bullets || []).some((b) => b.text && b.text.trim())) },
-        { label: 'Quantified results (numbers in bullets)', ok: (r.experience || []).some((e) => (e.bullets || []).some((b) => /\d/.test(b.text || ''))) },
-        { label: 'Skills listed', ok: (r.skills || []).some((s) => s.value || s.label) },
-        { label: 'Education added', ok: (r.education || []).some((e) => e.school || e.degree) },
-    ];
-}
-
 export default function ResumeWorkspace({ design, initialProfile = null, authed = false }) {
     const [resume, setResume] = useState(() => profileToResume(initialProfile));
     const [order, setOrder] = useState(() => resume._order || ['summary', 'experience', 'skills', 'courses', 'education']);
@@ -61,6 +51,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [adding, setAdding] = useState(false);
     const [saving, setSaving] = useState(false);
     const [panel, setPanel] = useState(null);
+    const [atsAiOpen, setAtsAiOpen] = useState(false);
+    const [jdTailorOpen, setJdTailorOpen] = useState(false);
     const [pricingOpen, setPricingOpen] = useState(false);
     const [dataVersion, setDataVersion] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -512,6 +504,184 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
+    // Apply an actionable ATS suggestion directly to the resume content.
+    const applyAtsSuggestion = (s) => {
+        const section = s?.section;
+        const newText = s?.newText;
+        const original = s?.originalText;
+        const target = s?.target;
+        if (!section || !newText || !newText.trim()) return false;
+
+        // ── header fields (name, title, location, phone, email, linkedin, github…) ──
+        if (section === 'header') {
+            const field = (target || '').toLowerCase();
+            // Allow direct field name, or match by user-friendly label
+            const fieldMap = {
+                name: 'name', 'full name': 'name',
+                title: 'title', 'job title': 'title', headline: 'title',
+                location: 'location', address: 'location',
+                phone: 'phone', 'phone number': 'phone', mobile: 'phone',
+                email: 'email', 'e-mail': 'email',
+                linkedin: 'linkedin', 'linkedin label': 'linkedin', 'linkedin url': 'linkedinUrl',
+                github: 'github', 'github label': 'github', 'github url': 'githubUrl',
+            };
+            const key = fieldMap[field];
+            if (key && resume[key] !== undefined) {
+                setField(key, newText);
+                return true;
+            }
+            // Fallback: replace original text in any header-ish field
+            if (original) {
+                if (resume.name === original) { setField('name', newText); return true; }
+                if (resume.title === original) { setField('title', newText); return true; }
+                if (resume.location === original) { setField('location', newText); return true; }
+                if (resume.phone === original) { setField('phone', newText); return true; }
+                if (resume.email === original) { setField('email', newText); return true; }
+                if (resume.summary === original) { setField('summary', newText); return true; }
+            }
+            return false;
+        }
+
+        // ── summary ──
+        if (section === 'summary') {
+            if (original && resume.summary && resume.summary.includes(original)) {
+                setField('summary', resume.summary.replace(original, newText));
+            } else {
+                setField('summary', newText);
+            }
+            return true;
+        }
+
+        // ── skills ──
+        if (section === 'skills') {
+            const skills = [...(resume.skills || [])];
+            // Replace an existing skill group's value
+            if (original) {
+                for (const sk of skills) {
+                    if (sk.value && sk.value.includes(original)) {
+                        sk.value = sk.value.replace(original, newText);
+                        setResume((r) => ({ ...r, skills }));
+                        return true;
+                    }
+                }
+            }
+            // Add a new skill group
+            if (target) {
+                skills.push({ id: nextId(), label: target, value: newText });
+            } else {
+                skills.push({ id: nextId(), label: 'Skills', value: newText });
+            }
+            setResume((r) => ({ ...r, skills }));
+            return true;
+        }
+
+        // ── single-text sections (achievements, awards, languages, interests, publications) ──
+        const textSections = ['achievements', 'awards', 'languages', 'interests', 'publications'];
+        if (textSections.includes(section)) {
+            const items = [...(resume[section] || [])];
+            if (original) {
+                // Replace the matching item's text
+                const idx = items.findIndex((it) => it.text && it.text.includes(original));
+                if (idx >= 0) {
+                    items[idx] = { ...items[idx], text: items[idx].text.replace(original, newText) };
+                    setResume((r) => ({ ...r, [section]: items }));
+                    return true;
+                }
+            }
+            // Add new item
+            items.push({ id: nextId(), text: newText });
+            setResume((r) => ({ ...r, [section]: items }));
+            return true;
+        }
+
+        // ── experience bullets ──
+        if (section === 'experience') {
+            const exp = (resume.experience || []).map((e) => ({ ...e, bullets: (e.bullets || []).map((b) => ({ ...b })) }));
+            if (original) {
+                for (const e of exp) {
+                    for (const b of e.bullets) {
+                        if (b.text && b.text.includes(original)) {
+                            b.text = b.text.replace(original, newText);
+                            setResume((r) => ({ ...r, experience: exp }));
+                            return true;
+                        }
+                    }
+                }
+            }
+            // Add a bullet to the most relevant entry (by target company/role)
+            if (target) {
+                const entry = exp.find((e) =>
+                    (e.primary && e.primary.includes(target)) ||
+                    (e.secondary && e.secondary.includes(target))
+                );
+                const at = entry || exp[exp.length - 1];
+                if (at) {
+                    at.bullets.push({ id: nextId(), text: newText });
+                    setResume((r) => ({ ...r, experience: exp }));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ── projects bullets ──
+        if (section === 'projects') {
+            const proj = (resume.projects || []).map((p) => ({ ...p, bullets: (p.bullets || []).map((b) => ({ ...b })) }));
+            if (original) {
+                for (const p of proj) {
+                    for (const b of p.bullets) {
+                        if (b.text && b.text.includes(original)) {
+                            b.text = b.text.replace(original, newText);
+                            setResume((r) => ({ ...r, projects: proj }));
+                            return true;
+                        }
+                    }
+                }
+            }
+            if (target) {
+                const entry = proj.find((p) =>
+                    (p.primary && p.primary.includes(target)) ||
+                    (p.secondary && p.secondary.includes(target))
+                );
+                const at = entry || proj[proj.length - 1];
+                if (at) {
+                    at.bullets.push({ id: nextId(), text: newText });
+                    setResume((r) => ({ ...r, projects: proj }));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ── courses & certifications ──
+        if (section === 'courses' || section === 'certifications') {
+            const items = [...(resume[section] || [])];
+            if (original) {
+                const idx = items.findIndex((it) =>
+                    (it.title && it.title.includes(original)) ||
+                    (it.issuer && it.issuer.includes(original))
+                );
+                if (idx >= 0) {
+                    const it = items[idx];
+                    if (it.title && it.title.includes(original)) items[idx] = { ...it, title: it.title.replace(original, newText) };
+                    else items[idx] = { ...it, issuer: it.issuer.replace(original, newText) };
+                    setResume((r) => ({ ...r, [section]: items }));
+                    return true;
+                }
+            }
+            items.push({ id: nextId(), title: newText, issuer: '' });
+            setResume((r) => ({ ...r, [section]: items }));
+            return true;
+        }
+
+        // Fallback: attempt a raw replace across text fields
+        if (original && resume.summary && resume.summary.includes(original)) {
+            setField('summary', resume.summary.replace(original, newText));
+            return true;
+        }
+        return false;
+    };
+
     const renderBody = (type, col = 'main') => {
         const meta = META[type];
         if (meta.kind === 'text') {
@@ -577,8 +747,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
 
     const available = SECTION_CATALOG.filter((s) => !order.includes(s.type));
     const stackHeight = pageCount * PAGE + (pageCount - 1) * GAP;
-    const checks = atsChecks(resume);
-    const passed = checks.filter((c) => c.ok).length;
 
     return (
         <div id="rb-root" className="min-h-screen bg-slate-200">
@@ -630,12 +798,20 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         />
                     )}
                     <button
-                        onClick={() => setPanel(panel === 'ats' ? null : 'ats')}
-                        title="ATS Check"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'ats' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
+                        onClick={() => setAtsAiOpen((o) => !o)}
+                        title="AI ATS Analysis"
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${atsAiOpen ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                        <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">ATS</span>
-                        <span className="hidden sm:inline">Check</span>
+                        <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">AI</span>
+                        <span className="hidden sm:inline">ATS</span>
+                    </button>
+                    <button
+                        onClick={() => setJdTailorOpen((o) => !o)}
+                        title="RAG Job Description Resume Tailor"
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${jdTailorOpen ? 'bg-teal-500/15 text-teal-600 font-semibold' : 'text-muted-foreground hover:bg-muted'}`}
+                    >
+                        <span>✨</span>
+                        <span className="hidden sm:inline">Tailor to JD</span>
                     </button>
                     <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
@@ -741,7 +917,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 </div>
             )}
 
-            <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${panel === 'ats' ? 'md:mr-80' : ''}`}>
+            <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${atsAiOpen ? 'md:mr-80' : ''}`}>
                 <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
                     {Array.from({ length: pageCount }).map((_, p) => (
@@ -927,38 +1103,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 </aside>
             )}
 
-            {/* ATS Check panel */}
-            {panel === 'ats' && (
-                <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-80 max-w-[88vw] overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-2xl">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-slate-800">ATS Check</h3>
-                        <button onClick={() => setPanel(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                    <div className="mb-5 flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
-                        <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white ${passed === checks.length ? 'bg-emerald-500' : passed >= checks.length - 2 ? 'bg-teal-500' : 'bg-amber-500'}`}>
-                            {Math.round((passed / checks.length) * 100)}
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-slate-800">{passed} of {checks.length} checks passed</p>
-                            <p className="text-xs text-slate-500">Fix the items below to improve parsing.</p>
-                        </div>
-                    </div>
-                    <ul className="space-y-2.5">
-                        {checks.map((c) => (
-                            <li key={c.label} className="flex items-start gap-2.5 text-sm">
-                                {c.ok ? (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                ) : (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.86l-8.3 14A1 1 0 003 19h18a1 1 0 00.86-1.5l-8.3-14a1 1 0 00-1.72 0z" /></svg>
-                                )}
-                                <span className={c.ok ? 'text-slate-600' : 'font-medium text-slate-800'}>{c.label}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
 
             <PricingModal
                 open={pricingOpen}
@@ -988,6 +1132,27 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 onAccept={applyAiText}
                 onClose={() => setAiOpen(false)}
                 onPaymentRequired={() => setPricingOpen(true)}
+            />
+
+            <AtsAnalysisPanel
+                open={atsAiOpen}
+                resume={resume}
+                onClose={() => setAtsAiOpen(false)}
+                onPaymentRequired={() => setPricingOpen(true)}
+                onApplySuggestion={applyAtsSuggestion}
+            />
+
+            <JdTailorPanel
+                open={jdTailorOpen}
+                resume={resume}
+                onClose={() => setJdTailorOpen(false)}
+                onPaymentRequired={() => setPricingOpen(true)}
+                onApplyTailored={(tailored) => {
+                    if (tailored) {
+                        setResume((r) => ({ ...r, summary: tailored }));
+                        toast.success('Tailored content applied to summary!');
+                    }
+                }}
             />
 
             {previewUrl && (

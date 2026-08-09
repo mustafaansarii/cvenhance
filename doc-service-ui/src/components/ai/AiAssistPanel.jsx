@@ -105,10 +105,31 @@ export default function AiAssistPanel({ open, section, currentText = '', format 
                                 <textarea value={instruction} onChange={(e) => setInstruction(e.target.value)} rows={2}
                                     placeholder={hasText ? 'Tell the AI what to change (optional)…' : 'Describe what you want to write…'}
                                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30" />
-                                <button onClick={() => run()} disabled={loading}
-                                    className="mt-2 w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
-                                    {loading ? 'Thinking…' : hasText ? 'Improve with AI' : 'Help me write'}
-                                </button>
+                                <div className="mt-2 flex gap-2">
+                                    <button onClick={() => run()} disabled={loading}
+                                        className="flex-1 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
+                                        {loading ? 'Thinking…' : hasText ? 'Improve with AI' : 'Help me write'}
+                                    </button>
+                                    <button onClick={async () => {
+                                        if (!instruction.trim() && !currentText.trim()) { toast.error('Enter a search query or prompt first.'); return; }
+                                        setLoading(true);
+                                        try {
+                                            const data = await aiService.searchVault(instruction.trim() || currentText.trim());
+                                            const exps = data?.experiences || [];
+                                            if (exps.length) {
+                                                setResult({ questions: [], suggestions: exps });
+                                                toast.success(`Found ${exps.length} past experience matches from Career Vault!`);
+                                            } else {
+                                                toast('No past experiences found in your Career Vault for this query.');
+                                            }
+                                        } catch (e) {
+                                            toast.error('Could not search Career Vault.');
+                                        } finally { setLoading(false); }
+                                    }} disabled={loading} title="Search your personal vector memory of past resumes"
+                                        className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition hover:border-accent hover:text-accent disabled:opacity-50">
+                                        Vault 🔍
+                                    </button>
+                                </div>
                             </div>
                         </>
                     )}
