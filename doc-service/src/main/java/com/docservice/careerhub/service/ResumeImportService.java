@@ -1,5 +1,6 @@
 package com.docservice.careerhub.service;
 
+import com.docservice.careerhub.ai.AiPrompt;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.Profile;
@@ -44,6 +45,9 @@ public class ResumeImportService {
 
     @Autowired
     private ParseProfileDataHelper parseProfileDataHelper;
+
+    @Autowired
+    private CareerVaultService careerVaultService;
 
     private String profileSchema = "{}";
 
@@ -133,11 +137,7 @@ public class ResumeImportService {
     }
 
     private String buildSystemInstruction() {
-        return "You are a precise resume/CV parser. Read the resume text and return ONLY a single JSON object "
-                + "(no markdown, no commentary) that matches the given JSON shape EXACTLY — same keys and structure. "
-                + "Rules: fix broken, duplicated or misformatted data; if a field is missing, infer a reasonable value "
-                + "from context or use an empty string/array; format date periods like 'Jan 2020 - Present'; keep bullets "
-                + "concise and ATS-friendly; do NOT invent companies, schools, or skills that the text does not support.";
+        return AiPrompt.RESUME_PARSER_SYSTEM.getPrompt();
     }
 
     private String buildUserPrompt(String resumeText) {
@@ -151,5 +151,48 @@ public class ResumeImportService {
             logger.error("Saving imported profile failed", e);
             throw new RuntimeException("Failed to save the imported profile", e);
         }
+
+        // ── Index into Career Vault (RAG personal memory) ─────────────────────
+        // Extract the key textual sections from the parsed profile for semantic indexing.
+        // This runs async-safely in a try/catch so a vault failure never blocks import.
+        try {
+            Map<String, String> sections = extractTextSections(profile);
+            if (!sections.isEmpty()) {
+                careerVaultService.indexSections(ownerEmail, sections);
+            }
+        } catch (Exception e) {
+            logger.warn("Career vault indexing failed for {} (non-fatal): {}", ownerEmail, e.getMessage());
+        }
+        // ── end Career Vault ──────────────────────────────────────────────────────
+    }
+
+    /**
+     * Flatten relevant top-level string fields from the parsed profile JSON
+     * into a map of section → text for vector indexing.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, String> extractTextSections(Map<String, Object> profile) {
+        Map<String, String> result = new java.util.LinkedHashMap<>();
+        String[] textFields = {"summary", "objective", "skills", "experience", "education", "projects",
+                               "certifications", "achievements", "publications", "courses"};
+        for (String field : textFields) {
+            Object val = profile.get(field);
+            if (val == null) continue;
+            String text;
+            if (val instanceof String s) {
+                text = s;
+            } else {
+                // Arrays / objects: serialize to compact JSON text for embedding
+                try {
+                    text = objectMapper.writeValueAsString(val);
+                } catch (Exception ignored) {
+                    continue;
+                }
+            }
+            if (text != null && !text.isBlank() && !text.equals("null") && !text.equals("[]") && !text.equals("{}")) {
+                result.put(field, text);
+            }
+        }
+        return result;
     }
 }

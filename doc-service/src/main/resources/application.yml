@@ -6,19 +6,33 @@ spring:
         chat:
           options:
             model: ${GEMINI_MODEL:gemini-flash-latest}
-    retry:
-      max-attempts: 3
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        dimensions: 768
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW
+        schema-name: public
+        table-name: vector_store
+
+  retry:
+    max-attempts: 3
+
   threads:
     virtual:
       enabled: ${USE_VIRTUAL_THREADS:true}
+
   config:
     import: optional:file:./.env[.properties],optional:file:/etc/secrets/.env[.properties]
+
   servlet:
     multipart:
       max-file-size: ${MAX_UPLOAD_SIZE:2MB}
       max-request-size: ${MAX_UPLOAD_SIZE:2MB}
+
   application:
     name: ${APP_NAME:DOC-SERVICE}
+
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -39,16 +53,18 @@ spring:
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
+
+    show-sql: ${JPA_SHOW_SQL:false}
+
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           time_zone: ${APP_TIMEZONE:Asia/Kolkata}
-    dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: ${JPA_SHOW_SQL:true}
 
   security:
     oauth2:
@@ -61,6 +77,7 @@ spring:
             scope:
               - profile
               - email
+
           github:
             client-id: ${GITHUB_CLIENT_ID:}
             client-secret: ${GITHUB_CLIENT_SECRET:}
@@ -72,7 +89,11 @@ spring:
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:ERROR}
-    com.docservice.careerhub: ${LOG_LEVEL_APP:INFO}
+    com.docservice.careerhub: ${LOG_LEVEL_APP:ERROR}
+
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.orm.jdbc.extract: OFF
 
 server:
   port: ${PORT:5001}

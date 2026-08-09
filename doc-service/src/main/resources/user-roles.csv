@@ -19,5 +19,12 @@ POST,/api/payments/webhook,PUBLIC
 POST,/api/contact,PUBLIC
 POST,/api/ai/generate,USER|ADMIN
 POST,/api/ai/assist,USER|ADMIN
+POST,/api/ai/ats-analyze,USER|ADMIN
+GET,/api/ai/ats-history,USER|ADMIN
+GET,/api/ai/ats-history/*,USER|ADMIN
+POST,/api/ai/tailor,USER|ADMIN
+GET,/api/ai/vault/experiences,USER|ADMIN
+POST,/api/ai/bullets/seed,ADMIN
 POST,/api/contact/admin/send,ADMIN
 POST,/api/profile/import-resume,USER|ADMIN
+
