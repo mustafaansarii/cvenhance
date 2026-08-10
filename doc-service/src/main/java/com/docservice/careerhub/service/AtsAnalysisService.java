@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.ai.document.Document;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +16,6 @@ import com.docservice.careerhub.ai.AiPrompt;
 import com.docservice.careerhub.ai.AiException;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
-import com.docservice.careerhub.ai.VectorSearchService;
 import com.docservice.careerhub.dto.ai.AtsAnalysisResult;
 import com.docservice.careerhub.dto.request.AtsAnalysisRequest;
 import com.docservice.careerhub.entity.AtsAnalysisHistory;
@@ -47,9 +44,6 @@ public class AtsAnalysisService {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private VectorSearchService vectorSearchService;
 
     public AtsAnalysisResult analyze(String userEmail, AtsAnalysisRequest request) {
         if (!entitlementService.hasActivePlan(userEmail)) {
@@ -133,21 +127,6 @@ public class AtsAnalysisService {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.hasText(request.getTargetRole())) {
             sb.append("Target role: ").append(request.getTargetRole().trim()).append("\n\n");
-
-            // ── RAG: retrieve ATS keyword corpus for this role ────────────────
-            try {
-                List<Document> keywordDocs = vectorSearchService.search(
-                        request.getTargetRole(), 3,
-                        Map.of("type", "role_keywords"));
-                if (!keywordDocs.isEmpty()) {
-                    sb.append("TRENDING ATS KEYWORDS FOR THIS ROLE (sourced from real job postings):\n");
-                    keywordDocs.forEach(d -> sb.append("- ").append(d.getText()).append("\n"));
-                    sb.append("\n");
-                }
-            } catch (Exception e) {
-                LOGGER.debug("Role keyword RAG retrieval skipped: {}", e.getMessage());
-            }
-            // ── end RAG ──────────────────────────────────────────────────────
         }
         sb.append("RESUME TEXT:\n").append(request.getResumeText().trim());
         return sb.toString();

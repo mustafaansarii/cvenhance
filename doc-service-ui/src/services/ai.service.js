@@ -27,15 +27,6 @@ const aiService = {
         return res.data;
     },
 
-    async tailorResume({ resumeText, jobDescription, section }) {
-        const res = await api.post('ai/tailor', { resumeText, jobDescription, section });
-        return res.data;
-    },
-
-    async searchVault(query = '') {
-        const res = await api.get(`ai/vault/experiences?query=${encodeURIComponent(query)}`);
-        return res.data;
-    },
 };
 
 export default aiService;

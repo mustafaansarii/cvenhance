@@ -1,6 +1,5 @@
 package com.docservice.careerhub.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +24,6 @@ import com.docservice.careerhub.dto.request.AtsAnalysisRequest;
 import com.docservice.careerhub.entity.AtsAnalysisHistory;
 import com.docservice.careerhub.service.AtsAnalysisService;
 import com.docservice.careerhub.service.ResumeAiService;
-import com.docservice.careerhub.dto.request.JdTailorRequest;
-import com.docservice.careerhub.dto.request.SeedBulletRequest;
-import com.docservice.careerhub.service.BulletBankService;
-import com.docservice.careerhub.service.CareerVaultService;
-import com.docservice.careerhub.service.JdTailorService;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -43,15 +37,6 @@ public class AiController {
 
     @Autowired
     private AtsAnalysisService atsAnalysisService;
-
-    @Autowired
-    private JdTailorService jdTailorService;
-
-    @Autowired
-    private BulletBankService bulletBankService;
-
-    @Autowired
-    private CareerVaultService careerVaultService;
 
     @PostMapping("/generate")
     public Map<String, String> generate(@RequestBody AiRequest request) {
@@ -80,34 +65,4 @@ public class AiController {
         return ResponseEntity.ok(atsAnalysisService.toResult(history));
     }
 
-    /**
-     * RAG-powered: tailor the user's resume to a specific job description.
-     * POST /api/ai/tailor
-     */
-    @PostMapping("/tailor")
-    public Map<String, String> tailorResume(Authentication authentication,
-                                            @RequestBody JdTailorRequest request) {
-        return Map.of("tailoredResume", jdTailorService.tailor(authentication.getName(), request));
-    }
-
-    /**
-     * Admin: seed high-quality bullets into the bullet bank vector store.
-     * POST /api/ai/bullets/seed
-     */
-    @PostMapping("/bullets/seed")
-    public Map<String, Object> seedBullets(@RequestBody SeedBulletRequest request) {
-        int count = bulletBankService.seed(request);
-        return Map.of("seeded", count, "status", "ok");
-    }
-
-    /**
-     * RAG-powered: query personal career vault for past experiences matching query.
-     * GET /api/ai/vault/experiences?query=...
-     */
-    @GetMapping("/vault/experiences")
-    public Map<String, Object> findVaultExperiences(Authentication authentication,
-                                                     @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "") String query) {
-        List<String> experiences = careerVaultService.findRelevantExperiences(authentication.getName(), query, 5);
-        return Map.of("experiences", experiences);
-    }
 }

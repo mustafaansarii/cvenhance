@@ -1,5 +1,13 @@
 package com.docservice.careerhub.service;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import com.docservice.careerhub.ai.AiException;
 import com.docservice.careerhub.ai.AiPrompt;
 import com.docservice.careerhub.ai.AiRequest;
@@ -7,13 +15,6 @@ import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.AiAssistResult;
 import com.docservice.careerhub.dto.request.AiAssistRequest;
 import com.docservice.careerhub.exception.ApiException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 @Service
 public class ResumeAiService {
@@ -29,9 +30,6 @@ public class ResumeAiService {
 
     @Autowired
     private EntitlementService entitlementService;
-
-    @Autowired
-    private BulletBankService bulletBankService;
 
     public AiAssistResult assist(String userEmail, AiAssistRequest request) {
         if (!entitlementService.hasActivePlan(userEmail)) {
@@ -71,26 +69,6 @@ public class ResumeAiService {
 
     private String buildUserPrompt(AiAssistRequest request) {
         StringBuilder sb = new StringBuilder();
-
-        // ── RAG: inject similar high-quality bullets as few-shot examples ──────
-        String queryText = StringUtils.hasText(request.getCurrentText())
-                ? request.getCurrentText()
-                : (StringUtils.hasText(request.getInstruction()) ? request.getInstruction() : "");
-        if (StringUtils.hasText(queryText)) {
-            try {
-                List<String> exampleBullets = bulletBankService.findSimilarBullets(
-                        queryText, null, request.getSection(), 3);
-                if (!exampleBullets.isEmpty()) {
-                    sb.append("RECRUITER-APPROVED EXAMPLES FOR THIS SECTION (follow their style and tone):\n");
-                    exampleBullets.forEach(b -> sb.append("• ").append(b).append("\n"));
-                    sb.append("\n");
-                }
-            } catch (Exception e) {
-                // RAG retrieval failure must never block the user request
-                LOGGER.debug("Bullet bank retrieval skipped: {}", e.getMessage());
-            }
-        }
-        // ── end RAG ──────────────────────────────────────────────────────────
 
         sb.append("Resume section: ").append(StringUtils.hasText(request.getSection()) ? request.getSection() : "general").append("\n");
         if (StringUtils.hasText(request.getCurrentText())) {

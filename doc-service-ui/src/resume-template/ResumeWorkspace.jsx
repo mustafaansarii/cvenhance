@@ -11,7 +11,6 @@ import docService from '../services/doc.service';
 import PricingModal from '../components/payment/PricingModal';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
 import AtsAnalysisPanel from '../components/ai/AtsAnalysisPanel';
-import JdTailorPanel from '../components/ai/JdTailorPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
@@ -52,7 +51,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [saving, setSaving] = useState(false);
     const [panel, setPanel] = useState(null);
     const [atsAiOpen, setAtsAiOpen] = useState(false);
-    const [jdTailorOpen, setJdTailorOpen] = useState(false);
     const [pricingOpen, setPricingOpen] = useState(false);
     const [dataVersion, setDataVersion] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -806,14 +804,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                         <span className="hidden sm:inline">ATS</span>
                     </button>
                     <button
-                        onClick={() => setJdTailorOpen((o) => !o)}
-                        title="RAG Job Description Resume Tailor"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${jdTailorOpen ? 'bg-teal-500/15 text-teal-600 font-semibold' : 'text-muted-foreground hover:bg-muted'}`}
-                    >
-                        <span>✨</span>
-                        <span className="hidden sm:inline">Tailor to JD</span>
-                    </button>
-                    <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
                         title="Design & Font"
                         className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'design' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
@@ -1140,19 +1130,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
                 onClose={() => setAtsAiOpen(false)}
                 onPaymentRequired={() => setPricingOpen(true)}
                 onApplySuggestion={applyAtsSuggestion}
-            />
-
-            <JdTailorPanel
-                open={jdTailorOpen}
-                resume={resume}
-                onClose={() => setJdTailorOpen(false)}
-                onPaymentRequired={() => setPricingOpen(true)}
-                onApplyTailored={(tailored) => {
-                    if (tailored) {
-                        setResume((r) => ({ ...r, summary: tailored }));
-                        toast.success('Tailored content applied to summary!');
-                    }
-                }}
             />
 
             {previewUrl && (
