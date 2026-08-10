@@ -2,7 +2,10 @@ package com.docservice.careerhub.config;
 
 import java.util.Locale;
 
+import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.embedding.EmbeddingRequest;
+import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +16,27 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 public class VectorStoreConfig {
+
+    @Bean
+    @ConditionalOnMissingBean(EmbeddingModel.class)
+    public EmbeddingModel embeddingModel() {
+        return new EmbeddingModel() {
+            @Override
+            public EmbeddingResponse call(EmbeddingRequest request) {
+                return new EmbeddingResponse(java.util.List.of());
+            }
+
+            @Override
+            public float[] embed(Document document) {
+                return new float[768];
+            }
+
+            @Override
+            public int dimensions() {
+                return 768;
+            }
+        };
+    }
 
     @Bean
     @ConditionalOnMissingBean(VectorStore.class)
