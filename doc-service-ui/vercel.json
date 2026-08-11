@@ -8,7 +8,7 @@
     "rewrites": [
         {
             "source": "/careerhub/:path*",
-            "destination": "https://doc-service-srwe.onrender.com/:path*"
+            "destination": "https://cvenhance.onrender.com/:path*"
         },
         {
             "source": "/(.*)",
