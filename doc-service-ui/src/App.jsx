@@ -25,6 +25,7 @@ import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
 import SettingsPage from './pages/SettingsPage';
 import ResumeUploadPrompt from './components/profile/ResumeUploadPrompt';
+import PrivacyConsentBanner from './components/shared/PrivacyConsentBanner';
 
 function App() {
   const location = useLocation();
@@ -109,6 +110,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideFooter && <Footer />}
+      <PrivacyConsentBanner />
     </div>
   );
 }
