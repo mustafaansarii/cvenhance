@@ -12,9 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import docService from '../../services/doc.service';
 import authService from '../../services/auth.service';
-import { DEFAULT_CODE } from '../../resume-template/registry';
-
-const designCodeFor = (doc) => doc?.templateCode || DEFAULT_CODE;
+const designCodeFor = (doc) => doc?.templateCode || 'classic';
 
 const CATEGORIES = [
     { key: 'CV_AND_RESUME', label: 'CV & Resume' },
@@ -39,7 +37,7 @@ const STATUS_BADGE = {
     FAILED: 'bg-red-50 text-red-600',
 };
 
-function TemplateCard({ doc, actionLabel, onAction, isBusy }) {
+function TemplateCard({ doc, onAction, isBusy }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -269,7 +267,7 @@ export default function Templates({ mode = 'templates' }) {
     const docGrid = (items) => (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((doc) => (
-                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} actionLabel="Open" onAction={handleAction} />
+                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} />
             ))}
         </div>
     );
@@ -348,8 +346,7 @@ export default function Templates({ mode = 'templates' }) {
                 {!error && !loading && !isUserDocs && (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {templates.map((doc) => (
-                            <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id}
-                                actionLabel="Start Editing" onAction={handleAction} />
+                            <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} />
                         ))}
                     </div>
                 )}

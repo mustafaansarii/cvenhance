@@ -7,7 +7,7 @@ import {
     AddButton, RemoveButton,
 } from './shared';
 import userService from '../services/user.service';
-import docService from '../services/doc.service';
+import resumeBuilderService from '../services/resume-builder.service';
 import PricingModal from '../components/payment/PricingModal';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
 import AtsAnalysisPanel from '../components/ai/AtsAnalysisPanel';
@@ -40,9 +40,13 @@ const FONT_OPTIONS = [
 ];
 const ACCENTS = ['#0f172a', '#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#db2777', '#0891b2'];
 
-export default function ResumeWorkspace({ design, initialProfile = null, authed = false }) {
-    const [resume, setResume] = useState(() => profileToResume(initialProfile));
-    const [order, setOrder] = useState(() => resume._order || ['summary', 'experience', 'skills', 'courses', 'education']);
+export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
+    const [resume, setResume] = useState(() => initialDocument?.resumeData && Object.keys(initialDocument.resumeData).length
+        ? initialDocument.resumeData
+        : profileToResume(initialProfile));
+    const [order, setOrder] = useState(() => initialDocument?.sectionOrder?.length
+        ? initialDocument.sectionOrder
+        : (initialDocument?.resumeData?._order || profileToResume(initialProfile)._order || ['summary', 'experience', 'skills', 'courses', 'education']));
     const [pageCount, setPageCount] = useState(1);
     const [dragType, setDragType] = useState(null);
     const [overType, setOverType] = useState(null);
@@ -55,18 +59,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [dataVersion, setDataVersion] = useState(0);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [fitScale, setFitScale] = useState(1);
-    const [locked, setLocked] = useState(true);
-    const [docId, setDocId] = useState(null);
+    const [locked, setLocked] = useState(() => !initialDocument?.unlocked);
+    const [docId] = useState(() => initialDocument?.id || null);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (!authed) { setLocked(true); return; }
-        docService.openByTemplate(design.code)
-            .then((doc) => { setDocId(doc.id); setLocked(!doc.unlocked); })
-            .catch(() => setLocked(true));
-    }, [authed, design.code]);
     const [settings, setSettings] = useState(() => ({
-        margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e',
+        margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e', ...initialDocument?.editorSettings,
     }));
     const setSetting = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
     const resetDesign = () => setSettings({ margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e' });
@@ -84,6 +82,21 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
     const [aiText, setAiText] = useState('');
     const [aiSection, setAiSection] = useState('resume text');
     useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+    useEffect(() => {
+        if (!authed || !docId) return undefined;
+        const timer = window.setTimeout(() => {
+            resumeBuilderService.saveDocument(docId, {
+                name: resume.name ? `${resume.name} resume` : undefined,
+                resumeData: resume,
+                sectionOrder: order,
+                editorSettings: settings,
+            }).catch(() => {
+                // Autosave failure should not interrupt typing; the explicit download path retries a save.
+            });
+        }, 700);
+        return () => window.clearTimeout(timer);
+    }, [authed, docId, order, resume, settings]);
 
     useEffect(() => {
         const sheet = sheetRef.current;
@@ -333,10 +346,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, authed 
         setSaving(true);
         try { await userService.updateProfile(resumeToProfile(resume)); } catch { /* ignore */ }
         try {
-            const doc = await docService.openByTemplate(design.code);
-            setDocId(doc.id);
-            await docService.claim(doc.id);
-            setLocked(false);
+            const doc = await resumeBuilderService.claimDocument(docId);
+            setLocked(!doc.unlocked);
             toast.success('Resume unlocked — you can download it now');
         } catch (err) {
             if (err?.response?.status === 402) {

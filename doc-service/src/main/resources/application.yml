@@ -58,6 +58,10 @@ spring:
         jdbc:
           time_zone: ${APP_TIMEZONE:Asia/Kolkata}
 
+  flyway:
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:0}
+
   security:
     oauth2:
       client:

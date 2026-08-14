@@ -24,4 +24,11 @@ GET,/api/ai/ats-history,USER|ADMIN
 GET,/api/ai/ats-history/*,USER|ADMIN
 POST,/api/contact/admin/send,ADMIN
 POST,/api/profile/import-resume,USER|ADMIN
-
+GET,/api/resume-builder/templates,PUBLIC
+GET,/api/resume-builder/templates/*,PUBLIC
+POST,/api/resume-builder/templates,ADMIN
+GET,/api/resume-builder/documents,USER|ADMIN
+POST,/api/resume-builder/documents/by-template/*,USER|ADMIN
+GET,/api/resume-builder/documents/*,USER|ADMIN
+PATCH,/api/resume-builder/documents/*,USER|ADMIN
+POST,/api/resume-builder/documents/*/claim,USER|ADMIN
