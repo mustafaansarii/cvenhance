@@ -4,4 +4,5 @@
 latex-templates/
 dist/
 .DS_Store
+.worktrees/
 doc-service-ui/.DS_Store

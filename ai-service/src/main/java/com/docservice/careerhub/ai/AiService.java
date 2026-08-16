@@ -1,18 +1,16 @@
 package com.docservice.careerhub.ai;
 
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 
 @Service
 public class AiService {
 
-    private final ChatClient chatClient;
+    private final List<AiProvider> providers;
 
-    public AiService(ChatModel chatModel) {
-        this.chatClient = ChatClient.create(chatModel);
+    public AiService(List<AiProvider> providers) {
+        this.providers = List.copyOf(providers);
     }
 
     public String generate(String prompt) {
@@ -20,36 +18,29 @@ public class AiService {
     }
 
     public String generate(AiRequest request) {
-        try {
-            return spec(request).call().content();
-        } catch (AiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AiException("AI text generation failed", e);
-        }
+        validate(request);
+        return generateWithFallback(provider -> provider.generate(request), "text");
     }
 
     public <T> T generate(AiRequest request, Class<T> type) {
-        try {
-            return spec(request).call().entity(type);
-        } catch (AiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AiException("AI structured generation failed", e);
-        }
+        validate(request);
+        return generateWithFallback(provider -> provider.generate(request, type), "structured");
     }
 
-    private ChatClient.ChatClientRequestSpec spec(AiRequest request) {
+    private void validate(AiRequest request) {
         if (request == null || request.prompt() == null || request.prompt().isBlank()) {
             throw new AiException("prompt is required");
         }
-        ChatClient.ChatClientRequestSpec prompt = chatClient.prompt().user(request.prompt());
-        if (request.system() != null && !request.system().isBlank()) {
-            prompt = prompt.system(request.system());
-        }
-        if (request.temperature() != null) {
-            prompt = prompt.options(ChatOptions.builder().temperature(request.temperature()).build());
-        }
-        return prompt;
+        if (providers.isEmpty()) throw new AiException("no AI providers are configured");
     }
+    private <T> T generateWithFallback(ProviderCall<T> call, String responseType) {
+        AiException lastFailure = null;
+        for (AiProvider provider : providers) {
+            try { return call.generate(provider); }
+            catch (Exception exception) { lastFailure = new AiException(provider.name() + " provider failed", exception); }
+        }
+        throw new AiException("AI " + responseType + " generation failed for all configured providers", lastFailure);
+    }
+    @FunctionalInterface
+    private interface ProviderCall<T> { T generate(AiProvider provider); }
 }

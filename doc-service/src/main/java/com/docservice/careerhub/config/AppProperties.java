@@ -79,11 +79,14 @@ public class AppProperties {
     @Value("${github.clientSecret:}")
     private String githubClientSecret;
 
-    @Value("${openai.apiKey:}")
-    private String openaiApiKey;
+    @Value("${ai.openrouter.api-key:}")
+    private String openRouterApiKey;
 
-    @Value("${openai.modelName:gemini-flash-latest}")
-    private String openaiModelName;
+    @Value("${ai.openrouter.base-url:https://openrouter.ai/api}")
+    private String openRouterBaseUrl;
+
+    @Value("${ai.openrouter.model:openrouter/free}")
+    private String openRouterModel;
 
     @Value("${supabase.bucket.name:resume_pdf}")
     private String supabaseBucketName;

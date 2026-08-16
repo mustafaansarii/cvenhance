@@ -1,0 +1,20 @@
+package com.docservice.careerhub.ai;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
+
+public final class ChatModelAiProvider implements AiProvider {
+    private final String name;
+    private final ChatClient chatClient;
+    public ChatModelAiProvider(String name, ChatModel chatModel) { this.name = name; this.chatClient = ChatClient.create(chatModel); }
+    @Override public String name() { return name; }
+    @Override public String generate(AiRequest request) { return spec(request).call().content(); }
+    @Override public <T> T generate(AiRequest request, Class<T> type) { return spec(request).call().entity(type); }
+    private ChatClient.ChatClientRequestSpec spec(AiRequest request) {
+        ChatClient.ChatClientRequestSpec prompt = chatClient.prompt().user(request.prompt());
+        if (request.system() != null && !request.system().isBlank()) prompt = prompt.system(request.system());
+        if (request.temperature() != null) prompt = prompt.options(ChatOptions.builder().temperature(request.temperature()).build());
+        return prompt;
+    }
+}
