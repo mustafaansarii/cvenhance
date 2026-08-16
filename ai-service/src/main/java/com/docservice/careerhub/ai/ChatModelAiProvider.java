@@ -6,11 +6,35 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 
 public final class ChatModelAiProvider implements AiProvider {
     private final String name;
+    private final String model;
     private final ChatClient chatClient;
-    public ChatModelAiProvider(String name, ChatModel chatModel) { this.name = name; this.chatClient = ChatClient.create(chatModel); }
-    @Override public String name() { return name; }
-    @Override public String generate(AiRequest request) { return spec(request).call().content(); }
-    @Override public <T> T generate(AiRequest request, Class<T> type) { return spec(request).call().entity(type); }
+
+    public ChatModelAiProvider(String name, String model, ChatModel chatModel) {
+        this.name = name;
+        this.model = model;
+        this.chatClient = ChatClient.create(chatModel);
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public String model() {
+        return model;
+    }
+
+    @Override
+    public String generate(AiRequest request) {
+        return spec(request).call().content();
+    }
+
+    @Override
+    public <T> T generate(AiRequest request, Class<T> type) {
+        return spec(request).call().entity(type);
+    }
+
     private ChatClient.ChatClientRequestSpec spec(AiRequest request) {
         ChatClient.ChatClientRequestSpec prompt = chatClient.prompt().user(request.prompt());
         if (request.system() != null && !request.system().isBlank()) prompt = prompt.system(request.system());

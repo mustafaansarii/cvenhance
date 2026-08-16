@@ -4,6 +4,8 @@ import com.docservice.careerhub.ai.AiProvider;
 import com.docservice.careerhub.ai.ChatModelAiProvider;
 import io.micrometer.observation.ObservationRegistry;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -18,6 +20,8 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class AiProviderConfiguration {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AiProviderConfiguration.class);
+
     private final AppProperties properties;
 
     public AiProviderConfiguration(AppProperties properties) {
@@ -30,10 +34,13 @@ public class AiProviderConfiguration {
             ObjectProvider<RestClient.Builder> restClientBuilder) {
         ChatModel openRouterChatModel = createOpenRouterChatModel(
                 toolCallingManager, retryTemplate, observationRegistry, restClientBuilder);
-
-        return List.of(
-                new ChatModelAiProvider("Gemini", geminiChatModel),
-                new ChatModelAiProvider("OpenRouter", openRouterChatModel));
+        
+        List<AiProvider> providers = List.of(
+                new ChatModelAiProvider("Gemini", properties.getGeminiModel(), geminiChatModel),
+                new ChatModelAiProvider("OpenRouter", properties.getOpenRouterModel(), openRouterChatModel));
+        LOGGER.info("AI providers ready: Gemini primary ({}) and OpenRouter fallback ({})",
+                properties.getGeminiModel(), properties.getOpenRouterModel());
+        return providers;
     }
 
     private OpenAiChatModel createOpenRouterChatModel(ToolCallingManager toolCallingManager,

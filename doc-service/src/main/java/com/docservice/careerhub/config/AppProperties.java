@@ -79,6 +79,9 @@ public class AppProperties {
     @Value("${github.clientSecret:}")
     private String githubClientSecret;
 
+    @Value("${spring.ai.google.genai.chat.options.model:gemini-flash-latest}")
+    private String geminiModel;
+
     @Value("${ai.openrouter.api-key:}")
     private String openRouterApiKey;
 
