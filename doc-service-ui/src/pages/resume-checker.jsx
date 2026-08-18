@@ -81,27 +81,87 @@ function ScoreRing({ score, size = 104 }) {
     );
 }
 
+
+const WIRE_VIEW_W = 400;
+const WIRE_VIEW_H = 160;
+const WIRE_PATH_W = 800;
+const WIRE_WAVELENGTH = 200;
+const WIRE_BASE = WIRE_VIEW_H / 2;
+const WIRES = [
+    { color: '#ef4444', amp: 30, phase: 0.0, dur: 3.2 },
+    { color: '#10b981', amp: 34, phase: 2.2, dur: 2.6 },
+    { color: '#3b82f6', amp: 24, phase: 4.2, dur: 3.9 },
+];
+function wavePath(amp, phase) {
+    let d = `M 0 ${WIRE_BASE}`;
+    for (let x = 0; x <= WIRE_PATH_W; x += 6) {
+        const y = WIRE_BASE + amp * Math.sin((x / WIRE_WAVELENGTH) * Math.PI * 2 + phase);
+        d += ` L ${x} ${y.toFixed(1)}`;
+    }
+    return d;
+}
+
 const Bar = ({ w = '100%', h = 'h-3' }) => <div className={`${h} rounded bg-muted`} style={{ width: w }} />;
 
-/** Full 3-pane skeleton shown while the AI analysis runs. */
+function TwistedWire({ width = 360, height = 128 }) {
+    return (
+        <svg viewBox={`0 0 ${WIRE_VIEW_W} ${WIRE_VIEW_H}`} width={width} height={height} className="mx-auto overflow-hidden">
+            <defs>
+                {/* Fade the ends so the wires appear to travel in from off-screen and out the other side. */}
+                <linearGradient id="tw-fade" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stopColor="white" stopOpacity="0" />
+                    <stop offset="0.2" stopColor="white" stopOpacity="1" />
+                    <stop offset="0.8" stopColor="white" stopOpacity="1" />
+                    <stop offset="1" stopColor="white" stopOpacity="0" />
+                </linearGradient>
+                <mask id="tw-mask">
+                    <rect x="0" y="0" width={WIRE_VIEW_W} height={WIRE_VIEW_H} fill="url(#tw-fade)" />
+                </mask>
+            </defs>
+            <g mask="url(#tw-mask)">
+                {WIRES.map((w, i) => (
+                    <g key={i} style={{ animation: `tw-slide ${w.dur}s linear infinite` }}>
+                        <path d={wavePath(w.amp, w.phase)} fill="none" stroke={w.color}
+                            strokeWidth="3" strokeLinecap="round" opacity="0.85" />
+                    </g>
+                ))}
+            </g>
+        </svg>
+    );
+}
+
+/** Shown while the AI analysis runs: the 3-pane skeleton, with the animated twisted-wire loader on top. */
 function AnalyzingSkeleton() {
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-background">
             <HeroBar />
-            <div className="flex min-h-0 flex-1 animate-pulse flex-col lg:flex-row lg:overflow-hidden">
-                <aside className="w-full shrink-0 space-y-3 p-4 lg:w-60 lg:border-r lg:border-border">
-                    <div className="mx-auto h-24 w-24 rounded-full bg-muted" />
-                    <Bar w="40%" />
-                    {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-8 rounded-lg bg-muted" />)}
-                </aside>
-                <section className="min-w-0 flex-1 p-5 sm:p-8 lg:border-r lg:border-border">
-                    <div className="mx-auto max-w-2xl space-y-4">
-                        <div className="h-8 w-52 rounded bg-muted" />
-                        <Bar w="70%" />
-                        {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 rounded-xl bg-muted" />)}
+            <style>{`@keyframes tw-slide{from{transform:translateX(0)}to{transform:translateX(-${WIRE_PATH_W / 2}px)}}`}</style>
+            <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+                {/* Skeleton layout (background) */}
+                <div className="flex min-h-0 flex-1 animate-pulse flex-col lg:flex-row lg:overflow-hidden">
+                    <aside className="w-full shrink-0 space-y-3 p-4 lg:w-60 lg:border-r lg:border-border">
+                        <div className="mx-auto h-24 w-24 rounded-full bg-muted" />
+                        <Bar w="40%" />
+                        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-8 rounded-lg bg-muted" />)}
+                    </aside>
+                    <section className="min-w-0 flex-1 p-5 sm:p-8 lg:border-r lg:border-border">
+                        <div className="mx-auto max-w-2xl space-y-4">
+                            <div className="h-8 w-52 rounded bg-muted" />
+                            <Bar w="70%" />
+                            {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-24 rounded-xl bg-muted" />)}
+                        </div>
+                    </section>
+                    <section className="hidden w-full shrink-0 bg-muted/60 lg:block lg:h-full lg:w-[540px]" />
+                </div>
+
+                {/* Twisted-wire animation overlay (transparent, no border) */}
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+                    <div className="text-center">
+                        <TwistedWire />
+                        <p className="mt-4 text-base font-semibold text-foreground">Analyzing your resume…</p>
+                        <p className="mt-1 text-sm text-muted-foreground">Scoring each section and finding fixes.</p>
                     </div>
-                </section>
-                <section className="hidden w-full shrink-0 bg-muted/60 lg:block lg:h-full lg:w-[540px]" />
+                </div>
             </div>
         </div>
     );
@@ -269,6 +329,9 @@ export default function ResumeCheckerPage() {
                                 </div>
                             )}
                             <span className="text-xs text-muted-foreground">Drag &amp; drop or click · PDF or DOCX · max 2 MB · parsed in your browser</span>
+                            <span className="text-[11px] text-muted-foreground">
+                                Free: 2 analyses/day. <Link to="/pricing" className="font-semibold text-accent hover:underline">Subscribe</Link> for more &amp; saved history.
+                            </span>
                         </div>
 
                         {/* Recent analyses */}
