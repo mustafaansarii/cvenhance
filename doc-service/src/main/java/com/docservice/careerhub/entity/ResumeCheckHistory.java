@@ -14,11 +14,10 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "ats_analysis_history", indexes = {
-        @Index(name = "idx_ats_history_owner_created", columnList = "ownerEmail, createdAt"),
-        @Index(name = "idx_ats_history_score", columnList = "score")
+@Table(name = "resume_check_history", indexes = {
+        @Index(name = "idx_resume_check_owner_created", columnList = "ownerEmail, createdAt")
 })
-public class AtsAnalysisHistory {
+public class ResumeCheckHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,16 +29,10 @@ public class AtsAnalysisHistory {
     private String targetRole;
 
     @Column(nullable = false)
-    private int score;
+    private int overallScore;
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String strengthsJson;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String weaknessesJson;
-
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String suggestionsJson;
+    private String categoriesJson;
 
     @Column(columnDefinition = "TEXT")
     private String resumeSnapshot;

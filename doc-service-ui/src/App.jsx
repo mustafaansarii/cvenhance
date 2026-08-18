@@ -21,13 +21,14 @@ import ResumeCheckerPage from './pages/resume-checker';
 import ComingSoon from './pages/ComingSoon';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
+import ResumeBuilder from './pages/ResumeBuilder';
 import SettingsPage from './pages/SettingsPage';
 import ResumeUploadPrompt from './components/profile/ResumeUploadPrompt';
 import PrivacyConsentBanner from './components/shared/PrivacyConsentBanner';
 
 function App() {
   const location = useLocation();
-  const isEditor = location.pathname.startsWith('/doc-editor');
+  const isEditor = location.pathname.startsWith('/doc-editor') || location.pathname.startsWith('/resume-builder');
   const noFooterPaths = ['/login', '/signup'];
   const hideFooter = isEditor || noFooterPaths.includes(location.pathname);
 
@@ -67,6 +68,7 @@ function App() {
         <Route path="/job-tracker" element={<ComingSoon breadcrumb="Job Search" title="Job Tracker" description="Organize all your applications in one place." />} />
         <Route path="/job-board" element={<ComingSoon breadcrumb="Job Search" title="Job Board" description="Find roles that match your skills and experience." />} />
         <Route path="/templates" element={<DocTemplates />} />
+        <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
         <Route
           path="/my-templates"
           element={

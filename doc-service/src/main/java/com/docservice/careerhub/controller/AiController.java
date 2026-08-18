@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.AiAssistResult;
-import com.docservice.careerhub.dto.ai.AtsAnalysisResult;
+import com.docservice.careerhub.dto.ai.ResumeCheckResult;
 import com.docservice.careerhub.dto.request.AiAssistRequest;
-import com.docservice.careerhub.dto.request.AtsAnalysisRequest;
-import com.docservice.careerhub.entity.AtsAnalysisHistory;
-import com.docservice.careerhub.service.AtsAnalysisService;
+import com.docservice.careerhub.dto.request.ResumeCheckRequest;
+import com.docservice.careerhub.entity.ResumeCheckHistory;
 import com.docservice.careerhub.service.ResumeAiService;
+import com.docservice.careerhub.service.ResumeCheckService;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -36,7 +36,7 @@ public class AiController {
     private ResumeAiService resumeAiService;
 
     @Autowired
-    private AtsAnalysisService atsAnalysisService;
+    private ResumeCheckService resumeCheckService;
 
     @PostMapping("/generate")
     public Map<String, String> generate(@RequestBody AiRequest request) {
@@ -48,21 +48,20 @@ public class AiController {
         return resumeAiService.assist(authentication.getName(), request);
     }
 
-    @PostMapping("/ats-analyze")
-    public AtsAnalysisResult analyze(Authentication authentication, @RequestBody AtsAnalysisRequest request) {
-        return atsAnalysisService.analyze(authentication.getName(), request);
+    @PostMapping("/resume-check")
+    public ResumeCheckResult resumeCheck(Authentication authentication, @RequestBody ResumeCheckRequest request) {
+        return resumeCheckService.check(authentication.getName(), request);
     }
 
-    @GetMapping("/ats-history")
-    public Page<AtsAnalysisHistory> history(Authentication authentication,
-                                            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return atsAnalysisService.history(authentication.getName(), pageable);
+    @GetMapping("/resume-check/history")
+    public Page<ResumeCheckHistory> resumeCheckHistory(Authentication authentication,
+                                                       @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        return resumeCheckService.history(authentication.getName(), pageable);
     }
 
-    @GetMapping("/ats-history/{id}")
-    public ResponseEntity<AtsAnalysisResult> getHistory(Authentication authentication, @PathVariable Long id) {
-        AtsAnalysisHistory history = atsAnalysisService.getHistory(authentication.getName(), id);
-        return ResponseEntity.ok(atsAnalysisService.toResult(history));
+    @GetMapping("/resume-check/history/{id}")
+    public ResponseEntity<ResumeCheckResult> resumeCheckHistoryItem(Authentication authentication, @PathVariable Long id) {
+        ResumeCheckHistory history = resumeCheckService.getHistory(authentication.getName(), id);
+        return ResponseEntity.ok(resumeCheckService.toResult(history));
     }
-
 }

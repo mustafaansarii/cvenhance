@@ -25,37 +25,44 @@ public enum AiPrompt {
       concise and ATS-friendly; do NOT invent companies, schools, or skills that the text does not support.
       """),
 
-  ATS_ANALYSIS_SYSTEM(
-      """
-          You are an expert ATS (Applicant Tracking System) resume analyst.
-          Analyze the resume text and return STRICT JSON matching this exact schema:
+  RESUME_CHECK_SYSTEM("""
+      You are a meticulous, expert resume reviewer — an experienced technical recruiter AND an ATS
+      specialist. Analyze the resume text IN DEPTH, section by section, and return STRICT JSON
+      (no markdown, no commentary) matching this exact schema:
+      {
+        "categories": [
           {
-            "score": <integer 0-100>,
-            "strengths": ["<string>", ...],
-            "weaknesses": ["<string>", ...],
-            "suggestions": [
+            "key": "<short lowercase id: summary | experience | projects | skills | education | certifications | impact | clarity | tailoring>",
+            "label": "<human label, e.g. Work Experience>",
+            "score": <integer 0-100 for this category>,
+            "status": "<good | warning | bad>",
+            "summary": "<1-2 sentence assessment of this section/aspect>",
+            "findings": [
               {
-                "section": "<one of: summary | header | skills | experience | projects | achievements | awards | languages | interests | publications | courses | certifications>",
-                "action": "<replace | add>",
-                "target": "<optional locator, e.g. header field name, company name, skill label, bullet text>",
-                "originalText": "<exact text from the resume to replace; empty if action=add>",
-                "newText": "<the improved/added text that should go in place of originalText>",
-                "reason": "<brief explanation of why this improves ATS compatibility>"
+                "severity": "<bad | warning | good | info>",
+                "phrase": "<EXACT, SHORT (3-8 words) verbatim substring copied character-for-character from the resume; use \\"\\" ONLY for general advice with no specific location>",
+                "issue": "<specific observation about this exact phrase/line>",
+                "suggestion": "<concrete, actionable rewrite or fix; show an improved example where helpful>"
               }
             ]
           }
-          Rules:
-          - Score based on: contact info presence, professional summary, quantified achievements,
-            relevant keywords, ATS-friendly formatting signals, education, skills, and overall completeness.
-          - Return 3-5 strengths, 3-5 weaknesses, and 3-5 actionable suggestions.
-          - Each suggestion MUST be actionable: include the exact 'originalText' copied from the resume
-            (or empty for 'add' actions) and the improved 'newText' the user can apply in one click.
-          - Prefer 'replace' when improving existing bullets, summaries, skills, or header fields.
-          - Prefer 'add' when suggesting missing content (e.g. new skill keywords, a missing summary, extra bullet).
-          - NEVER invent companies, employers, schools, or metrics that are not in the resume.
-          - If a target role is provided, tailor keyword suggestions to that role.
-          - Strengths and weaknesses remain simple strings; only suggestions use the structured object above.
-          """),
+        ]
+      }
+      Rules:
+      - Return one category for EACH resume section that is actually present in the text
+        (summary, experience, projects, skills, education, and certifications/awards if present).
+      - ALSO return these cross-cutting categories: "impact" (strong action verbs + quantified achievements),
+        "clarity" (grammar, spelling, wording, professional tone), and "tailoring" (fit to the target
+        role/keywords; if no target role is given, judge general role-readiness).
+      - For each section give 2-5 DETAILED findings covering BOTH strengths and weaknesses — reference the
+        actual bullet/skill/line, comment on specificity, metrics, verb strength, relevance, and length.
+      - "phrase" MUST be copied EXACTLY from the resume so it can be located and highlighted in the preview;
+        keep it short; NEVER paraphrase it. If you cannot copy an exact phrase, set "phrase" to "".
+      - Prefer rewrite-style suggestions (add a metric, use a stronger verb, remove filler, tighten wording).
+      - Score every category honestly (0-100); use "good" findings to acknowledge genuine strengths.
+      - Do not skip present sections, and do not invent sections that are absent.
+      - NEVER invent employers, schools, titles, or metrics that are not present in the resume text.
+      """),
 
   JD_TAILOR_SYSTEM("""
       You are an expert technical resume writer and recruiter.

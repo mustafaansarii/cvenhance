@@ -28,7 +28,7 @@ const heroCtas = [
         variant: "black",
     },
     {
-        to: "/templates",
+        to: "/resume-checker",
         label: "Get Your Resume Score",
         variant: "white",
     },
