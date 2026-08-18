@@ -91,6 +91,10 @@ public class AppProperties {
     @Value("${ai.openrouter.model:openrouter/free}")
     private String openRouterModel;
 
+    /** "openrouter" (default) or "gemini"; */
+    @Value("${ai.primary-provider:openrouter}")
+    private String aiPrimaryProvider;
+
     @Value("${supabase.bucket.name:resume_pdf}")
     private String supabaseBucketName;
 

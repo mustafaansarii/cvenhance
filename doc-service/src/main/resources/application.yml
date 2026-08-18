@@ -167,6 +167,7 @@ latex:
   compile-timeout-seconds: ${LATEX_COMPILE_TIMEOUT_SECONDS:120}
 
 ai:
+  primary-provider: ${AI_PRIMARY_PROVIDER:gemini}
   openrouter:
     api-key: ${OPENROUTER_API_KEY:}
     base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}

@@ -37,6 +37,7 @@ public class ResumeCheckService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResumeCheckService.class);
     private static final double TEMPERATURE = 0.3;
     private static final int DAILY_LIMIT = 20;
+    private static final int HISTORY_LIMIT = 3;
     private static final int LONG_SENTENCE_CHARS = 220;
     private static final int MIN_WORDS = 400;
     private static final int MAX_WORDS = 900;
@@ -99,14 +100,21 @@ public class ResumeCheckService {
         try {
             ResumeCheckHistory history = new ResumeCheckHistory();
             history.setOwnerEmail(ownerEmail);
-            // target_role is varchar(255); users may paste a full JD here, so store only a short label.
             history.setTargetRole(labelForTargetRole(request.getTargetRole()));
             history.setOverallScore(result.overallScore());
             history.setCategoriesJson(objectMapper.writeValueAsString(result.categories()));
             history.setResumeSnapshot(resumeText);
             historyRepository.save(history);
+            pruneHistory(ownerEmail);
         } catch (Exception e) {
             LOGGER.warn("Failed to persist resume-check history for {}: {}", ownerEmail, e.getMessage());
+        }
+    }
+
+    private void pruneHistory(String ownerEmail) {
+        List<ResumeCheckHistory> all = historyRepository.findByOwnerEmailOrderByCreatedAtDesc(ownerEmail);
+        if (all.size() > HISTORY_LIMIT) {
+            historyRepository.deleteAll(all.subList(HISTORY_LIMIT, all.size()));
         }
     }
 
