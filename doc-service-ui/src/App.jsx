@@ -10,7 +10,6 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import Footer from './components/footer/Footer';
 import DocEditor from './pages/DocEditor';
-import ResumeBuilder from './pages/ResumeBuilder';
 import NotFound from './components/not-found/NotFound';
 import authService from './services/auth.service';
 import ContactUsPage from './pages/contact-us';
@@ -19,7 +18,6 @@ import TermsPage from './pages/terms';
 import RefundPolicyPage from './pages/refund-policy';
 import PrivacyPolicyPage from './pages/privacy-policy';
 import ResumeCheckerPage from './pages/resume-checker';
-import ResumeExamplePage from './pages/resume-example';
 import ComingSoon from './pages/ComingSoon';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
@@ -29,7 +27,7 @@ import PrivacyConsentBanner from './components/shared/PrivacyConsentBanner';
 
 function App() {
   const location = useLocation();
-  const isEditor = location.pathname.startsWith('/doc-editor') || location.pathname.startsWith('/resume-builder');
+  const isEditor = location.pathname.startsWith('/doc-editor');
   const noFooterPaths = ['/login', '/signup'];
   const hideFooter = isEditor || noFooterPaths.includes(location.pathname);
 
@@ -65,13 +63,9 @@ function App() {
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/resume-checker" element={<ResumeCheckerPage />} />
-        <Route path="/resume-example" element={<ResumeExamplePage />} />
         <Route path="/interview-prep" element={<ComingSoon breadcrumb="Job Search" title="Interview Prep" description="Practice with AI mock interviews and get instant feedback." />} />
         <Route path="/job-tracker" element={<ComingSoon breadcrumb="Job Search" title="Job Tracker" description="Organize all your applications in one place." />} />
         <Route path="/job-board" element={<ComingSoon breadcrumb="Job Search" title="Job Board" description="Find roles that match your skills and experience." />} />
-        <Route path="/resume-builder" element={<ResumeBuilder />} />
-        <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
-
         <Route path="/templates" element={<DocTemplates />} />
         <Route
           path="/my-templates"

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import docService from '../../services/doc.service';
 
 const MotionDiv = motion.div;
 
@@ -57,15 +56,14 @@ const REVIEWS = [
 
 const FAQS = [
     { q: 'Is CVEnhance free to use?', a: 'Yes. You can build a resume, fill in your details, and download a PDF for free — no payment required to get a finished, recruiter-ready document.' },
-    { q: 'Do I need an account to build a resume?', a: 'No. You can open the resume builder and download a PDF without signing in. Creating an account simply lets us save your details and reuse them next time.' },
-    { q: 'What is the difference between the form editor and the LaTeX editor?', a: 'The form editor is the default — you fill in structured fields and see a live preview, no coding needed. The LaTeX editor is for advanced users who want to tweak the raw LaTeX of the same template. Use the ⋯ menu on any template to switch.' },
+    { q: 'Do I need an account to use a resume template?', a: 'Create an account to save a template to your documents, edit it, and return to it later.' },
+    { q: 'How do I edit a template?', a: 'Choose a template, save it to your account, and edit it in the LaTeX editor with a live PDF preview.' },
     { q: 'Are CVEnhance resumes ATS-friendly?', a: 'Yes. Every template uses clean, single-column-friendly layouts with standard section headings and readable fonts, so applicant tracking systems can parse your name, experience, and skills without dropping content.' },
-    { q: 'How do I download my resume as a PDF?', a: 'Click “Download PDF” in the builder. It produces a crisp, multi-page US-Letter PDF with proper margins — page breaks fall between sections so nothing gets cut in half.' },
-    { q: 'Can I edit my resume after I have started?', a: 'Of course. Edit any field inline, drag headings to reorder sections, add or remove sections, and re-download anytime. If you are signed in, your edits are saved back to your account on download.' },
-    { q: 'Will my saved details pre-fill the builder?', a: 'Yes. Once you add your details under Profile → Resume details, every template you open is automatically pre-filled with your information. If you have not added anything yet, the form shows example content you can replace.' },
-    { q: 'Can I switch templates without re-typing everything?', a: 'Yes. Your information lives in one place and flows into whichever template you pick, so changing the design never means re-entering your experience, education, or skills.' },
+    { q: 'How do I download my resume as a PDF?', a: 'Use the PDF controls in the editor to compile and download your document.' },
+    { q: 'Can I edit my resume after I have started?', a: 'Yes. Saved documents remain in My Documents, where you can edit and compile them again anytime.' },
+    { q: 'Can I switch templates?', a: 'Yes. Browse templates and save another design to your account whenever you want to try a different layout.' },
     { q: 'How do I sign in or create an account?', a: 'Use your email and password, or continue with Google or GitHub. If you sign in with a social account for the first time, an account is created for you automatically.' },
-    { q: 'Can I add sections like Projects, Certifications, or Awards?', a: 'Yes. Use “Add section” at the bottom of the builder to add Projects, Certifications, Achievements, Awards, Languages, Volunteering, Publications, and more — then reorder them by dragging the headings.' }
+    { q: 'Can I add sections like Projects, Certifications, or Awards?', a: 'Yes. Add the section in your template source, then compile the document again to update the PDF.' }
 ];
 
 function FaqItem({ item, isOpen, onToggle }) {
@@ -137,22 +135,7 @@ function Stars({ count = 5 }) {
 }
 
 export default function HomeSections() {
-    const [liveTemplates, setLiveTemplates] = useState([]);
-    useEffect(() => {
-        let alive = true;
-        docService.listTemplates({ type: 'CV_AND_RESUME', page: 0, size: 8 })
-            .then((data) => {
-                if (!alive) return;
-                const cards = (data?.content || [])
-                    .filter((t) => t.imageUrl)
-                    .slice(0, 4)
-                    .map((t) => ({ src: t.imageUrl, name: t.name, to: `/resume-builder/${t.templateCode}` }));
-                setLiveTemplates(cards);
-            })
-            .catch(() => { /* keep fallback */ });
-        return () => { alive = false; };
-    }, []);
-    const templateCards = liveTemplates.length ? liveTemplates : TEMPLATES;
+    const templateCards = TEMPLATES;
 
     return (
         <div className="bg-background text-foreground">

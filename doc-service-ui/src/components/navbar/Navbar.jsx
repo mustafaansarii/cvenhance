@@ -30,20 +30,19 @@ const ICONS = { builder: <DocIcon />, grid: <GridIcon />, folder: <FolderIcon />
 
 const navItems = [
     {
-        label: 'Resume',
+        label: 'Templates',
         mega: {
             columns: [
                 {
                     kind: 'cards', heading: 'Tools',
                     items: [
-                        { icon: 'builder', title: 'Resume Builder', desc: 'Helps you to land interviews', to: '/resume-builder' },
-                        { icon: 'grid', title: 'Resume Checker', desc: 'Is your resume good enough?', to: '/resume-checker' },
-                        { icon: 'folder', title: 'Resume Templates', desc: 'Free and premium templates', to: '/templates' },
-                        { icon: 'mail', title: 'Resume Examples', desc: 'Generate or explore', to: '/resume-example' },
+                        { icon: 'folder', title: 'Explore Templates', desc: 'Free and premium templates', to: '/templates' },
+                        { icon: 'grid', title: 'CV Analyze', desc: 'Is your resume good enough?', to: '/resume-checker' },
+                        
                     ],
                 },
             ],
-            promo: { title: 'Free, ATS-friendly resume builder', desc: 'Build and download in minutes — no account needed.', cta: 'Build your resume', to: '/resume-builder' },
+            promo: { title: 'Professional resume templates', desc: 'Choose a template and tailor it to your experience.', cta: 'Browse templates', to: '/templates?type=CV_AND_RESUME&page=1&size=50' },
         },
     },
     {

@@ -82,7 +82,7 @@ export default function Hero() {
 
                         <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1f1e1d] leading-tight tracking-tight">
                             Land more interviews with our{" "}
-                            <span className="italic text-[#c96442]">Resume Builder</span>
+                            <span className="italic text-[#c96442]">CV Builder</span>
                         </h1>
 
                         <p className="text-base sm:text-lg text-[#6b6a65] leading-relaxed max-w-lg">

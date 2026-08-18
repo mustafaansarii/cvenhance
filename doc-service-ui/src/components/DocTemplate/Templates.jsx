@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import {
     DocumentTextIcon,
     EllipsisHorizontalIcon,
-    PencilSquareIcon,
     CodeBracketIcon,
     MagnifyingGlassIcon,
     ChevronLeftIcon,
@@ -12,8 +11,6 @@ import {
 } from '@heroicons/react/24/outline';
 import docService from '../../services/doc.service';
 import authService from '../../services/auth.service';
-const designCodeFor = (doc) => doc?.templateCode || 'classic';
-
 const CATEGORIES = [
     { key: 'CV_AND_RESUME', label: 'CV & Resume' },
     { key: 'COVER_LETTER', label: 'Cover Letter' },
@@ -51,7 +48,7 @@ function TemplateCard({ doc, onAction, isBusy }) {
 
     return (
         <div
-            onClick={() => !isBusy && choose('form')}
+            onClick={() => !isBusy && choose('latex')}
             className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:shadow-lg hover:ring-1 hover:ring-accent"
         >
             <div className="relative flex items-center justify-center overflow-hidden bg-muted" style={{ aspectRatio: '3/4' }}>
@@ -90,7 +87,6 @@ function TemplateCard({ doc, onAction, isBusy }) {
                     </button>
                     {menuOpen && (
                         <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
-                            <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><PencilSquareIcon className="h-4 w-4 text-muted-foreground" /> Edit with form</button>
                             <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><CodeBracketIcon className="h-4 w-4 text-muted-foreground" /> Edit with LaTeX editor</button>
                         </div>
                     )}
@@ -186,12 +182,7 @@ export default function Templates({ mode = 'templates' }) {
     const [error, setError] = useState(null);
     const [busyId, setBusyId] = useState(null);
 
-    const handleAction = async (doc, action = 'form') => {
-
-        if (action === 'form') {
-            navigate(`/resume-builder/${designCodeFor(doc)}`);
-            return;
-        }
+    const handleAction = async (doc, action = 'latex') => {
 
         if (busyId) return;
         setBusyId(doc.id);
