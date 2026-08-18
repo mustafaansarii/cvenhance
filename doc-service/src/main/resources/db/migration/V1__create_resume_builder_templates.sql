@@ -30,6 +30,31 @@ CREATE INDEX IF NOT EXISTS idx_resume_builder_documents_owner
 CREATE INDEX IF NOT EXISTS idx_resume_builder_documents_owner_template
     ON resume_builder_documents (owner_email, template_code);
 
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'resume_builder_templates'
+          AND column_name = 'created_at'
+    ) THEN
+        ALTER TABLE resume_builder_templates
+            ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'resume_builder_templates'
+          AND column_name = 'updated_at'
+    ) THEN
+        ALTER TABLE resume_builder_templates
+            ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
+
 INSERT INTO resume_builder_templates (template_code, name, description, active, version, config_json)
 VALUES
     ('classic', 'Classic', 'Editable resume template', TRUE, 1, $json${"schemaVersion":1,"accent":"#3b6fe0","layout":{"type":"single-column","sidebarSections":["skills","projects","achievements","languages","interests","awards"],"sidebarWidth":"33%","sidebarSide":"left","columnGap":32},"page":{"margin":44,"fontSize":14,"lineHeight":1.2,"fontFamily":"sans","sectionGap":20},"header":{"variant":"classic","name":{"fontSize":37,"fontWeight":700,"lineHeight":1.0},"title":{"fontSize":16,"fontWeight":600,"lineHeight":1.25},"contact":{"fontSize":13,"lineHeight":1.35,"gap":20}},"sections":{"title":{"variant":"underline","fontSize":18,"fontWeight":700,"lineHeight":1.2},"body":{"fontSize":14,"lineHeight":1.45},"spacingTop":20,"spacingBottom":10},"items":{"primary":{"fontSize":16,"fontWeight":700,"lineHeight":1.25},"secondary":{"fontSize":14,"fontWeight":600,"lineHeight":1.3},"meta":{"fontSize":13,"lineHeight":1.35},"bullet":{"fontSize":14,"lineHeight":1.4},"spacingBottom":16}}$json$),
