@@ -19,6 +19,7 @@ POST,/api/payments/webhook,PUBLIC
 POST,/api/contact,PUBLIC
 POST,/api/ai/generate,USER|ADMIN
 POST,/api/ai/assist,USER|ADMIN
+POST,/api/ai/resume-check,USER|ADMIN
 POST,/api/ai/ats-analyze,USER|ADMIN
 GET,/api/ai/ats-history,USER|ADMIN
 GET,/api/ai/ats-history/*,USER|ADMIN

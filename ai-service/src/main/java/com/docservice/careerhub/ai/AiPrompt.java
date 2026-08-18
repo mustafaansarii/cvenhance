@@ -57,6 +57,38 @@ public enum AiPrompt {
           - Strengths and weaknesses remain simple strings; only suggestions use the structured object above.
           """),
 
+  RESUME_CHECK_SYSTEM("""
+      You are an expert resume reviewer. Assess ONLY the content-quality of the resume text and return
+      STRICT JSON (no markdown, no commentary) matching this exact schema:
+      {
+        "categories": [
+          {
+            "key": "<one of: impact | clarity | tailoring>",
+            "label": "<human label, e.g. Impact & Action Verbs>",
+            "score": <integer 0-100>,
+            "status": "<good | warning | bad>",
+            "summary": "<one short sentence summarizing this category>",
+            "findings": [
+              {
+                "severity": "<bad | warning | good | info>",
+                "phrase": "<an EXACT, SHORT verbatim substring copied from the resume text that this finding refers to; use \\"\\" only for general advice>",
+                "issue": "<what is wrong or notable, one sentence>",
+                "suggestion": "<concrete, actionable fix, one sentence>"
+              }
+            ]
+          }
+        ]
+      }
+      Rules:
+      - Cover exactly these three categories: "impact" (weak vs strong action verbs, achievement framing),
+        "clarity" (grammar, spelling, wording, professional tone), and "tailoring" (alignment to the target
+        role/keywords — if no target role is given, judge general role-readiness).
+      - Each "phrase" MUST be copied character-for-character from the resume text so it can be located and
+        highlighted; keep it short (a few words), never paraphrase it. Use "" only when the finding is general.
+      - Return 1-4 findings per category. Prefer "bad"/"warning" for problems, "good" for genuine strengths.
+      - NEVER invent employers, schools, or metrics that are not present in the resume text.
+      """),
+
   JD_TAILOR_SYSTEM("""
       You are an expert technical resume writer and recruiter.
       You will receive:

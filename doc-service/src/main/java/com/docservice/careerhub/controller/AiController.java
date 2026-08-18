@@ -19,11 +19,14 @@ import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.AiAssistResult;
 import com.docservice.careerhub.dto.ai.AtsAnalysisResult;
+import com.docservice.careerhub.dto.ai.ResumeCheckResult;
 import com.docservice.careerhub.dto.request.AiAssistRequest;
 import com.docservice.careerhub.dto.request.AtsAnalysisRequest;
+import com.docservice.careerhub.dto.request.ResumeCheckRequest;
 import com.docservice.careerhub.entity.AtsAnalysisHistory;
 import com.docservice.careerhub.service.AtsAnalysisService;
 import com.docservice.careerhub.service.ResumeAiService;
+import com.docservice.careerhub.service.ResumeCheckService;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -38,6 +41,9 @@ public class AiController {
     @Autowired
     private AtsAnalysisService atsAnalysisService;
 
+    @Autowired
+    private ResumeCheckService resumeCheckService;
+
     @PostMapping("/generate")
     public Map<String, String> generate(@RequestBody AiRequest request) {
         return Map.of("text", aiService.generate(request));
@@ -51,6 +57,11 @@ public class AiController {
     @PostMapping("/ats-analyze")
     public AtsAnalysisResult analyze(Authentication authentication, @RequestBody AtsAnalysisRequest request) {
         return atsAnalysisService.analyze(authentication.getName(), request);
+    }
+
+    @PostMapping("/resume-check")
+    public ResumeCheckResult resumeCheck(Authentication authentication, @RequestBody ResumeCheckRequest request) {
+        return resumeCheckService.check(authentication.getName(), request);
     }
 
     @GetMapping("/ats-history")

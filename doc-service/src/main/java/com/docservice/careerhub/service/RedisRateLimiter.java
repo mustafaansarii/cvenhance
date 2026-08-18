@@ -20,7 +20,7 @@ import java.util.Map;
 public class RedisRateLimiter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisRateLimiter.class);
-    private static final int AI_DAILY_LIMIT = 30;
+    private static final int AI_DAILY_LIMIT = 10;
     private static final long DAY_TTL_SECONDS = 90_000;
 
     private final RestClient restClient = RestClient.create();
@@ -32,6 +32,13 @@ public class RedisRateLimiter {
         String key = "ai:assist:" + email + ":" + LocalDate.now(ZoneOffset.UTC);
         if (!allow(key, AI_DAILY_LIMIT, DAY_TTL_SECONDS)) {
             throw ApiException.tooManyRequests("You've reached today's AI limit. Please try again tomorrow.");
+        }
+    }
+
+    public void checkDailyLimit(String email, String feature, int limit) {
+        String key = "ai:" + feature + ":" + email + ":" + LocalDate.now(ZoneOffset.UTC);
+        if (!allow(key, limit, DAY_TTL_SECONDS)) {
+            throw ApiException.tooManyRequests("You've reached today's limit. Please try again tomorrow.");
         }
     }
 
