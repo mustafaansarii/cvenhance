@@ -99,7 +99,8 @@ public class ResumeCheckService {
         try {
             ResumeCheckHistory history = new ResumeCheckHistory();
             history.setOwnerEmail(ownerEmail);
-            history.setTargetRole(StringUtils.hasText(request.getTargetRole()) ? request.getTargetRole().trim() : null);
+            // target_role is varchar(255); users may paste a full JD here, so store only a short label.
+            history.setTargetRole(labelForTargetRole(request.getTargetRole()));
             history.setOverallScore(result.overallScore());
             history.setCategoriesJson(objectMapper.writeValueAsString(result.categories()));
             history.setResumeSnapshot(resumeText);
@@ -107,6 +108,14 @@ public class ResumeCheckService {
         } catch (Exception e) {
             LOGGER.warn("Failed to persist resume-check history for {}: {}", ownerEmail, e.getMessage());
         }
+    }
+
+    private String labelForTargetRole(String targetRole) {
+        if (!StringUtils.hasText(targetRole)) {
+            return null;
+        }
+        String trimmed = targetRole.trim();
+        return trimmed.length() <= 200 ? trimmed : trimmed.substring(0, 200) + "…";
     }
 
     // ---------------- Deterministic checks ----------------
