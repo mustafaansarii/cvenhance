@@ -22,30 +22,26 @@ const legacyColors = {
 
 const PAD = 0;
 
-/**
- * Renders a PDF scaled to fit its container width, then highlights matching text.
- * `highlights`: array of `{ phrase, color }`. Matching is whitespace/punctuation-insensitive and
- * spans across pdf.js text spans (words are often split), so multi-word phrases highlight correctly.
- */
 export default function PdfViewer({ file, highlights, activePhrase, activeCategory }) {
     const containerRef = useRef(null);
-    const [size, setSize] = useState({ w: 0, h: 0 });
+    const [width, setWidth] = useState(0);
 
     useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return undefined;
-        const ro = new ResizeObserver((entries) => {
-            const { width: w, height: h } = entries[0].contentRect;
-            setSize((prev) => (Math.abs(prev.w - w) > 6 || Math.abs(prev.h - h) > 6
-                ? { w: Math.floor(w), h: Math.floor(h) } : prev));
-        });
-        ro.observe(el);
-        return () => ro.disconnect();
+        let frame = 0;
+        const measure = () => {
+            const el = containerRef.current;
+            if (!el) return;
+            const w = Math.floor(el.clientWidth);
+            setWidth((prev) => (Math.abs(prev - w) > 8 ? w : prev));
+        };
+        measure();
+        const onResize = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
+        window.addEventListener('resize', onResize);
+        return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', onResize); };
     }, []);
 
     useEffect(() => {
-        const { w: width, h: height } = size;
-        if (!file || !containerRef.current || !width || !height) return undefined;
+        if (!file || !containerRef.current || !width) return undefined;
         let cancelled = false;
         const container = containerRef.current;
         const marks = (highlights && highlights.length)
@@ -56,7 +52,8 @@ export default function PdfViewer({ file, highlights, activePhrase, activeCatego
             container.replaceChildren();
             const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
             const outputScale = (window.devicePixelRatio || 1) * 2;
-            const availableW = width - PAD * 2;
+            // Reserve room for a possible vertical scrollbar so a horizontal scrollbar never appears.
+            const availableW = width - PAD * 2 - 16;
 
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
                 if (cancelled) return;
@@ -104,9 +101,9 @@ export default function PdfViewer({ file, highlights, activePhrase, activeCatego
         });
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [file, size.w, size.h, activePhrase, activeCategory, JSON.stringify(highlights || [])]);
+    }, [file, width, activePhrase, activeCategory, JSON.stringify(highlights || [])]);
 
-    return <div ref={containerRef} className="flex h-full min-h-[60vh] w-full flex-col gap-1.5 overflow-auto bg-muted" />;
+    return <div ref={containerRef} className="flex h-full min-h-[60vh] w-full flex-col gap-1.5 overflow-y-auto overflow-x-hidden bg-muted" />;
 }
 
 // ---------------- Accurate highlighting ----------------

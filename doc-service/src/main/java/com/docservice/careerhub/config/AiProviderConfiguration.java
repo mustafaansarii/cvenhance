@@ -34,12 +34,15 @@ public class AiProviderConfiguration {
             ObjectProvider<RestClient.Builder> restClientBuilder) {
         ChatModel openRouterChatModel = createOpenRouterChatModel(
                 toolCallingManager, retryTemplate, observationRegistry, restClientBuilder);
-        
-        List<AiProvider> providers = List.of(
-                new ChatModelAiProvider("Gemini", properties.getGeminiModel(), geminiChatModel),
-                new ChatModelAiProvider("OpenRouter", properties.getOpenRouterModel(), openRouterChatModel));
-        LOGGER.info("AI providers ready: Gemini primary ({}) and OpenRouter fallback ({})",
-                properties.getGeminiModel(), properties.getOpenRouterModel());
+
+        AiProvider gemini = new ChatModelAiProvider("Gemini", properties.getGeminiModel(), geminiChatModel);
+        AiProvider openRouter = new ChatModelAiProvider("OpenRouter", properties.getOpenRouterModel(), openRouterChatModel);
+        boolean geminiPrimary = "gemini".equalsIgnoreCase(properties.getAiPrimaryProvider());
+        List<AiProvider> providers = geminiPrimary
+                ? List.of(gemini, openRouter)
+                : List.of(openRouter, gemini);
+        LOGGER.info("AI providers ready: {} primary, {} fallback",
+                providers.get(0).name(), providers.get(1).name());
         return providers;
     }
 
