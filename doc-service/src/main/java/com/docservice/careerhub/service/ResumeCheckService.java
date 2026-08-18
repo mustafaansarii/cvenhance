@@ -9,10 +9,16 @@ import com.docservice.careerhub.dto.ai.ResumeCheckResult;
 import com.docservice.careerhub.dto.ai.ResumeCheckResult.Category;
 import com.docservice.careerhub.dto.ai.ResumeCheckResult.Finding;
 import com.docservice.careerhub.dto.request.ResumeCheckRequest;
+import com.docservice.careerhub.entity.ResumeCheckHistory;
 import com.docservice.careerhub.exception.ApiException;
+import com.docservice.careerhub.repo.ResumeCheckHistoryRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -50,6 +56,12 @@ public class ResumeCheckService {
     @Autowired
     private RedisRateLimiter redisRateLimiter;
 
+    @Autowired
+    private ResumeCheckHistoryRepository historyRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public ResumeCheckResult check(String userEmail, ResumeCheckRequest request) {
         redisRateLimiter.checkDailyLimit(userEmail, "resume-check", DAILY_LIMIT);
         validate(request);
@@ -58,7 +70,43 @@ public class ResumeCheckService {
         List<Category> categories = new ArrayList<>(deterministicCategories(text));
         categories.addAll(aiCategories(userEmail, request, text));
 
-        return new ResumeCheckResult(overallScore(categories), categories);
+        ResumeCheckResult result = new ResumeCheckResult(overallScore(categories), categories);
+        saveHistory(userEmail, request, text, result);
+        return result;
+    }
+
+    public Page<ResumeCheckHistory> history(String ownerEmail, Pageable pageable) {
+        return historyRepository.findByOwnerEmailOrderByCreatedAtDesc(ownerEmail, pageable);
+    }
+
+    public ResumeCheckHistory getHistory(String ownerEmail, Long id) {
+        return historyRepository.findByIdAndOwnerEmail(id, ownerEmail)
+                .orElseThrow(() -> ApiException.notFound("Resume check not found: " + id));
+    }
+
+    public ResumeCheckResult toResult(ResumeCheckHistory history) {
+        try {
+            List<Category> categories = objectMapper.readValue(history.getCategoriesJson(),
+                    new TypeReference<List<Category>>() { });
+            return new ResumeCheckResult(history.getOverallScore(), categories);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to deserialize resume-check history {}: {}", history.getId(), e.getMessage());
+            return new ResumeCheckResult(history.getOverallScore(), List.of());
+        }
+    }
+
+    private void saveHistory(String ownerEmail, ResumeCheckRequest request, String resumeText, ResumeCheckResult result) {
+        try {
+            ResumeCheckHistory history = new ResumeCheckHistory();
+            history.setOwnerEmail(ownerEmail);
+            history.setTargetRole(StringUtils.hasText(request.getTargetRole()) ? request.getTargetRole().trim() : null);
+            history.setOverallScore(result.overallScore());
+            history.setCategoriesJson(objectMapper.writeValueAsString(result.categories()));
+            history.setResumeSnapshot(resumeText);
+            historyRepository.save(history);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to persist resume-check history for {}: {}", ownerEmail, e.getMessage());
+        }
     }
 
     // ---------------- Deterministic checks ----------------

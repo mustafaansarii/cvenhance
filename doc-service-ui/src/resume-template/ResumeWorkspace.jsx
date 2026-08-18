@@ -10,7 +10,7 @@ import userService from '../services/user.service';
 import resumeBuilderService from '../services/resume-builder.service';
 import PricingModal from '../components/payment/PricingModal';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
-import AtsAnalysisPanel from '../components/ai/AtsAnalysisPanel';
+import ResumeCheckPanel from '../components/ai/ResumeCheckPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
@@ -513,184 +513,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
-    // Apply an actionable ATS suggestion directly to the resume content.
-    const applyAtsSuggestion = (s) => {
-        const section = s?.section;
-        const newText = s?.newText;
-        const original = s?.originalText;
-        const target = s?.target;
-        if (!section || !newText || !newText.trim()) return false;
-
-        // ── header fields (name, title, location, phone, email, linkedin, github…) ──
-        if (section === 'header') {
-            const field = (target || '').toLowerCase();
-            // Allow direct field name, or match by user-friendly label
-            const fieldMap = {
-                name: 'name', 'full name': 'name',
-                title: 'title', 'job title': 'title', headline: 'title',
-                location: 'location', address: 'location',
-                phone: 'phone', 'phone number': 'phone', mobile: 'phone',
-                email: 'email', 'e-mail': 'email',
-                linkedin: 'linkedin', 'linkedin label': 'linkedin', 'linkedin url': 'linkedinUrl',
-                github: 'github', 'github label': 'github', 'github url': 'githubUrl',
-            };
-            const key = fieldMap[field];
-            if (key && resume[key] !== undefined) {
-                setField(key, newText);
-                return true;
-            }
-            // Fallback: replace original text in any header-ish field
-            if (original) {
-                if (resume.name === original) { setField('name', newText); return true; }
-                if (resume.title === original) { setField('title', newText); return true; }
-                if (resume.location === original) { setField('location', newText); return true; }
-                if (resume.phone === original) { setField('phone', newText); return true; }
-                if (resume.email === original) { setField('email', newText); return true; }
-                if (resume.summary === original) { setField('summary', newText); return true; }
-            }
-            return false;
-        }
-
-        // ── summary ──
-        if (section === 'summary') {
-            if (original && resume.summary && resume.summary.includes(original)) {
-                setField('summary', resume.summary.replace(original, newText));
-            } else {
-                setField('summary', newText);
-            }
-            return true;
-        }
-
-        // ── skills ──
-        if (section === 'skills') {
-            const skills = [...(resume.skills || [])];
-            // Replace an existing skill group's value
-            if (original) {
-                for (const sk of skills) {
-                    if (sk.value && sk.value.includes(original)) {
-                        sk.value = sk.value.replace(original, newText);
-                        setResume((r) => ({ ...r, skills }));
-                        return true;
-                    }
-                }
-            }
-            // Add a new skill group
-            if (target) {
-                skills.push({ id: nextId(), label: target, value: newText });
-            } else {
-                skills.push({ id: nextId(), label: 'Skills', value: newText });
-            }
-            setResume((r) => ({ ...r, skills }));
-            return true;
-        }
-
-        // ── single-text sections (achievements, awards, languages, interests, publications) ──
-        const textSections = ['achievements', 'awards', 'languages', 'interests', 'publications'];
-        if (textSections.includes(section)) {
-            const items = [...(resume[section] || [])];
-            if (original) {
-                // Replace the matching item's text
-                const idx = items.findIndex((it) => it.text && it.text.includes(original));
-                if (idx >= 0) {
-                    items[idx] = { ...items[idx], text: items[idx].text.replace(original, newText) };
-                    setResume((r) => ({ ...r, [section]: items }));
-                    return true;
-                }
-            }
-            // Add new item
-            items.push({ id: nextId(), text: newText });
-            setResume((r) => ({ ...r, [section]: items }));
-            return true;
-        }
-
-        // ── experience bullets ──
-        if (section === 'experience') {
-            const exp = (resume.experience || []).map((e) => ({ ...e, bullets: (e.bullets || []).map((b) => ({ ...b })) }));
-            if (original) {
-                for (const e of exp) {
-                    for (const b of e.bullets) {
-                        if (b.text && b.text.includes(original)) {
-                            b.text = b.text.replace(original, newText);
-                            setResume((r) => ({ ...r, experience: exp }));
-                            return true;
-                        }
-                    }
-                }
-            }
-            // Add a bullet to the most relevant entry (by target company/role)
-            if (target) {
-                const entry = exp.find((e) =>
-                    (e.primary && e.primary.includes(target)) ||
-                    (e.secondary && e.secondary.includes(target))
-                );
-                const at = entry || exp[exp.length - 1];
-                if (at) {
-                    at.bullets.push({ id: nextId(), text: newText });
-                    setResume((r) => ({ ...r, experience: exp }));
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // ── projects bullets ──
-        if (section === 'projects') {
-            const proj = (resume.projects || []).map((p) => ({ ...p, bullets: (p.bullets || []).map((b) => ({ ...b })) }));
-            if (original) {
-                for (const p of proj) {
-                    for (const b of p.bullets) {
-                        if (b.text && b.text.includes(original)) {
-                            b.text = b.text.replace(original, newText);
-                            setResume((r) => ({ ...r, projects: proj }));
-                            return true;
-                        }
-                    }
-                }
-            }
-            if (target) {
-                const entry = proj.find((p) =>
-                    (p.primary && p.primary.includes(target)) ||
-                    (p.secondary && p.secondary.includes(target))
-                );
-                const at = entry || proj[proj.length - 1];
-                if (at) {
-                    at.bullets.push({ id: nextId(), text: newText });
-                    setResume((r) => ({ ...r, projects: proj }));
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // ── courses & certifications ──
-        if (section === 'courses' || section === 'certifications') {
-            const items = [...(resume[section] || [])];
-            if (original) {
-                const idx = items.findIndex((it) =>
-                    (it.title && it.title.includes(original)) ||
-                    (it.issuer && it.issuer.includes(original))
-                );
-                if (idx >= 0) {
-                    const it = items[idx];
-                    if (it.title && it.title.includes(original)) items[idx] = { ...it, title: it.title.replace(original, newText) };
-                    else items[idx] = { ...it, issuer: it.issuer.replace(original, newText) };
-                    setResume((r) => ({ ...r, [section]: items }));
-                    return true;
-                }
-            }
-            items.push({ id: nextId(), title: newText, issuer: '' });
-            setResume((r) => ({ ...r, [section]: items }));
-            return true;
-        }
-
-        // Fallback: attempt a raw replace across text fields
-        if (original && resume.summary && resume.summary.includes(original)) {
-            setField('summary', resume.summary.replace(original, newText));
-            return true;
-        }
-        return false;
-    };
-
     const renderBody = (type, col = 'main') => {
         const meta = META[type];
         if (meta.kind === 'text') {
@@ -808,11 +630,11 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                     )}
                     <button
                         onClick={() => setAtsAiOpen((o) => !o)}
-                        title="AI ATS Analysis"
+                        title="AI resume analysis"
                         className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${atsAiOpen ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
                         <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">AI</span>
-                        <span className="hidden sm:inline">ATS</span>
+                        <span className="hidden sm:inline">Analyze</span>
                     </button>
                     <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
@@ -1135,12 +957,11 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 onPaymentRequired={() => setPricingOpen(true)}
             />
 
-            <AtsAnalysisPanel
+            <ResumeCheckPanel
                 open={atsAiOpen}
                 resume={resume}
                 onClose={() => setAtsAiOpen(false)}
                 onPaymentRequired={() => setPricingOpen(true)}
-                onApplySuggestion={applyAtsSuggestion}
             />
 
             {previewUrl && (

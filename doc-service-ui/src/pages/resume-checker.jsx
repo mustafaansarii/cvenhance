@@ -1,13 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import mammoth from 'mammoth/mammoth.browser';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {
-    ArrowUpTrayIcon, DocumentTextIcon, ArrowPathIcon,
+    ArrowUpTrayIcon, DocumentTextIcon,
     ChevronLeftIcon, ChevronRightIcon, ExclamationTriangleIcon, CheckCircleIcon,
     Squares2X2Icon, TagIcon, BriefcaseIcon, ChatBubbleLeftRightIcon, VideoCameraIcon, CodeBracketIcon,
-    ArrowTopRightOnSquareIcon, SparklesIcon,
+    ArrowTopRightOnSquareIcon, SparklesIcon, ClockIcon,
 } from '@heroicons/react/24/outline';
 import Navbar from '../components/navbar/Navbar';
 import PageHero from '../components/shared/PageHero';
@@ -53,6 +53,8 @@ async function textFromFile(file) {
 
 const scoreHex = (s) => (s >= 80 ? '#10b981' : s >= 55 ? '#f59e0b' : '#ef4444');
 const scoreText = (s) => (s >= 80 ? 'text-emerald-500' : s >= 55 ? 'text-amber-500' : 'text-red-500');
+const scoreBg = (s) => (s >= 80 ? 'bg-emerald-500' : s >= 55 ? 'bg-amber-500' : 'bg-red-500');
+const fmtDate = (iso) => { try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
 
 const HeroBar = () => (
     <div className="shrink-0 border-b border-border bg-cover bg-center home-page-hero-bg"
@@ -117,6 +119,25 @@ export default function ResumeCheckerPage() {
     const [reading, setReading] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
     const [dragging, setDragging] = useState(false);
+    const [history, setHistory] = useState([]);
+
+    const loadHistory = () => {
+        resumeCheckerService.getHistory(0, 10)
+            .then((page) => setHistory(page?.content || []))
+            .catch(() => setHistory([]));
+    };
+    useEffect(() => { loadHistory(); }, []);
+
+    // Re-open a stored analysis: rebuild results from the saved categories + resume snapshot (text preview).
+    const viewHistory = (item) => {
+        let cats = [];
+        try { cats = JSON.parse(item.categoriesJson || '[]'); } catch { cats = []; }
+        setFile(null);
+        setText(item.resumeSnapshot || '');
+        setData({ overallScore: item.overallScore, categories: cats });
+        setActiveIdx(0);
+        setFocusIdx(null);
+    };
 
     const categories = data?.categories || [];
     const isPdf = /\.pdf$/i.test(file?.name || '');
@@ -160,6 +181,7 @@ export default function ResumeCheckerPage() {
             setData(result);
             setActiveIdx(0);
             setFocusIdx(null);
+            loadHistory();
             toast.success('Analysis ready.', { id });
         } catch (err) {
             const status = err?.response?.status;
@@ -249,12 +271,36 @@ export default function ResumeCheckerPage() {
                             <span className="text-xs text-muted-foreground">Drag &amp; drop or click · PDF or DOCX · max 2 MB · parsed in your browser</span>
                         </div>
 
+                        {/* Recent analyses */}
+                        {history.length > 0 && (
+                            <div className="mx-auto mt-10 max-w-2xl text-left">
+                                <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <ClockIcon className="h-3.5 w-3.5" /> Recent analyses
+                                </p>
+                                <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+                                    {history.map((h) => (
+                                        <li key={h.id}>
+                                            <button onClick={() => viewHistory(h)}
+                                                className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted">
+                                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${scoreBg(h.overallScore)}`}>{h.overallScore}</span>
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block truncate text-sm font-medium text-foreground">{h.targetRole || 'General analysis'}</span>
+                                                    <span className="block text-xs text-muted-foreground">{fmtDate(h.createdAt)}</span>
+                                                </span>
+                                                <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Preview image */}
                         <div className="group relative mx-auto mt-10 max-w-4xl">
                             <div className="pointer-events-none absolute -inset-4 rounded-3xl bg-accent/10 blur-2xl" />
                             <img src="/resume-analysis.png" alt="Resume analysis: category scores, issues, fixes, and highlighted keywords"
                                 loading="lazy" width="2880" height="1626"
-                                className="relative w-full  shadow-2xl ring-1 ring-border transition duration-500 group-hover:-translate-y-1" />
+                                className="relative w-full shadow-2xl ring-1 ring-border transition duration-500 group-hover:-translate-y-1" />
                         </div>
                     </div>
                 </main>
@@ -269,6 +315,10 @@ export default function ResumeCheckerPage() {
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden lg:border-x lg:border-border">
                 {/* Left rail */}
                 <aside className="w-full shrink-0 p-4 lg:w-60 lg:overflow-y-auto lg:border-r lg:border-border">
+                    <button onClick={reset}
+                        className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground">
+                        <ArrowUpTrayIcon className="h-4 w-4" /> Analyze another file
+                    </button>
                     <div className="flex flex-col items-center pb-4">
                         <ScoreRing score={data.overallScore ?? 0} />
                     </div>
@@ -285,10 +335,6 @@ export default function ResumeCheckerPage() {
                             </nav>
                         </>
                     )}
-                    <button onClick={reset} className="mt-5 flex items-center gap-1.5 text-xs font-medium text-accent hover:underline">
-                        <ArrowPathIcon className="h-3.5 w-3.5" /> Analyze another file
-                    </button>
-
                     <p className="mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tools</p>
                     <Link to="/templates?type=CV_AND_RESUME&page=1&size=50"
                         className="flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover">
@@ -389,14 +435,17 @@ export default function ResumeCheckerPage() {
     );
 }
 
-/** Highlights the active category's phrases inside plain DOCX text using <mark>. */
 function renderDocx(text, highlights) {
     const marks = (highlights || []).filter((h) => h.phrase && h.phrase.trim());
     if (!marks.length) return text;
-    const escaped = marks.map((m) => m.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-    const regex = new RegExp(`(${escaped.join('|')})`, 'ig');
-    return text.split(regex).map((chunk, i) => {
-        const hit = marks.find((m) => m.phrase.toLowerCase() === chunk.toLowerCase());
+    // Build a whitespace-flexible pattern per phrase (spaces → \s+), then find the matching color.
+    const patterns = marks.map((m) => ({
+        color: m.color,
+        re: new RegExp('^' + m.phrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '$', 'i'),
+    }));
+    const splitter = new RegExp(`(${marks.map((m) => m.phrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')).join('|')})`, 'ig');
+    return text.split(splitter).map((chunk, i) => {
+        const hit = chunk && patterns.find((p) => p.re.test(chunk));
         return hit
             ? <mark key={i} style={{ backgroundColor: hit.color, borderRadius: '2px' }}>{chunk}</mark>
             : chunk;
