@@ -5,6 +5,7 @@ import { getTemplate } from '../resume-template/registry';
 import userService from '../services/user.service';
 import resumeBuilderService from '../services/resume-builder.service';
 import ResumeBuilderSkeleton from '../components/shared/ResumeBuilderSkeleton';
+import Seo from '../components/shared/Seo';
 
 export default function ResumeBuilder() {
     const { code } = useParams();
@@ -32,15 +33,30 @@ export default function ResumeBuilder() {
         return () => { alive = false; };
     }, [design.code]);
 
-    if (state.loading) return <ResumeBuilderSkeleton />;
+    const templateName = design.name || 'Professional';
+    const seo = (
+        <Seo
+            title={`${templateName} Resume Template — Free AI Resume Builder | CVEnhance`}
+            description={`Build an ATS-friendly resume with the ${templateName} template. Fill in your details, get AI writing suggestions, and download a polished PDF — free to start.`}
+            keywords={`${templateName} resume template, AI resume builder, ATS resume template, online resume maker, CV builder`}
+            path={`/resume-builder/${design.code}`}
+        />
+    );
+
+    if (state.loading) {
+        return (<>{seo}<ResumeBuilderSkeleton /></>);
+    }
 
     return (
-        <ResumeWorkspace
-            key={`${design.code}:${state.document?.id || 'visitor'}:${state.authed}`}
-            design={design}
-            initialProfile={state.profile}
-            initialDocument={state.document}
-            authed={state.authed}
-        />
+        <>
+            {seo}
+            <ResumeWorkspace
+                key={`${design.code}:${state.document?.id || 'visitor'}:${state.authed}`}
+                design={design}
+                initialProfile={state.profile}
+                initialDocument={state.document}
+                authed={state.authed}
+            />
+        </>
     );
 }

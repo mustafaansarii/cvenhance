@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Navbar from '../components/navbar/Navbar';
 import PageHero from '../components/shared/PageHero';
+import Seo from '../components/shared/Seo';
 import PdfViewer, { severityColors } from '../components/ai/PdfViewer';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
 import resumeCheckerService from '../services/resumeChecker.service';
@@ -29,6 +30,23 @@ const SEVERITY_BAR = { bad: 'border-l-red-400', warning: 'border-l-amber-400', g
 
 const problemsOf = (c) => (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning').length;
 const firstFixIdx = (cats) => { const i = (cats || []).findIndex((c) => problemsOf(c) > 0); return i >= 0 ? i : 0; };
+
+const CHECKER_SEO = {
+    title: 'Free AI Resume Checker & ATS Score Analyzer | CVEnhance',
+    description: 'Check your resume against ATS rules in seconds. Get a section-by-section score with fixes for impact, quantification, buzzwords, brevity, and formatting — free, parsed right in your browser.',
+    keywords: 'resume checker, ATS resume checker, resume score, resume analyzer, ATS score checker, free resume checker, resume review, CV checker',
+    path: '/resume-checker',
+};
+const CHECKER_JSONLD = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'CVEnhance Resume Checker',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    url: 'https://www.cvenhance.in/resume-checker',
+    description: CHECKER_SEO.description,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+};
 
 const INTERNAL_TOOLS = [
     { label: 'Resume templates', to: '/templates?type=CV_AND_RESUME&page=1&size=50', icon: Squares2X2Icon },
@@ -57,6 +75,55 @@ const scoreHex = (s) => (s >= 80 ? '#10b981' : s >= 55 ? '#f59e0b' : '#ef4444');
 const scoreText = (s) => (s >= 80 ? 'text-emerald-500' : s >= 55 ? 'text-amber-500' : 'text-red-500');
 const scoreBg = (s) => (s >= 80 ? 'bg-emerald-500' : s >= 55 ? 'bg-amber-500' : 'bg-red-500');
 const fmtDate = (iso) => { try { return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+const fmtShort = (iso) => { try { return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch { return ''; } };
+
+/** Horizontal line graph of the last few analyses' overall scores. `items` are oldest → newest. */
+function ScoreTrend({ items }) {
+    if (!items || items.length < 2) return null;
+    const W = 320, H = 96, padX = 26, padTop = 22, padBottom = 20;
+    const scores = items.map((it) => it.overallScore ?? 0);
+    const n = scores.length;
+    const lo = Math.max(0, Math.min(...scores) - 12);
+    const hi = Math.min(100, Math.max(...scores) + 12);
+    const span = Math.max(1, hi - lo);
+    const x = (i) => padX + (i * (W - padX * 2)) / (n - 1);
+    const y = (s) => padTop + (1 - (s - lo) / span) * (H - padTop - padBottom);
+    const pts = scores.map((s, i) => [x(i), y(s)]);
+    const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+    const area = `${line} L ${x(n - 1).toFixed(1)} ${H - padBottom} L ${x(0).toFixed(1)} ${H - padBottom} Z`;
+    const delta = scores[n - 1] - scores[n - 2];
+    return (
+        <div className="w-full">
+            <div className="mb-1 flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Score trend · last {n}</p>
+                <span className={`text-[11px] font-semibold ${delta >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)} pts
+                </span>
+            </div>
+            <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stopColor="currentColor" stopOpacity="0.18" />
+                        <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+                    </linearGradient>
+                </defs>
+                <g className="text-accent">
+                    <path d={area} fill="url(#trend-fill)" />
+                    <path d={line} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </g>
+                <g className="text-muted-foreground">
+                    {pts.map((p, i) => <text key={i} x={p[0]} y={H - 6} textAnchor="middle" fontSize="8.5" fill="currentColor">{fmtShort(items[i].createdAt)}</text>)}
+                </g>
+                {pts.map((p, i) => (
+                    <g key={i}>
+                        <circle cx={p[0]} cy={p[1]} r="4" fill={scoreHex(scores[i])} />
+                        <text x={p[0]} y={p[1] - 9} textAnchor="middle" fontSize="11" fontWeight="700" fill={scoreHex(scores[i])}>{scores[i]}</text>
+                    </g>
+                ))}
+            </svg>
+        </div>
+    );
+}
 
 const HeroBar = () => (
     <div className="shrink-0 border-b border-border bg-cover bg-center home-page-hero-bg"
@@ -241,6 +308,7 @@ export default function ResumeCheckerPage() {
     const active = categories[activeIdx] || null;
     const topFixes = categories.map((c, i) => ({ c, i })).filter(({ c }) => problemsOf(c) > 0);
     const completed = categories.map((c, i) => ({ c, i })).filter(({ c }) => problemsOf(c) === 0);
+    const trendItems = [...history].slice(0, 3).reverse(); // last 3 analyses, oldest → newest
 
     const sentenceFor = (phrase) => {
         if (!phrase || !phrase.trim()) return '';
@@ -347,6 +415,7 @@ export default function ResumeCheckerPage() {
     if (!data) {
         return (
             <div className="flex min-h-screen flex-col bg-background">
+                <Seo {...CHECKER_SEO} jsonLd={CHECKER_JSONLD} />
                 <div className="border-b border-border bg-cover bg-center home-page-hero-bg"
                     style={{ backgroundImage: "url('/assest/home_page.png')" }}>
                     <Navbar />
@@ -439,6 +508,8 @@ export default function ResumeCheckerPage() {
     // ---------- Results ----------
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-background">
+            {/* A specific analysis (/resume-checker/:id) is user-specific — keep it out of the index. */}
+            <Seo {...CHECKER_SEO} path={id ? `/resume-checker/${id}` : CHECKER_SEO.path} noindex={Boolean(id)} />
             <HeroBar />
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden lg:border-x lg:border-border">
                 {/* Mobile-only: score + action on top (desktop shows these inside the left rail) */}
@@ -454,8 +525,15 @@ export default function ResumeCheckerPage() {
                     </button>
                 </div>
 
+                {/* Mobile-only: score-trend graph under the score bar */}
+                {trendItems.length >= 2 && (
+                    <div className="order-2 border-b border-border p-4 lg:hidden">
+                        <ScoreTrend items={trendItems} />
+                    </div>
+                )}
+
                 {/* Left rail */}
-                <aside className="order-4 w-full shrink-0 p-4 lg:order-1 lg:w-60 lg:overflow-y-auto lg:border-r lg:border-border">
+                <aside className="order-5 w-full shrink-0 p-4 lg:order-1 lg:w-60 lg:overflow-y-auto lg:border-r lg:border-border">
                     <button onClick={reset}
                         className="mb-4 hidden w-full items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground lg:flex">
                         <ArrowUpTrayIcon className="h-4 w-4" /> Analyze another file
@@ -463,6 +541,11 @@ export default function ResumeCheckerPage() {
                     <div className="hidden flex-col items-center pb-4 lg:flex">
                         <ScoreRing score={data.overallScore ?? 0} />
                     </div>
+                    {trendItems.length >= 2 && (
+                        <div className="hidden pb-4 lg:block">
+                            <ScoreTrend items={trendItems} />
+                        </div>
+                    )}
                     <p className="mt-2 mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Top fixes</p>
                     <nav className="space-y-0.5">
                         {topFixes.length === 0 && <p className="px-3 py-2 text-sm text-emerald-500">No issues 🎉</p>}
@@ -504,7 +587,7 @@ export default function ResumeCheckerPage() {
                 </aside>
 
                 {/* Middle detail */}
-                <section className="order-3 min-w-0 flex-1 p-5 sm:p-8 lg:order-2 lg:overflow-y-auto lg:border-r lg:border-border">
+                <section className="order-4 min-w-0 flex-1 p-5 sm:p-8 lg:order-2 lg:overflow-y-auto lg:border-r lg:border-border">
                     {active && (
                         <div className="mx-auto max-w-2xl">
                             <div className="mb-5 flex items-center gap-2">
@@ -574,7 +657,7 @@ export default function ResumeCheckerPage() {
                 </section>
 
                 {/* Right preview */}
-                <section className="order-2 w-full shrink-0 lg:order-3 lg:h-full lg:w-[540px]">
+                <section className="order-3 w-full shrink-0 lg:order-3 lg:h-full lg:w-[540px]">
                     {isPdf ? (
                         <PdfViewer file={file} highlights={highlights} />
                     ) : (
