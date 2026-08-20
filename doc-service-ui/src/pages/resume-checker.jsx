@@ -441,13 +441,26 @@ export default function ResumeCheckerPage() {
         <div className="flex h-screen flex-col overflow-hidden bg-background">
             <HeroBar />
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden lg:border-x lg:border-border">
-                {/* Left rail */}
-                <aside className="w-full shrink-0 p-4 lg:w-60 lg:overflow-y-auto lg:border-r lg:border-border">
+                {/* Mobile-only: score + action on top (desktop shows these inside the left rail) */}
+                <div className="order-1 flex items-center gap-3 border-b border-border p-4 lg:hidden">
+                    <ScoreRing score={data.overallScore ?? 0} size={95} />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground">Resume score</p>
+                        <p className="text-xs text-muted-foreground">Scroll for the preview and every section.</p>
+                    </div>
                     <button onClick={reset}
-                        className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground">
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground">
+                        <ArrowUpTrayIcon className="h-4 w-4" /> New
+                    </button>
+                </div>
+
+                {/* Left rail */}
+                <aside className="order-4 w-full shrink-0 p-4 lg:order-1 lg:w-60 lg:overflow-y-auto lg:border-r lg:border-border">
+                    <button onClick={reset}
+                        className="mb-4 hidden w-full items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent hover:text-accent-foreground lg:flex">
                         <ArrowUpTrayIcon className="h-4 w-4" /> Analyze another file
                     </button>
-                    <div className="flex flex-col items-center pb-4">
+                    <div className="hidden flex-col items-center pb-4 lg:flex">
                         <ScoreRing score={data.overallScore ?? 0} />
                     </div>
                     <p className="mt-2 mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Top fixes</p>
@@ -491,7 +504,7 @@ export default function ResumeCheckerPage() {
                 </aside>
 
                 {/* Middle detail */}
-                <section className="min-w-0 flex-1 p-5 sm:p-8 lg:overflow-y-auto lg:border-r lg:border-border">
+                <section className="order-3 min-w-0 flex-1 p-5 sm:p-8 lg:order-2 lg:overflow-y-auto lg:border-r lg:border-border">
                     {active && (
                         <div className="mx-auto max-w-2xl">
                             <div className="mb-5 flex items-center gap-2">
@@ -561,7 +574,7 @@ export default function ResumeCheckerPage() {
                 </section>
 
                 {/* Right preview */}
-                <section className="w-full shrink-0 lg:h-full lg:w-[540px]">
+                <section className="order-2 w-full shrink-0 lg:order-3 lg:h-full lg:w-[540px]">
                     {isPdf ? (
                         <PdfViewer file={file} highlights={highlights} />
                     ) : (

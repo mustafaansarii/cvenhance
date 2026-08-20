@@ -26,6 +26,20 @@ public class ResumeAnalyzer {
     private static final int MAX_WORDS = 950;
     private static final int MAX_FINDINGS = 6;
     private static final int SNIPPET_CHARS = 45;
+    private static final int PENALTY_PER_ISSUE = 25;
+
+    private static final Map<String, Double> CATEGORY_WEIGHTS = Map.ofEntries(
+            Map.entry("impact", 4.0),
+            Map.entry("quantification", 4.0),
+            Map.entry("sections", 2.0),
+            Map.entry("brevity", 2.0),
+            Map.entry("readability", 2.0),
+            Map.entry("length", 1.0),
+            Map.entry("repetition", 1.0),
+            Map.entry("buzzwords", 1.0),
+            Map.entry("fillers", 1.0),
+            Map.entry("pronouns", 1.0),
+            Map.entry("dates", 1.0));
 
     private static final Pattern EMAIL = Pattern.compile("[\\w.+-]+@[\\w-]+\\.[\\w.-]+");
     private static final Pattern PHONE = Pattern.compile("\\+?\\d[\\d\\s().-]{7,}\\d");
@@ -62,6 +76,7 @@ public class ResumeAnalyzer {
         List<Finding> issues = new ArrayList<>();
         List<Finding> strong = new ArrayList<>();
         Set<String> seenVerbs = new LinkedHashSet<>();
+        int strongBullets = 0;
         for (String line : lines) {
             String body = ResumeTextUtil.stripBullet(line);
             if (body.isEmpty()) {
@@ -81,16 +96,22 @@ public class ResumeAnalyzer {
                         "Start with a strong action verb (e.g. Led, Built, Reduced, Automated)."));
             } else {
                 String verb = ResumeTextUtil.firstWord(body);
-                if (Lexicon.ACTION_VERBS.contains(verb.toLowerCase(Locale.ROOT))
-                        && seenVerbs.add(verb.toLowerCase(Locale.ROOT))) {
-                    strong.add(new Finding("good", verb,
-                            "Strong action verb — \"" + verb + "\".",
-                            "Great — this bullet leads with impact."));
+                if (Lexicon.ACTION_VERBS.contains(verb.toLowerCase(Locale.ROOT))) {
+                    strongBullets++;
+                    if (seenVerbs.add(verb.toLowerCase(Locale.ROOT))) {
+                        strong.add(new Finding("good", verb,
+                                "Strong action verb — \"" + verb + "\".",
+                                "Great — this bullet leads with impact."));
+                    }
                 }
             }
         }
+
+        int weakBullets = issues.size();
+        int passive = 0;
         Matcher m = PASSIVE.matcher(text);
         while (m.find()) {
+            passive++;
             issues.add(new Finding("warning", m.group(),
                     "Passive voice — \"" + m.group() + "\".",
                     "Rewrite in active voice led by the action you took."));
@@ -101,7 +122,10 @@ public class ResumeAnalyzer {
         if (findings.isEmpty()) {
             findings.add(new Finding("good", "", "Bullets use strong, active phrasing.", "Keep leading with impact verbs."));
         }
-        return category("impact", "Impact & Action Verbs", findings, "Lead every bullet with a strong action verb.");
+
+        int total = weakBullets + strongBullets;
+        int score = total == 0 ? 40 : Math.round(100f * strongBullets / total) - passive * 10;
+        return category("impact", "Impact & Action Verbs", findings, "Lead every bullet with a strong action verb.", score);
     }
 
     private Category quantification(List<String> lines) {
@@ -133,7 +157,9 @@ public class ResumeAnalyzer {
         String ok = bullets > 0
                 ? quantified.size() + " of " + bullets + " achievements are quantified — nice."
                 : "Quantify impact wherever possible.";
-        return category("quantification", "Quantification", findings, ok);
+
+        int score = bullets == 0 ? 20 : Math.round(100f * quantified.size() / bullets);
+        return category("quantification", "Quantification", findings, ok, score);
     }
 
     private Category repetition(String text) {
@@ -231,17 +257,20 @@ public class ResumeAnalyzer {
                         "Good — the timeline is clear."));
             }
         }
-        if (findings.isEmpty()) {
+        boolean hasDates = !seen.isEmpty();
+        if (!hasDates) {
             findings.add(new Finding("warning", "", "No dates detected.",
                     "Add start/end dates (e.g. Jan 2022 – Present) so recruiters can gauge tenure."));
         }
-        return category("dates", "Dates", findings, "Dates are present — good.");
+        return category("dates", "Dates", findings, "Dates are present — good.", hasDates ? 100 : 40);
     }
 
     private Category sections(String lower, String text) {
         List<Finding> findings = new ArrayList<>();
+        int score = 100;
         for (String section : List.of("experience", "education", "skills")) {
             if (!lower.contains(section)) {
+                score -= 30; // a missing core section is a serious ATS problem
                 findings.add(new Finding("bad", "", "No \"" + section + "\" section detected.",
                         "Add a clearly labelled " + section + " section for ATS parsing."));
             }
@@ -250,6 +279,7 @@ public class ResumeAnalyzer {
         if (email.find()) {
             findings.add(new Finding("good", email.group(), "Email present.", "Good — recruiters can reach you."));
         } else {
+            score -= 25;
             findings.add(new Finding("bad", "", "No email address detected.",
                     "Add a professional email so recruiters can reach you."));
         }
@@ -257,6 +287,7 @@ public class ResumeAnalyzer {
         if (phone.find()) {
             findings.add(new Finding("good", phone.group().trim(), "Phone number present.", "Good — direct contact is available."));
         } else {
+            score -= 12;
             findings.add(new Finding("warning", "", "No phone number detected.", "Add a phone number to your header."));
         }
         Matcher link = LINK.matcher(text);
@@ -264,13 +295,13 @@ public class ResumeAnalyzer {
             findings.add(new Finding("good", contactToken(text, link.start()),
                     "Profile/portfolio link present.", "Good — this adds credibility."));
         } else {
+            score -= 12;
             findings.add(new Finding("warning", "", "No LinkedIn/GitHub/portfolio link detected.",
                     "Add a relevant profile or portfolio link."));
         }
-        return category("sections", "Sections & Contact", findings, "Core sections and contact details are present.");
+        return category("sections", "Sections & Contact", findings, "Core sections and contact details are present.", score);
     }
 
-    /** Expand a match index out to its surrounding non-whitespace token (e.g. the full linkedin.com/in/... URL). */
     private String contactToken(String text, int idx) {
         int start = idx;
         int end = idx;
@@ -286,14 +317,17 @@ public class ResumeAnalyzer {
     private Category length(String text) {
         int words = ResumeTextUtil.countWords(text);
         List<Finding> findings = new ArrayList<>();
+        int score = 100;
         if (words < MIN_WORDS) {
+            score = Math.round(100f * words / MIN_WORDS);
             findings.add(new Finding("warning", "", "The resume is short (~" + words + " words).",
                     "Expand with more detail on impact and responsibilities."));
         } else if (words > MAX_WORDS) {
+            score = ResumeTextUtil.clamp(100 - Math.round(100f * (words - MAX_WORDS) / MAX_WORDS), 0, 100);
             findings.add(new Finding("warning", "", "The resume is long (~" + words + " words).",
                     "Trim to the most relevant, recent, high-impact content (aim for one page)."));
         }
-        return category("length", "Length", findings, "Appropriately sized (~" + words + " words).");
+        return category("length", "Length", findings, "Appropriately sized (~" + words + " words).", score);
     }
 
     // ---------------- Shared builders ----------------
@@ -313,21 +347,35 @@ public class ResumeAnalyzer {
         return category(key, label, findings, okSummary);
     }
 
-    private Category category(String key, String label, List<Finding> findings, String okSummary) {
-        int problems = (int) findings.stream()
+    private int problemCount(List<Finding> findings) {
+        return (int) findings.stream()
                 .filter(f -> "bad".equals(f.severity()) || "warning".equals(f.severity()))
                 .count();
-        int score = ResumeTextUtil.clamp(100 - problems * 15, 0, 100);
-        String status = problems == 0 ? "good" : problems <= 2 ? "warning" : "bad";
+    }
+
+    private Category category(String key, String label, List<Finding> findings, String okSummary) {
+        return category(key, label, findings, okSummary,
+                ResumeTextUtil.clamp(100 - problemCount(findings) * PENALTY_PER_ISSUE, 0, 100));
+    }
+
+    private Category category(String key, String label, List<Finding> findings, String okSummary, int score) {
+        int problems = problemCount(findings);
+        String status = score >= 80 ? "good" : score >= 55 ? "warning" : "bad";
         String summary = problems == 0 ? okSummary : problems + " issue" + (problems == 1 ? "" : "s") + " found.";
-        return new Category(key, label, score, status, summary, findings);
+        return new Category(key, label, ResumeTextUtil.clamp(score, 0, 100), status, summary, findings);
     }
 
     private int overallScore(List<Category> categories) {
-        if (categories.isEmpty()) {
+        double weighted = 0;
+        double totalWeight = 0;
+        for (Category c : categories) {
+            double w = CATEGORY_WEIGHTS.getOrDefault(c.key(), 1.0);
+            weighted += c.score() * w;
+            totalWeight += w;
+        }
+        if (totalWeight == 0) {
             return 0;
         }
-        int sum = categories.stream().mapToInt(Category::score).sum();
-        return ResumeTextUtil.clamp(Math.round((float) sum / categories.size()), 0, 100);
+        return ResumeTextUtil.clamp((int) Math.round(weighted / totalWeight), 0, 100);
     }
 }
