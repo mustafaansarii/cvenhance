@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
     PAGE_W, PAGE, GAP, STRIDE, MARGIN,
-    SECTION_CATALOG, META, blankItem, nextId, profileToResume, resumeToProfile,
+    SECTION_CATALOG, META, blankItem, nextId, profileToResume, resumeToProfile, hasResumeContent,
     AddButton, RemoveButton,
 } from './shared';
 import userService from '../services/user.service';
@@ -41,12 +41,20 @@ const FONT_OPTIONS = [
 const ACCENTS = ['#0f172a', '#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#db2777', '#0891b2'];
 
 export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
-    const [resume, setResume] = useState(() => initialDocument?.resumeData && Object.keys(initialDocument.resumeData).length
+    // Prefer the saved document only when it holds real content; otherwise seed from the user's profile
+    // (a signed-in user with no profile gets a blank form, never the sample — see profileToResume).
+    const hasDoc = hasResumeContent(initialDocument?.resumeData);
+    const [resume, setResume] = useState(() => hasDoc
         ? initialDocument.resumeData
-        : profileToResume(initialProfile));
-    const [order, setOrder] = useState(() => initialDocument?.sectionOrder?.length
-        ? initialDocument.sectionOrder
-        : (initialDocument?.resumeData?._order || profileToResume(initialProfile)._order || ['summary', 'experience', 'skills', 'courses', 'education']));
+        : profileToResume(initialProfile, authed));
+    const [order, setOrder] = useState(() => {
+        if (hasDoc) {
+            return initialDocument.sectionOrder?.length
+                ? initialDocument.sectionOrder
+                : (initialDocument.resumeData._order || ['summary', 'experience', 'skills', 'courses', 'education']);
+        }
+        return profileToResume(initialProfile, authed)._order || ['summary', 'experience', 'skills', 'courses', 'education'];
+    });
     const [pageCount, setPageCount] = useState(1);
     const [dragType, setDragType] = useState(null);
     const [overType, setOverType] = useState(null);

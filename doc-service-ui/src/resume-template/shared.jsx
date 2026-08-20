@@ -43,8 +43,34 @@ export function blankItem(kind) {
     }
 }
 
-export function profileToResume(profile) {
-    const p = (profile && Object.keys(profile).length) ? profile : SAMPLE_RESUME;
+/** True if a resume object holds real, user-authored content (not just blank scaffolding). */
+export function hasResumeContent(resume) {
+    if (!resume || !Object.keys(resume).length) return false;
+    if (TEXT_FIELDS.some((k) => (resume[k] ?? '').toString().trim())) return true;
+    return LIST_TYPES.some((t) => Array.isArray(resume[t]) && resume[t].some((it) => {
+        if (!it || typeof it !== 'object') return Boolean(it);
+        return Object.entries(it).some(([k, v]) => {
+            if (k === 'id') return false;
+            if (Array.isArray(v)) return v.some((b) => (typeof b === 'string' ? b.trim() : (b?.text || '').trim()));
+            return (v ?? '').toString().trim();
+        });
+    }));
+}
+
+export function blankResume() {
+    const resume = {};
+    TEXT_FIELDS.forEach((k) => { resume[k] = ''; });
+    DEFAULT_ORDER.forEach((t) => {
+        resume[t] = META[t].kind === 'text' ? '' : [blankItem(META[t].kind)];
+    });
+    resume._order = DEFAULT_ORDER.slice();
+    return resume;
+}
+
+export function profileToResume(profile, blankIfEmpty = false) {
+    const hasProfile = profile && Object.keys(profile).length;
+    if (!hasProfile && blankIfEmpty) return blankResume();
+    const p = hasProfile ? profile : SAMPLE_RESUME;
     const resume = {};
     TEXT_FIELDS.forEach((k) => { resume[k] = p[k] || ''; });
 
