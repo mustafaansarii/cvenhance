@@ -468,13 +468,52 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 }
             });
 
+            pdf.setFont('helvetica', 'normal');
+            const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
+            const range = document.createRange();
+            for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+                const value = node.nodeValue;
+                if (!value || !value.trim()) continue;
+                const placeLine = (start, end) => {
+                    while (start < end && /\s/.test(value[start])) start += 1;
+                    while (end > start && /\s/.test(value[end - 1])) end -= 1;
+                    if (end <= start) return;
+                    range.setStart(node, start);
+                    range.setEnd(node, end);
+                    const rect = range.getBoundingClientRect();
+                    if (!rect || rect.height === 0 || rect.width === 0) return;
+                    const topCss = rect.top - cRect.top;
+                    const leftCss = rect.left - cRect.left;
+                    const centerCss = topCss + rect.height / 2;
+                    const pIndex = pageRanges.findIndex((p) => centerCss >= p.topCss - 0.5 && centerCss < p.bottomCss + 0.5);
+                    if (pIndex < 0) return;
+                    pdf.setPage(pIndex + 1);
+                    pdf.setFontSize(Math.max(4, rect.height * cssToPt * 0.82));
+                    const yPt = marginPt + (topCss + rect.height * 0.8 - pageRanges[pIndex].topCss) * cssToPt;
+                    pdf.text(value.slice(start, end), leftCss * cssToPt, yPt, { renderingMode: 'invisible', baseline: 'alphabetic' });
+                };
+
+                let lineStart = 0;
+                let prevTop = null;
+                for (let i = 0; i < value.length; i += 1) {
+                    range.setStart(node, i);
+                    range.setEnd(node, i + 1);
+                    const r = range.getBoundingClientRect();
+                    const top = r && r.height ? Math.round(r.top) : prevTop;
+                    if (prevTop !== null && top !== null && top !== prevTop) {
+                        placeLine(lineStart, i);
+                        lineStart = i;
+                    }
+                    if (top !== null) prevTop = top;
+                }
+                placeLine(lineStart, value.length);
+            }
+
             return pdf;
         } finally {
             if (holder.parentNode) holder.parentNode.removeChild(holder);
         }
     };
-
-    const pdfName = () => `${(resume.name || 'resume').trim() || 'resume'}.pdf`;
 
     const ensureUnlocked = () => {
         if (!authed) {
@@ -494,7 +533,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         setSaving(true);
         try {
             const pdf = await buildPdf();
-            if (pdf) pdf.save(pdfName());
+            if (pdf) pdf.save(`${(resume.name || 'resume').trim() || 'resume'}.pdf`);
             else window.print();
         } catch {
             toast.error('Could not generate the PDF — opening print instead');
@@ -595,14 +634,16 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         .editable:focus { box-shadow: 0 0 0 2px rgba(13,148,136,0.5); }
         .editable:empty::before { content: attr(data-ph); color: #9ca3af; }
         .editable a { color: #2563eb; text-decoration: underline; cursor: pointer; }
-        @page { size: letter; margin: 0; }
+        /* The @page margin gives uniform margins on every printed page; the sheet drops its own
+           padding in print so content isn't inset twice. Native print keeps text selectable/ATS-readable. */
+        @page { size: letter; margin: ${settings.margin}px; }
         @media print {
           html, body { background: #fff !important; }
           .no-print { display: none !important; }
           #rb-root { background: #fff !important; min-height: 0 !important; }
-          #rb-canvas { padding: 0 !important; display: block !important; }
-          #rb-stack { position: static !important; width: auto !important; height: auto !important; }
-          #resume-sheet { position: static !important; box-shadow: none !important; margin: 0 auto !important; width: 8.5in !important; max-width: none !important; }
+          #rb-canvas { padding: 0 !important; margin: 0 !important; display: block !important; }
+          #rb-stack { position: static !important; width: auto !important; height: auto !important; transform: none !important; }
+          #resume-sheet { position: static !important; box-shadow: none !important; margin: 0 !important; width: auto !important; max-width: none !important; padding: 0 !important; }
           #resume-sheet [data-block] { break-inside: avoid; margin-top: 0 !important; }
           .editable:hover, .editable:focus { box-shadow: none !important; }
           .editable:empty::before { content: "" !important; }
