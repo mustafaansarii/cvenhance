@@ -5,7 +5,6 @@ import 'pdfjs-dist/web/pdf_viewer.css';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url).toString();
 
-// Severity → highlight colour (red / yellow / green / blue).
 export const severityColors = {
     bad: 'rgba(248, 113, 113, 0.55)',
     warning: 'rgba(251, 191, 36, 0.55)',
@@ -100,7 +99,6 @@ export default function PdfViewer({ file, highlights, activePhrase, activeCatego
             if (!cancelled) container.textContent = 'Unable to render this PDF preview.';
         });
         return () => { cancelled = true; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [file, width, activePhrase, activeCategory, JSON.stringify(highlights || [])]);
 
     return <div ref={containerRef} className="flex h-full min-h-[60vh] w-full flex-col gap-1.5 overflow-y-auto overflow-x-hidden bg-muted" />;
@@ -122,7 +120,6 @@ function normalize(str) {
         } else if (/\s/.test(ch)) {
             if (norm.length && !prevSpace) { norm += ' '; map.push(i); prevSpace = true; }
         }
-        // punctuation is dropped so "results-driven" == "results driven" == "resultsdriven"
     }
     return { norm, map };
 }
@@ -137,6 +134,7 @@ function applyHighlights(layer, marks) {
     const segs = [];
     spans.forEach((s) => {
         const t = s.textContent;
+        if (full.length) full += ' ';
         segs.push({ s, start: full.length, end: full.length + t.length });
         full += t;
     });
@@ -151,7 +149,6 @@ function applyHighlights(layer, marks) {
             const nEnd = idx + p.length;
             const before = idx > 0 ? norm[idx - 1] : ' ';
             const after = nEnd < norm.length ? norm[nEnd] : ' ';
-            // short phrases must sit on word boundaries so "led" doesn't match inside "fulfilled"
             const boundaryOk = p.replace(/\s/g, '').length > 3 || (before === ' ' && after === ' ');
             if (boundaryOk) {
                 const oStart = map[idx];

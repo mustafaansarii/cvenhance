@@ -17,7 +17,6 @@ const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short
 
 /** Form-builder drawer: analyzes the current resume with the resume-check API and lists past runs. */
 export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequired }) {
-    const [targetRole, setTargetRole] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [activeKey, setActiveKey] = useState(null);
@@ -30,7 +29,7 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
 
     useEffect(() => {
         if (!open) return undefined;
-        setResult(null); setError(null); setTargetRole(''); setActiveKey(null);
+        setResult(null); setError(null); setActiveKey(null);
         const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current?.(); };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
@@ -104,7 +103,7 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
         if (!resumeText.trim()) { toast.error('Add some content to your resume first.'); return; }
         setLoading(true); setError(null);
         try {
-            const res = await resumeCheckerService.checkResume({ resumeText, targetRole: targetRole.trim() || undefined });
+            const res = await resumeCheckerService.checkResume({ resumeText });
             show(res);
             refreshHistory();
         } catch (err) {
@@ -152,7 +151,7 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
                                     className="flex w-full items-center justify-between rounded-lg border border-border px-2.5 py-1.5 text-left text-xs text-muted-foreground transition hover:border-accent hover:bg-accent/5">
                                     <span className="flex items-center gap-1.5">
                                         <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${scoreBg(h.overallScore)}`}>{h.overallScore}</span>
-                                        <span>{h.targetRole || 'General'}</span>
+                                        <span>Analysis</span>
                                     </span>
                                     <span className="text-[10px] text-muted-foreground">{fmtDate(h.createdAt)}</span>
                                 </button>
@@ -162,15 +161,9 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
                 )}
             </div>
 
-            {/* Target role + run */}
-            <div className="mb-3">
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Target role <span className="font-normal normal-case opacity-70">(optional)</span></label>
-                <input type="text" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} placeholder="e.g. Senior Frontend Engineer"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30" />
-            </div>
             <button onClick={run} disabled={loading}
                 className="mb-5 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
-                {loading ? 'Analyzing…' : 'Analyze with AI'}
+                {loading ? 'Analyzing…' : 'Analyze resume'}
             </button>
 
             {loading && (

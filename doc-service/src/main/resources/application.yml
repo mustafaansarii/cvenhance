@@ -105,12 +105,13 @@ github:
   clientId: ${GITHUB_CLIENT_ID:}
   clientSecret: ${GITHUB_CLIENT_SECRET:}
 
-supabase:
-  bucket:
-    name: ${SUPABASE_BUCKET_NAME:resume_pdf}
-  service:
-    key: ${SUPABASE_SERVICE_KEY:}
-  url: ${SUPABASE_URL:}
+storage:
+  s3:
+    bucket: ${S3_BUCKET:resume_pdf}
+    endpoint: ${S3_ENDPOINT:}
+    region: ${S3_REGION:ap-south-1}
+    access-key: ${S3_ACCESS_KEY:}
+    secret-key: ${S3_SECRET_KEY:}
 
 springdoc:
   api-docs:
