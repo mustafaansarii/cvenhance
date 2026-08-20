@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { DocumentTextIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import resumeCheckerService from '../../services/resumeChecker.service';
 
-const SEVERITY_CHIP = {
-    bad: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-    warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-    good: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-    info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-};
 const STATUS_DOT = { good: 'bg-emerald-500', warning: 'bg-amber-500', bad: 'bg-red-500' };
 const problemsOf = (c) => (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning').length;
 const scoreText = (s) => (s >= 80 ? 'text-emerald-500' : s >= 55 ? 'text-amber-500' : 'text-red-500');
@@ -15,11 +11,11 @@ const scoreBg = (s) => (s >= 80 ? 'bg-emerald-500' : s >= 55 ? 'bg-amber-500' : 
 const scoreLabel = (s) => (s >= 80 ? 'Strong' : s >= 55 ? 'Needs work' : 'Weak');
 const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-/** Form-builder drawer: analyzes the current resume with the resume-check API and lists past runs. */
-export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequired }) {
+/** Form-builder drawer: a concise ATS summary of the current resume (or an uploaded PDF/DOCX). */
+export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, onPaymentRequired }) {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
-    const [activeKey, setActiveKey] = useState(null);
+    const [source, setSource] = useState(null); // label of what was analyzed
     const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
@@ -29,7 +25,7 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
 
     useEffect(() => {
         if (!open) return undefined;
-        setResult(null); setError(null); setActiveKey(null);
+        setResult(null); setError(null); setSource(null);
         const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current?.(); };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
@@ -96,15 +92,19 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
         return L.filter(Boolean).join('\n');
     };
 
-    const show = (res) => { setResult(res); setActiveKey(res?.categories?.[0]?.key || null); };
+    const toResult = (entity) => {
+        let categories = [];
+        try { categories = JSON.parse(entity?.categoriesJson || '[]'); } catch { categories = []; }
+        return { overallScore: entity?.overallScore ?? 0, categories };
+    };
 
-    const run = async () => {
-        const resumeText = buildResumeText();
-        if (!resumeText.trim()) { toast.error('Add some content to your resume first.'); return; }
+    const analyze = async ({ resumeText, file, label }) => {
+        if (!resumeText.trim()) { toast.error('No resume content to analyze.'); return; }
         setLoading(true); setError(null);
         try {
-            const res = await resumeCheckerService.checkResume({ resumeText });
-            show(res);
+            const res = await resumeCheckerService.checkResume({ resumeText, file });
+            setResult(toResult(res));
+            setSource(label);
             refreshHistory();
         } catch (err) {
             if (err?.response?.status === 402) {
@@ -117,15 +117,31 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
         } finally { setLoading(false); }
     };
 
-    const loadHistoryItem = async (id) => {
+    // Analyze the résumé being built: send its text AND a PDF snapshot of the current document,
+    // so history stores/previews the real résumé (not just text).
+    const runCurrent = async () => {
+        const resumeText = buildResumeText();
+        if (!resumeText.trim()) { toast.error('Add some content to your resume first.'); return; }
         setLoading(true); setError(null);
-        try { show(await resumeCheckerService.getHistoryItem(id)); }
-        catch (err) { const msg = err?.response?.data?.message || 'Could not load this analysis.'; setError(msg); toast.error(msg); }
-        finally { setLoading(false); }
+        let file = null;
+        try { file = buildPdfFile ? await buildPdfFile() : null; } catch { /* fall back to text-only analysis */ }
+        await analyze({ resumeText, file, label: 'Current resume' });
     };
 
-    const categories = result?.categories || [];
-    const active = categories.find((c) => c.key === activeKey) || null;
+    const loadHistoryItem = async (id) => {
+        setLoading(true); setError(null);
+        try {
+            setResult(toResult(await resumeCheckerService.getHistoryItem(id)));
+            setSource('Saved analysis');
+        } catch (err) {
+            const msg = err?.response?.data?.message || 'Could not load this analysis.'; setError(msg); toast.error(msg);
+        } finally { setLoading(false); }
+    };
+
+    const cats = result?.categories || [];
+    const withIssues = cats.map((c) => ({ c, n: problemsOf(c) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+    const okCount = cats.length - withIssues.length;
+    const totalIssues = withIssues.reduce((s, x) => s + x.n, 0);
 
     return (
         <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-80 max-w-[88vw] overflow-y-auto border-l border-border bg-card p-5 shadow-2xl">
@@ -136,13 +152,88 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
                 </button>
             </div>
 
+            {/* Analyze the current résumé (its text + a PDF snapshot of the document). */}
+            <button onClick={runCurrent} disabled={loading}
+                className="mb-5 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
+                {loading ? 'Analyzing…' : 'Analyze current resume'}
+            </button>
+
+            {loading && (
+                <div className="space-y-3">
+                    <div className="h-16 animate-pulse rounded-2xl bg-muted" />
+                    {[0, 1, 2].map((i) => <div key={i} className="h-8 animate-pulse rounded-lg bg-muted" />)}
+                </div>
+            )}
+
+            {error && !loading && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:bg-red-900/20">
+                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                    <button onClick={runCurrent} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Try again</button>
+                </div>
+            )}
+
+            {/* Summary only — full findings & highlights live on the Resume Analyzer page */}
+            {result && !loading && (
+                <div className="space-y-4">
+                    {source && (
+                        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <DocumentTextIcon className="h-3.5 w-3.5" /> {source}
+                        </p>
+                    )}
+
+                    <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-4">
+                        <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full text-white ${scoreBg(result.overallScore)}`}>
+                            <span className="text-lg font-extrabold leading-none">{result.overallScore}</span>
+                            <span className="text-[9px] font-semibold">/ 100</span>
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-foreground">{scoreLabel(result.overallScore)}</p>
+                            <p className="text-xs text-muted-foreground">
+                                {totalIssues > 0
+                                    ? `${totalIssues} issue${totalIssues === 1 ? '' : 's'} across ${withIssues.length} section${withIssues.length === 1 ? '' : 's'}`
+                                    : 'No issues found 🎉'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Top fixes — compact list, no per-finding detail */}
+                    {withIssues.length > 0 && (
+                        <div>
+                            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top fixes</p>
+                            <ul className="space-y-1">
+                                {withIssues.slice(0, 6).map(({ c, n }) => (
+                                    <li key={c.key} className="flex items-center justify-between rounded-lg border border-border px-2.5 py-1.5 text-xs">
+                                        <span className="flex items-center gap-1.5 text-foreground">
+                                            <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[c.status] || 'bg-slate-400'}`} />
+                                            {c.label}
+                                        </span>
+                                        <span className={`font-semibold ${scoreText(c.score)}`}>{n} issue{n === 1 ? '' : 's'}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {okCount > 0 && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                            ✓ {okCount} section{okCount === 1 ? '' : 's'} looking good
+                        </p>
+                    )}
+
+                    <Link to="/resume-checker" target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-xs font-semibold text-accent transition hover:bg-accent/5">
+                        Open full analysis <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                    </Link>
+                </div>
+            )}
+
             {/* History */}
-            <div className="mb-4">
+            <div className="mt-6">
                 <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">History</p>
                 {historyLoading ? (
                     <div className="space-y-1.5">{[0, 1, 2].map((i) => <div key={i} className="h-10 animate-pulse rounded-lg bg-muted" />)}</div>
                 ) : history.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No previous analyses. Run one below.</p>
+                    <p className="text-xs text-muted-foreground">No previous analyses yet.</p>
                 ) : (
                     <ul className="space-y-1.5">
                         {history.map((h) => (
@@ -160,85 +251,6 @@ export default function ResumeCheckPanel({ open, resume, onClose, onPaymentRequi
                     </ul>
                 )}
             </div>
-
-            <button onClick={run} disabled={loading}
-                className="mb-5 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
-                {loading ? 'Analyzing…' : 'Analyze resume'}
-            </button>
-
-            {loading && (
-                <div className="space-y-3">
-                    <div className="h-16 animate-pulse rounded-2xl bg-muted" />
-                    {[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />)}
-                </div>
-            )}
-
-            {error && !loading && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:bg-red-900/20">
-                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-                    <button onClick={run} className="mt-2 text-xs font-semibold text-red-600 hover:underline">Try again</button>
-                </div>
-            )}
-
-            {result && !loading && (
-                <div className="space-y-4">
-                    {/* Score */}
-                    <div className="flex items-center gap-3 rounded-2xl bg-muted/60 p-4">
-                        <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full text-white ${scoreBg(result.overallScore)}`}>
-                            <span className="text-lg font-extrabold leading-none">{result.overallScore}</span>
-                            <span className="text-[9px] font-semibold">/ 100</span>
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-foreground">{scoreLabel(result.overallScore)}</p>
-                            <p className="text-xs text-muted-foreground">Overall resume score</p>
-                        </div>
-                    </div>
-
-                    {/* Category chips */}
-                    <div className="flex flex-wrap gap-1.5">
-                        {categories.map((c) => {
-                            const n = problemsOf(c);
-                            const on = c.key === activeKey;
-                            return (
-                                <button key={c.key} onClick={() => setActiveKey(c.key)}
-                                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${on ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:bg-muted'}`}>
-                                    <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[c.status] || 'bg-slate-400'}`} />
-                                    {c.label}<span className="font-semibold">{n || '✓'}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Active category findings */}
-                    {active && (
-                        <div>
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-foreground">{active.label}</p>
-                                <span className={`text-xs font-bold ${scoreText(active.score)}`}>{active.score}/100</span>
-                            </div>
-                            {active.summary && <p className="mt-1 text-xs text-muted-foreground">{active.summary}</p>}
-                            <ul className="mt-3 space-y-2">
-                                {(active.findings || []).length === 0 && (
-                                    <li className="rounded-lg bg-emerald-50 p-2.5 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">No issues here 🎉</li>
-                                )}
-                                {(active.findings || []).map((f, i) => (
-                                    <li key={i} className="rounded-lg border border-border p-2.5">
-                                        <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${SEVERITY_CHIP[f.severity] || SEVERITY_CHIP.info}`}>{f.severity}</span>
-                                        {f.phrase && <p className="mt-1.5 text-xs font-medium italic text-foreground">“{f.phrase}”</p>}
-                                        <p className="mt-1 text-xs text-foreground">{f.issue}</p>
-                                        <p className="mt-1 text-xs text-muted-foreground"><span className="font-medium text-foreground">Fix:</span> {f.suggestion}</p>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    <button onClick={run} disabled={loading}
-                        className="w-full rounded-lg border border-border py-2 text-xs font-semibold text-muted-foreground transition hover:bg-muted disabled:opacity-60">
-                        Re-analyze
-                    </button>
-                </div>
-            )}
         </div>
     );
 }

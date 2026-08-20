@@ -543,6 +543,13 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         }
     };
 
+    /** A PDF snapshot of the current résumé as a File — used by the analysis panel so history stores the real doc. */
+    const buildPdfFile = async () => {
+        const pdf = await buildPdf();
+        if (!pdf) return null;
+        return new File([pdf.output('blob')], `${(resume.name || 'resume').trim() || 'resume'}.pdf`, { type: 'application/pdf' });
+    };
+
     const preview = async () => {
         if (!ensureUnlocked()) return;
         setSaving(true);
@@ -1009,6 +1016,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
             <ResumeCheckPanel
                 open={atsAiOpen}
                 resume={resume}
+                buildPdfFile={buildPdfFile}
                 onClose={() => setAtsAiOpen(false)}
                 onPaymentRequired={() => setPricingOpen(true)}
             />
