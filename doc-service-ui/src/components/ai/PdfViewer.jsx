@@ -6,10 +6,10 @@ import 'pdfjs-dist/web/pdf_viewer.css';
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url).toString();
 
 export const severityColors = {
-    bad: 'rgba(248, 113, 113, 0.55)',
-    warning: 'rgba(251, 191, 36, 0.55)',
-    good: 'rgba(52, 211, 153, 0.55)',
-    info: 'rgba(96, 165, 250, 0.55)',
+    bad: 'rgb(254, 202, 202)',
+    warning: 'rgb(253, 230, 138)',
+    good: 'rgb(167, 243, 208)',
+    info: 'rgb(191, 219, 254)',
 };
 
 const legacyColors = {
@@ -84,6 +84,7 @@ export default function PdfViewer({ file, highlights, activePhrase, activeCatego
                 const textLayerDiv = document.createElement('div');
                 textLayerDiv.className = 'textLayer absolute inset-0 overflow-hidden';
                 textLayerDiv.style.setProperty('--scale-factor', String(viewport.scale));
+                textLayerDiv.style.mixBlendMode = 'multiply';
                 wrapper.appendChild(textLayerDiv);
                 const textLayer = new TextLayer({
                     textContentSource: await page.getTextContent(),
@@ -106,7 +107,6 @@ export default function PdfViewer({ file, highlights, activePhrase, activeCatego
 
 // ---------------- Accurate highlighting ----------------
 
-/** Normalize to lowercase alphanumerics + single spaces, keeping a map back to original indices. */
 function normalize(str) {
     let norm = '';
     const map = [];
@@ -164,25 +164,27 @@ function applyHighlights(layer, marks) {
     });
 }
 
+function paint(el, color) {
+    el.style.backgroundColor = color;
+    el.style.borderRadius = '2px';
+}
+
 function wrapRange(span, s, e, color) {
     const node = span.firstChild;
     if (!node || node.nodeType !== 3) {
-        span.style.backgroundColor = color;
-        span.style.borderRadius = '2px';
+        paint(span, color);
         return;
     }
     const v = node.nodeValue;
     if (s <= 0 && e >= v.length) {
-        span.style.backgroundColor = color;
-        span.style.borderRadius = '2px';
+        paint(span, color);
         return;
     }
     const frag = document.createDocumentFragment();
     if (s > 0) frag.appendChild(document.createTextNode(v.slice(0, s)));
     const mark = document.createElement('span');
     mark.textContent = v.slice(s, e);
-    mark.style.backgroundColor = color;
-    mark.style.borderRadius = '2px';
+    paint(mark, color);
     frag.appendChild(mark);
     if (e < v.length) frag.appendChild(document.createTextNode(v.slice(e)));
     span.replaceChildren(frag);

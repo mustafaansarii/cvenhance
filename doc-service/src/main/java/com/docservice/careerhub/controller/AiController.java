@@ -21,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.AiAssistResult;
-import com.docservice.careerhub.dto.ai.ResumeCheckResult;
 import com.docservice.careerhub.dto.request.AiAssistRequest;
 import com.docservice.careerhub.entity.ResumeCheckHistory;
 import com.docservice.careerhub.service.ResumeAiService;
@@ -51,9 +50,9 @@ public class AiController {
     }
 
     @PostMapping(value = "/resume-check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResumeCheckResult resumeCheck(Authentication authentication,
-                                         @RequestParam("resumeText") String resumeText,
-                                         @RequestParam(value = "file", required = false) MultipartFile file) {
+    public ResumeCheckHistory resumeCheck(Authentication authentication,
+                                          @RequestParam("resumeText") String resumeText,
+                                          @RequestParam(value = "file", required = false) MultipartFile file) {
         return resumeCheckService.check(authentication.getName(), resumeText, file);
     }
 
@@ -64,8 +63,7 @@ public class AiController {
     }
 
     @GetMapping("/resume-check/history/{id}")
-    public ResponseEntity<ResumeCheckResult> resumeCheckHistoryItem(Authentication authentication, @PathVariable Long id) {
-        ResumeCheckHistory history = resumeCheckService.getHistory(authentication.getName(), id);
-        return ResponseEntity.ok(resumeCheckService.toResult(history));
+    public ResponseEntity<ResumeCheckHistory> resumeCheckHistoryItem(Authentication authentication, @PathVariable Long id) {
+        return ResponseEntity.ok(resumeCheckService.getHistory(authentication.getName(), id));
     }
 }

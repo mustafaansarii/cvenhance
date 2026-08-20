@@ -57,7 +57,6 @@ public class ResumeAnalyzer {
 
     // ---------------- Individual rules ----------------
 
-    /** Weak bullet openers + passive voice. */
     private Category impact(String text, List<String> lines) {
         List<Finding> findings = new ArrayList<>();
         for (String line : lines) {
@@ -88,29 +87,33 @@ public class ResumeAnalyzer {
     }
 
     private Category quantification(List<String> lines) {
-        List<Finding> findings = new ArrayList<>();
-        int bullets = 0;
-        int quantified = 0;
+        List<Finding> issues = new ArrayList<>();
+        List<Finding> quantified = new ArrayList<>();
         for (String line : lines) {
             String body = ResumeTextUtil.stripBullet(line);
             if (!Lexicon.ACTION_VERBS.contains(ResumeTextUtil.firstWord(body).toLowerCase(Locale.ROOT))) {
                 continue;
             }
-            bullets++;
             if (METRIC.matcher(body).find()) {
-                quantified++;
-            } else if (findings.size() < MAX_FINDINGS) {
-                findings.add(new Finding("warning", ResumeTextUtil.snippet(body, SNIPPET_CHARS),
+                quantified.add(new Finding("good", ResumeTextUtil.snippet(body, SNIPPET_CHARS),
+                        "Quantified achievement — backed by a concrete metric.",
+                        "Keep proving impact with numbers like this."));
+            } else {
+                issues.add(new Finding("warning", ResumeTextUtil.snippet(body, SNIPPET_CHARS),
                         "This achievement has no number to prove impact.",
                         "Add a metric — %, $, count, time saved, or scale."));
             }
         }
-        if (bullets == 0 && findings.isEmpty()) {
+        int bullets = issues.size() + quantified.size();
+        List<Finding> findings = new ArrayList<>();
+        issues.stream().limit(MAX_FINDINGS).forEach(findings::add);
+        quantified.stream().limit(MAX_FINDINGS).forEach(findings::add);
+        if (bullets == 0) {
             findings.add(new Finding("bad", "", "No quantified achievements detected.",
                     "Add figures (%, $, counts, time saved) to demonstrate measurable impact."));
         }
         String ok = bullets > 0
-                ? quantified + " of " + bullets + " achievements are quantified — nice."
+                ? quantified.size() + " of " + bullets + " achievements are quantified — nice."
                 : "Quantify impact wherever possible.";
         return category("quantification", "Quantification", findings, ok);
     }
@@ -242,7 +245,6 @@ public class ResumeAnalyzer {
 
     // ---------------- Shared builders ----------------
 
-    /** Flags each dictionary term found in the text (case-insensitive), capturing the original casing. */
     private Category dictionaryFindings(String key, String label, String text, String lower, List<String> terms,
                                         java.util.function.Function<String, String> issue, String suggestion,
                                         String okSummary, String severity) {

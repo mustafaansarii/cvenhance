@@ -1,11 +1,9 @@
 package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.ai.ResumeCheckResult;
-import com.docservice.careerhub.dto.ai.ResumeCheckResult.Category;
 import com.docservice.careerhub.entity.ResumeCheckHistory;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.repo.ResumeCheckHistoryRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,17 +44,16 @@ public class ResumeCheckService {
     @Autowired
     private StorageService storageService;
 
-    public ResumeCheckResult check(String userEmail, String resumeText, MultipartFile file) {
+    public ResumeCheckHistory check(String userEmail, String resumeText, MultipartFile file) {
         boolean subscribed = entitlementService.hasActivePlan(userEmail);
         if (!subscribed) {
-            redisRateLimiter.checkDailyLimit(userEmail, "resume-check", FREE_DAILY_LIMIT); // subscribers are unlimited
+            redisRateLimiter.checkDailyLimit(userEmail, "resume-check", FREE_DAILY_LIMIT);
         }
         validate(resumeText);
 
         String text = resumeText.trim();
         ResumeCheckResult result = resumeAnalyzer.analyze(text);
-        saveHistory(userEmail, text, file, result); // everyone keeps the latest HISTORY_LIMIT
-        return result;
+        return saveHistory(userEmail, text, file, result);
     }
 
     // ---------------- History ----------------
@@ -70,29 +67,25 @@ public class ResumeCheckService {
                 .orElseThrow(() -> ApiException.notFound("Resume check not found: " + id));
     }
 
-    public ResumeCheckResult toResult(ResumeCheckHistory history) {
+    private ResumeCheckHistory saveHistory(String ownerEmail, String resumeText, MultipartFile file, ResumeCheckResult result) {
+        ResumeCheckHistory history = new ResumeCheckHistory();
+        history.setOwnerEmail(ownerEmail);
+        history.setOverallScore(result.overallScore());
         try {
-            List<Category> categories = objectMapper.readValue(history.getCategoriesJson(),
-                    new TypeReference<List<Category>>() { });
-            return new ResumeCheckResult(history.getOverallScore(), categories);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to deserialize resume-check history {}: {}", history.getId(), e.getMessage());
-            return new ResumeCheckResult(history.getOverallScore(), List.of());
-        }
-    }
-
-    private void saveHistory(String ownerEmail, String resumeText, MultipartFile file, ResumeCheckResult result) {
-        try {
-            ResumeCheckHistory history = new ResumeCheckHistory();
-            history.setOwnerEmail(ownerEmail);
-            history.setOverallScore(result.overallScore());
             history.setCategoriesJson(objectMapper.writeValueAsString(result.categories()));
-            history.setResumeSnapshot(resumeText);
-            storeFile(ownerEmail, file, history);
-            historyRepository.save(history);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to serialize resume-check categories for {}: {}", ownerEmail, e.getMessage());
+            history.setCategoriesJson("[]");
+        }
+        history.setResumeSnapshot(resumeText);
+        storeFile(ownerEmail, file, history);
+        try {
+            ResumeCheckHistory saved = historyRepository.save(history);
             pruneHistory(ownerEmail);
+            return saved;
         } catch (Exception e) {
             LOGGER.warn("Failed to persist resume-check history for {}: {}", ownerEmail, e.getMessage());
+            return history; // transient (no id) — the analysis is still returned to the user
         }
     }
 

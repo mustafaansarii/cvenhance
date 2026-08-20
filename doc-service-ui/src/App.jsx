@@ -64,6 +64,7 @@ function App() {
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/resume-checker" element={<ResumeCheckerPage />} />
+        <Route path="/resume-checker/:id" element={<ResumeCheckerPage />} />
         <Route path="/interview-prep" element={<ComingSoon breadcrumb="Job Search" title="Interview Prep" description="Practice with AI mock interviews and get instant feedback." />} />
         <Route path="/job-tracker" element={<ComingSoon breadcrumb="Job Search" title="Job Tracker" description="Organize all your applications in one place." />} />
         <Route path="/job-board" element={<ComingSoon breadcrumb="Job Search" title="Job Board" description="Find roles that match your skills and experience." />} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import mammoth from 'mammoth/mammoth.browser';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
@@ -28,6 +28,7 @@ const SEVERITY_CHIP = {
 const SEVERITY_BAR = { bad: 'border-l-red-400', warning: 'border-l-amber-400', good: 'border-l-emerald-400', info: 'border-l-blue-400' };
 
 const problemsOf = (c) => (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning').length;
+const firstFixIdx = (cats) => { const i = (cats || []).findIndex((c) => problemsOf(c) > 0); return i >= 0 ? i : 0; };
 
 const INTERNAL_TOOLS = [
     { label: 'Resume templates', to: '/templates?type=CV_AND_RESUME&page=1&size=50', icon: Squares2X2Icon },
@@ -170,6 +171,8 @@ function AnalyzingSkeleton() {
 
 export default function ResumeCheckerPage() {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const loadedIdRef = useRef(null); // id already reflected in state (skip refetch after analyze)
     const inputRef = useRef(null);
     const [file, setFile] = useState(null);
     const [text, setText] = useState('');
@@ -178,6 +181,7 @@ export default function ResumeCheckerPage() {
     const [focusIdx, setFocusIdx] = useState(null);
     const [reading, setReading] = useState(false);
     const [analyzing, setAnalyzing] = useState(false);
+    const [loadingItem, setLoadingItem] = useState(Boolean(id));
     const [dragging, setDragging] = useState(false);
     const [history, setHistory] = useState([]);
     const [magicOpen, setMagicOpen] = useState(false);
@@ -191,13 +195,14 @@ export default function ResumeCheckerPage() {
     };
     useEffect(() => { loadHistory(); }, []);
 
-    const viewHistory = async (item) => {
+    const applyHistory = async (item, keepLocalFile = false) => {
         let cats = [];
         try { cats = JSON.parse(item.categoriesJson || '[]'); } catch { cats = []; }
         setText(item.resumeSnapshot || '');
         setData({ overallScore: item.overallScore, categories: cats });
-        setActiveIdx(0);
+        setActiveIdx(firstFixIdx(cats));
         setFocusIdx(null);
+        if (keepLocalFile) return;
         setFile(null);
         if (item.resumeFileUrl && (item.resumeFileType || '').includes('pdf')) {
             try {
@@ -206,6 +211,30 @@ export default function ResumeCheckerPage() {
             } catch { /* keep text fallback */ }
         }
     };
+
+    useEffect(() => {
+        if (!id) { setLoadingItem(false); return; }
+        if (loadedIdRef.current === String(id)) { setLoadingItem(false); return; }
+        let cancelled = false;
+        setLoadingItem(true);
+        resumeCheckerService.getHistoryItem(id)
+            .then((item) => { if (!cancelled) { loadedIdRef.current = String(id); return applyHistory(item); } })
+            .catch((err) => {
+                if (cancelled) return;
+                const status = err?.response?.status;
+                if (status === 401 || status === 403) {
+                    toast.error('Please sign in to view this analysis.');
+                    navigate('/login', { state: { from: `/resume-checker/${id}` } });
+                } else {
+                    toast.error('Analysis not found.');
+                    navigate('/resume-checker');
+                }
+            })
+            .finally(() => { if (!cancelled) setLoadingItem(false); });
+        return () => { cancelled = true; };
+    }, [id]);
+
+    const viewHistory = (item) => navigate(`/resume-checker/${item.id}`);
 
     const categories = data?.categories || [];
     const isPdf = /\.pdf$/i.test(file?.name || '');
@@ -268,30 +297,36 @@ export default function ResumeCheckerPage() {
     const analyze = async () => {
         if (!text.trim()) { toast.error('Upload a resume first.'); return; }
         setAnalyzing(true);
-        const id = toast.loading('Analyzing your resume…');
+        const toastId = toast.loading('Analyzing your resume…');
         try {
-            const result = await resumeCheckerService.checkResume({ resumeText: text, file });
-            setData(result);
-            setActiveIdx(0);
-            setFocusIdx(null);
+            const saved = await resumeCheckerService.checkResume({ resumeText: text, file });
+            await applyHistory(saved, true); // keep the just-uploaded file for an instant preview
             loadHistory();
-            toast.success('Analysis ready.', { id });
+            toast.success('Analysis ready.', { id: toastId });
+            if (saved?.id != null) {
+                loadedIdRef.current = String(saved.id); // effect will skip the refetch
+                navigate(`/resume-checker/${saved.id}`);
+            }
         } catch (err) {
             const status = err?.response?.status;
             if (status === 401 || status === 403) {
-                toast.error('Please sign in to analyze your resume.', { id });
+                toast.error('Please sign in to analyze your resume.', { id: toastId });
                 navigate('/login', { state: { from: '/resume-checker' } });
             } else if (status === 429) {
-                toast.error(err?.response?.data?.message || "You've reached today's limit. Try again tomorrow.", { id });
+                toast.error(err?.response?.data?.message || "You've reached today's limit. Try again tomorrow.", { id: toastId });
             } else {
-                toast.error(err?.response?.data?.message || 'Could not analyze your resume.', { id });
+                toast.error(err?.response?.data?.message || 'Could not analyze your resume.', { id: toastId });
             }
         } finally {
             setAnalyzing(false);
         }
     };
 
-    const reset = () => { setData(null); setFile(null); setText(''); setActiveIdx(0); setFocusIdx(null); };
+    const reset = () => {
+        setData(null); setFile(null); setText(''); setActiveIdx(0); setFocusIdx(null);
+        loadedIdRef.current = null;
+        navigate('/resume-checker');
+    };
 
     const CategoryRow = ({ c, i }) => {
         const n = problemsOf(c);
@@ -306,7 +341,7 @@ export default function ResumeCheckerPage() {
     };
 
     // ---------- Analyzing: full skeleton ----------
-    if (analyzing && !data) return <AnalyzingSkeleton />;
+    if ((analyzing || loadingItem) && !data) return <AnalyzingSkeleton />;
 
     // ---------- Landing / upload ----------
     if (!data) {
@@ -494,10 +529,12 @@ export default function ResumeCheckerPage() {
                                         <div key={i} className={`rounded-r-xl border-l-4 p-4 transition ${SEVERITY_BAR[f.severity] || SEVERITY_BAR.info} ${focused ? 'ring-1 ring-accent/40' : ''}`}>
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="flex items-center gap-2">
-                                                    <ExclamationTriangleIcon className={`h-4 w-4 ${scoreText(f.severity === 'good' ? 90 : f.severity === 'warning' ? 60 : 30)}`} />
+                                                    {f.severity === 'good'
+                                                        ? <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
+                                                        : <ExclamationTriangleIcon className={`h-4 w-4 ${scoreText(f.severity === 'warning' ? 60 : 30)}`} />}
                                                     <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${SEVERITY_CHIP[f.severity] || SEVERITY_CHIP.info}`}>{f.severity}</span>
                                                 </span>
-                                                {f.phrase && f.phrase.trim() && (
+                                                {f.phrase && f.phrase.trim() && f.severity !== 'good' && (
                                                     <button onClick={() => openMagic(f)} title="Rewrite this with AI"
                                                         className="flex items-center gap-1 rounded-md bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent transition hover:bg-accent/20">
                                                         <SparklesIcon className="h-3.5 w-3.5" /> Magic Writer
@@ -551,7 +588,6 @@ export default function ResumeCheckerPage() {
 function renderDocx(text, highlights) {
     const marks = (highlights || []).filter((h) => h.phrase && h.phrase.trim());
     if (!marks.length) return text;
-    // Build a whitespace-flexible pattern per phrase (spaces → \s+), then find the matching color.
     const patterns = marks.map((m) => ({
         color: m.color,
         re: new RegExp('^' + m.phrase.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '$', 'i'),
