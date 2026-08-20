@@ -12,6 +12,7 @@ import {
 import Navbar from '../components/navbar/Navbar';
 import PageHero from '../components/shared/PageHero';
 import PdfViewer, { severityColors } from '../components/ai/PdfViewer';
+import AiAssistPanel from '../components/ai/AiAssistPanel';
 import resumeCheckerService from '../services/resumeChecker.service';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.mjs', import.meta.url).toString();
@@ -172,7 +173,6 @@ export default function ResumeCheckerPage() {
     const inputRef = useRef(null);
     const [file, setFile] = useState(null);
     const [text, setText] = useState('');
-    const [targetRole, setTargetRole] = useState('');
     const [data, setData] = useState(null);
     const [activeIdx, setActiveIdx] = useState(0);
     const [focusIdx, setFocusIdx] = useState(null);
@@ -180,6 +180,9 @@ export default function ResumeCheckerPage() {
     const [analyzing, setAnalyzing] = useState(false);
     const [dragging, setDragging] = useState(false);
     const [history, setHistory] = useState([]);
+    const [magicOpen, setMagicOpen] = useState(false);
+    const [magicText, setMagicText] = useState('');
+    const [magicSection, setMagicSection] = useState('');
 
     const loadHistory = () => {
         resumeCheckerService.getHistory(0, 10)
@@ -188,15 +191,20 @@ export default function ResumeCheckerPage() {
     };
     useEffect(() => { loadHistory(); }, []);
 
-    // Re-open a stored analysis: rebuild results from the saved categories + resume snapshot (text preview).
-    const viewHistory = (item) => {
+    const viewHistory = async (item) => {
         let cats = [];
         try { cats = JSON.parse(item.categoriesJson || '[]'); } catch { cats = []; }
-        setFile(null);
         setText(item.resumeSnapshot || '');
         setData({ overallScore: item.overallScore, categories: cats });
         setActiveIdx(0);
         setFocusIdx(null);
+        setFile(null);
+        if (item.resumeFileUrl && (item.resumeFileType || '').includes('pdf')) {
+            try {
+                const blob = await (await fetch(item.resumeFileUrl)).blob();
+                setFile(new File([blob], 'resume.pdf', { type: 'application/pdf' }));
+            } catch { /* keep text fallback */ }
+        }
     };
 
     const categories = data?.categories || [];
@@ -205,14 +213,39 @@ export default function ResumeCheckerPage() {
     const topFixes = categories.map((c, i) => ({ c, i })).filter(({ c }) => problemsOf(c) > 0);
     const completed = categories.map((c, i) => ({ c, i })).filter(({ c }) => problemsOf(c) === 0);
 
+    const sentenceFor = (phrase) => {
+        if (!phrase || !phrase.trim()) return '';
+        const p = phrase.trim().toLowerCase();
+        const chunks = (text || '')
+            .split(/(?<=[.!?])\s+|\s*[•▪‣◦·|]\s*|\s+[oO]\s+|\n+/)
+            .map((c) => c.trim())
+            .filter(Boolean);
+        return chunks.find((c) => c.toLowerCase().includes(p)) || phrase.trim();
+    };
+    const clip = (s, n = 240) => (s && s.length > n ? `${s.slice(0, n).trim()}…` : s);
+
     const highlights = useMemo(() => {
         const findings = active?.findings || [];
         const chosen = focusIdx != null ? findings.filter((_, i) => i === focusIdx) : findings;
-        return chosen.filter((f) => f.phrase && f.phrase.trim())
+        return chosen
+            .filter((f) => f.phrase && f.phrase.trim())
             .map((f) => ({ phrase: f.phrase, color: severityColors[f.severity] || severityColors.warning }));
     }, [active, focusIdx]);
 
     const select = (i) => { setActiveIdx(i); setFocusIdx(null); };
+    const openMagic = (f) => {
+        setMagicSection(active?.label || 'resume');
+        setMagicText(sentenceFor(f.phrase));
+        setMagicOpen(true);
+    };
+    const acceptMagic = (t) => {
+        setMagicOpen(false);
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(t).then(() => toast.success('Copied — paste it into your resume.')).catch(() => {});
+        } else {
+            toast.success('Suggestion ready.');
+        }
+    };
 
     const onFile = async (f) => {
         if (!f) return;
@@ -237,7 +270,7 @@ export default function ResumeCheckerPage() {
         setAnalyzing(true);
         const id = toast.loading('Analyzing your resume…');
         try {
-            const result = await resumeCheckerService.checkResume({ resumeText: text, targetRole });
+            const result = await resumeCheckerService.checkResume({ resumeText: text, file });
             setData(result);
             setActiveIdx(0);
             setFocusIdx(null);
@@ -258,7 +291,7 @@ export default function ResumeCheckerPage() {
         }
     };
 
-    const reset = () => { setData(null); setFile(null); setText(''); setTargetRole(''); setActiveIdx(0); setFocusIdx(null); };
+    const reset = () => { setData(null); setFile(null); setText(''); setActiveIdx(0); setFocusIdx(null); };
 
     const CategoryRow = ({ c, i }) => {
         const n = problemsOf(c);
@@ -313,10 +346,7 @@ export default function ResumeCheckerPage() {
                                     <p className="mb-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                                         <DocumentTextIcon className="h-4 w-4" /> {file?.name}
                                     </p>
-                                    <textarea value={targetRole} onChange={(e) => setTargetRole(e.target.value)} rows={2}
-                                        placeholder="Optional: target role or paste a job description…"
-                                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30" />
-                                    <div className="mt-3 flex gap-2">
+                                    <div className="flex gap-2">
                                         <button onClick={() => inputRef.current?.click()}
                                             className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:text-accent">
                                             Change file
@@ -330,7 +360,7 @@ export default function ResumeCheckerPage() {
                             )}
                             <span className="text-xs text-muted-foreground">Drag &amp; drop or click · PDF or DOCX · max 2 MB · parsed in your browser</span>
                             <span className="text-[11px] text-muted-foreground">
-                                Free: 2 analyses/day. <Link to="/pricing" className="font-semibold text-accent hover:underline">Subscribe</Link> for more &amp; saved history.
+                                Free: 5 analyses/day, with your last 3 saved. <Link to="/pricing" className="font-semibold text-accent hover:underline">Subscribe</Link> for unlimited.
                             </span>
                         </div>
 
@@ -347,7 +377,7 @@ export default function ResumeCheckerPage() {
                                                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted">
                                                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${scoreBg(h.overallScore)}`}>{h.overallScore}</span>
                                                 <span className="min-w-0 flex-1">
-                                                    <span className="block truncate text-sm font-medium text-foreground">{h.targetRole || 'General analysis'}</span>
+                                                    <span className="block truncate text-sm font-medium text-foreground">Resume analysis</span>
                                                     <span className="block text-xs text-muted-foreground">{fmtDate(h.createdAt)}</span>
                                                 </span>
                                                 <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -462,16 +492,26 @@ export default function ResumeCheckerPage() {
                                     const focused = focusIdx === i;
                                     return (
                                         <div key={i} className={`rounded-r-xl border-l-4 p-4 transition ${SEVERITY_BAR[f.severity] || SEVERITY_BAR.info} ${focused ? 'ring-1 ring-accent/40' : ''}`}>
-                                            <div className="flex items-center gap-2">
-                                                <ExclamationTriangleIcon className={`h-4 w-4 ${scoreText(f.severity === 'good' ? 90 : f.severity === 'warning' ? 60 : 30)}`} />
-                                                <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${SEVERITY_CHIP[f.severity] || SEVERITY_CHIP.info}`}>{f.severity}</span>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="flex items-center gap-2">
+                                                    <ExclamationTriangleIcon className={`h-4 w-4 ${scoreText(f.severity === 'good' ? 90 : f.severity === 'warning' ? 60 : 30)}`} />
+                                                    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${SEVERITY_CHIP[f.severity] || SEVERITY_CHIP.info}`}>{f.severity}</span>
+                                                </span>
+                                                {f.phrase && f.phrase.trim() && (
+                                                    <button onClick={() => openMagic(f)} title="Rewrite this with AI"
+                                                        className="flex items-center gap-1 rounded-md bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent transition hover:bg-accent/20">
+                                                        <SparklesIcon className="h-3.5 w-3.5" /> Magic Writer
+                                                    </button>
+                                                )}
                                             </div>
-                                            {f.phrase && <p className="mt-2 text-sm font-medium italic text-foreground">“{f.phrase}”</p>}
-                                            <p className="mt-1.5 text-sm text-foreground">{f.issue}</p>
+                                            {f.phrase && f.phrase.trim() && (
+                                                <p className="mt-2 rounded-lg border border-border bg-background p-2.5 text-sm italic text-foreground">“{clip(sentenceFor(f.phrase))}”</p>
+                                            )}
+                                            <p className="mt-2 text-sm text-foreground">{f.issue}</p>
                                             <p className="mt-1.5 text-sm text-muted-foreground"><span className="font-medium text-foreground">Fix:</span> {f.suggestion}</p>
                                             {f.phrase && f.phrase.trim() && (
                                                 <button onClick={() => setFocusIdx(focused ? null : i)}
-                                                    className="mt-3 rounded-md bg-accent/10 px-3 py-1 text-xs font-semibold text-accent transition hover:bg-accent/20">
+                                                    className="mt-3 rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:text-accent">
                                                     {focused ? 'Show all' : 'Show in resume'}
                                                 </button>
                                             )}
@@ -494,6 +534,16 @@ export default function ResumeCheckerPage() {
                     )}
                 </section>
             </div>
+
+            <AiAssistPanel
+                open={magicOpen}
+                section={magicSection}
+                currentText={magicText}
+                format="plain"
+                onAccept={acceptMagic}
+                onClose={() => setMagicOpen(false)}
+                onPaymentRequired={() => navigate('/pricing')}
+            />
         </div>
     );
 }

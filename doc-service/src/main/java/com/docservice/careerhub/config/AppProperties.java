@@ -91,18 +91,23 @@ public class AppProperties {
     @Value("${ai.openrouter.model:openrouter/free}")
     private String openRouterModel;
 
-    /** "openrouter" (default) or "gemini"; */
     @Value("${ai.primary-provider:openrouter}")
     private String aiPrimaryProvider;
 
-    @Value("${supabase.bucket.name:resume_pdf}")
-    private String supabaseBucketName;
+    @Value("${storage.s3.bucket:resume_pdf}")
+    private String s3Bucket;
 
-    @Value("${supabase.service.key:}")
-    private String supabaseServiceKey;
+    @Value("${storage.s3.endpoint:}")
+    private String s3Endpoint;
 
-    @Value("${supabase.url:}")
-    private String supabaseUrl;
+    @Value("${storage.s3.region:ap-south-1}")
+    private String s3Region;
+
+    @Value("${storage.s3.access-key:}")
+    private String s3AccessKey;
+
+    @Value("${storage.s3.secret-key:}")
+    private String s3SecretKey;
 
     @Value("${cashfree.app.id:}")
     private String cashfreeAppId;

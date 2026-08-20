@@ -37,6 +37,17 @@ public class ResumeCheckHistory {
     @Column(columnDefinition = "TEXT")
     private String resumeSnapshot;
 
+    /** Storage object path (used to delete the file when this history row is pruned). */
+    @Column(columnDefinition = "TEXT")
+    private String resumeFilePath;
+
+    /** Public URL of the stored original file, rendered in the history preview. */
+    @Column(columnDefinition = "TEXT")
+    private String resumeFileUrl;
+
+    /** MIME type of the stored file, e.g. application/pdf. */
+    private String resumeFileType;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
