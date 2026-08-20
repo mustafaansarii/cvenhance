@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 public class ResumeAnalyzer {
 
     private static final int LONG_LINE_CHARS = 220;
+    private static final int DENSE_SENTENCE_WORDS = 28;
     private static final int MIN_WORDS = 350;
     private static final int MAX_WORDS = 950;
     private static final int MAX_FINDINGS = 6;
@@ -58,28 +59,45 @@ public class ResumeAnalyzer {
     // ---------------- Individual rules ----------------
 
     private Category impact(String text, List<String> lines) {
-        List<Finding> findings = new ArrayList<>();
+        List<Finding> issues = new ArrayList<>();
+        List<Finding> strong = new ArrayList<>();
+        Set<String> seenVerbs = new LinkedHashSet<>();
         for (String line : lines) {
-            if (findings.size() >= MAX_FINDINGS) {
-                break;
-            }
             String body = ResumeTextUtil.stripBullet(line);
+            if (body.isEmpty()) {
+                continue;
+            }
             String bodyLower = body.toLowerCase(Locale.ROOT);
+            String weakHit = null;
             for (String weak : Lexicon.WEAK_STARTERS.terms()) {
                 if (bodyLower.startsWith(weak)) {
-                    findings.add(new Finding("bad", body.substring(0, Math.min(weak.length(), body.length())),
-                            "Bullet opens with the weak phrase \"" + weak + "\".",
-                            "Start with a strong action verb (e.g. Led, Built, Reduced, Automated)."));
+                    weakHit = weak;
                     break;
+                }
+            }
+            if (weakHit != null) {
+                issues.add(new Finding("bad", body.substring(0, Math.min(weakHit.length(), body.length())),
+                        "Bullet opens with the weak phrase \"" + weakHit + "\".",
+                        "Start with a strong action verb (e.g. Led, Built, Reduced, Automated)."));
+            } else {
+                String verb = ResumeTextUtil.firstWord(body);
+                if (Lexicon.ACTION_VERBS.contains(verb.toLowerCase(Locale.ROOT))
+                        && seenVerbs.add(verb.toLowerCase(Locale.ROOT))) {
+                    strong.add(new Finding("good", verb,
+                            "Strong action verb — \"" + verb + "\".",
+                            "Great — this bullet leads with impact."));
                 }
             }
         }
         Matcher m = PASSIVE.matcher(text);
-        while (m.find() && findings.size() < MAX_FINDINGS) {
-            findings.add(new Finding("warning", m.group(),
+        while (m.find()) {
+            issues.add(new Finding("warning", m.group(),
                     "Passive voice — \"" + m.group() + "\".",
                     "Rewrite in active voice led by the action you took."));
         }
+        List<Finding> findings = new ArrayList<>();
+        issues.stream().limit(MAX_FINDINGS).forEach(findings::add);
+        strong.stream().limit(MAX_FINDINGS).forEach(findings::add);
         if (findings.isEmpty()) {
             findings.add(new Finding("good", "", "Bullets use strong, active phrasing.", "Keep leading with impact verbs."));
         }
@@ -180,28 +198,40 @@ public class ResumeAnalyzer {
     }
 
     private Category readability(String text) {
+        List<Finding> findings = new ArrayList<>();
         int words = 0;
         int sentences = 0;
-        for (String s : text.split("(?<=[.!?])\\s+|\\R")) {
-            int w = ResumeTextUtil.countWords(s);
-            if (w > 0) {
-                words += w;
-                sentences++;
+        for (String line : ResumeTextUtil.sentences(text)) {
+            String body = ResumeTextUtil.stripBullet(line);
+            int w = ResumeTextUtil.countWords(body);
+            if (w == 0) {
+                continue;
+            }
+            words += w;
+            sentences++;
+            if (w > DENSE_SENTENCE_WORDS && findings.size() < MAX_FINDINGS) {
+                findings.add(new Finding("warning", ResumeTextUtil.snippet(body, SNIPPET_CHARS),
+                        "This sentence runs ~" + w + " words — dense to read.",
+                        "Tighten to a single idea under ~20 words."));
             }
         }
-        double avg = sentences == 0 ? 0 : (double) words / sentences;
-        List<Finding> findings = new ArrayList<>();
-        if (avg > 28) {
-            findings.add(new Finding("warning", "",
-                    "Sentences average ~" + Math.round(avg) + " words — dense to read.",
-                    "Aim for tight, single-idea bullets under ~20 words."));
-        }
-        return category("readability", "Readability", findings, "Easy to scan — good sentence length.");
+        int avg = sentences == 0 ? 0 : Math.round((float) words / sentences);
+        return category("readability", "Readability", findings,
+                "Easy to scan — averaging ~" + avg + " words per sentence.");
     }
 
     private Category dates(String text) {
         List<Finding> findings = new ArrayList<>();
-        if (YEAR.matcher(text).results().count() == 0) {
+        Set<String> seen = new LinkedHashSet<>();
+        Matcher m = YEAR.matcher(text);
+        while (m.find() && findings.size() < MAX_FINDINGS) {
+            if (seen.add(m.group())) {
+                findings.add(new Finding("good", m.group(),
+                        "Date present — \"" + m.group() + "\".",
+                        "Good — the timeline is clear."));
+            }
+        }
+        if (findings.isEmpty()) {
             findings.add(new Finding("warning", "", "No dates detected.",
                     "Add start/end dates (e.g. Jan 2022 – Present) so recruiters can gauge tenure."));
         }
@@ -216,18 +246,41 @@ public class ResumeAnalyzer {
                         "Add a clearly labelled " + section + " section for ATS parsing."));
             }
         }
-        if (!EMAIL.matcher(text).find()) {
+        Matcher email = EMAIL.matcher(text);
+        if (email.find()) {
+            findings.add(new Finding("good", email.group(), "Email present.", "Good — recruiters can reach you."));
+        } else {
             findings.add(new Finding("bad", "", "No email address detected.",
                     "Add a professional email so recruiters can reach you."));
         }
-        if (!PHONE.matcher(text).find()) {
+        Matcher phone = PHONE.matcher(text);
+        if (phone.find()) {
+            findings.add(new Finding("good", phone.group().trim(), "Phone number present.", "Good — direct contact is available."));
+        } else {
             findings.add(new Finding("warning", "", "No phone number detected.", "Add a phone number to your header."));
         }
-        if (!LINK.matcher(text).find()) {
+        Matcher link = LINK.matcher(text);
+        if (link.find()) {
+            findings.add(new Finding("good", contactToken(text, link.start()),
+                    "Profile/portfolio link present.", "Good — this adds credibility."));
+        } else {
             findings.add(new Finding("warning", "", "No LinkedIn/GitHub/portfolio link detected.",
                     "Add a relevant profile or portfolio link."));
         }
         return category("sections", "Sections & Contact", findings, "Core sections and contact details are present.");
+    }
+
+    /** Expand a match index out to its surrounding non-whitespace token (e.g. the full linkedin.com/in/... URL). */
+    private String contactToken(String text, int idx) {
+        int start = idx;
+        int end = idx;
+        while (start > 0 && !Character.isWhitespace(text.charAt(start - 1))) {
+            start--;
+        }
+        while (end < text.length() && !Character.isWhitespace(text.charAt(end))) {
+            end++;
+        }
+        return text.substring(start, end);
     }
 
     private Category length(String text) {
