@@ -132,6 +132,28 @@ const HeroBar = () => (
     </div>
 );
 
+function PreviewSkeleton() {
+    const SkBar = ({ w }) => <div className="h-3 rounded bg-muted" style={{ width: w }} />;
+    return (
+        <div className="h-full min-h-[60vh] w-full overflow-hidden bg-muted p-4 sm:p-6">
+            <div className="mx-auto max-w-[520px] animate-pulse space-y-6 rounded-sm bg-card p-8 shadow">
+                <div className="space-y-2">
+                    <div className="mx-auto h-6 w-1/2 rounded bg-muted" />
+                    <div className="mx-auto h-2.5 w-2/3 rounded bg-muted" />
+                </div>
+                {Array.from({ length: 4 }).map((_, s) => (
+                    <div key={s} className="space-y-2">
+                        <SkBar w="35%" />
+                        <SkBar w="100%" />
+                        <SkBar w="92%" />
+                        <SkBar w="80%" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function ScoreRing({ score, size = 104 }) {
     const r = (size - 12) / 2;
     const c = 2 * Math.PI * r;
@@ -351,7 +373,7 @@ export default function ResumeCheckerPage() {
 
     const onFile = async (f) => {
         if (!f) return;
-        if (!/\.(pdf|docx)$/i.test(f.name)) { toast.error('Upload a PDF or DOCX file.'); return; }
+        if (!/\.pdf$/i.test(f.name)) { toast.error('Upload a PDF file.'); return; }
         if (f.size > MAX_BYTES) { toast.error('File is too large (max 2 MB).'); return; }
         setReading(true);
         const id = toast.loading('Reading your resume…');
@@ -432,7 +454,7 @@ export default function ResumeCheckerPage() {
                     onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={(e) => { e.preventDefault(); setDragging(false); onFile(e.dataTransfer.files?.[0]); }}>
-                    <input ref={inputRef} type="file" accept=".pdf,.docx" className="hidden"
+                    <input ref={inputRef} type="file" accept=".pdf" className="hidden"
                         onChange={(e) => onFile(e.target.files?.[0])} />
 
                     <div className="text-center">
@@ -451,23 +473,30 @@ export default function ResumeCheckerPage() {
                                     {reading ? 'Reading…' : dragging ? 'Drop it here' : 'Upload your resume'}
                                 </button>
                             ) : (
-                                <div className="w-full">
-                                    <p className="mb-3 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                                        <DocumentTextIcon className="h-4 w-4" /> {file?.name}
-                                    </p>
-                                    <div className="flex gap-2">
+                                <div className="w-full space-y-3">
+                                    {/* Selected-file card */}
+                                    <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 text-left">
+                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                                            <DocumentTextIcon className="h-5 w-5" />
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-sm font-semibold text-foreground">{file?.name}</span>
+                                            <span className="block text-xs text-muted-foreground">PDF · ready to analyze</span>
+                                        </span>
                                         <button onClick={() => inputRef.current?.click()}
-                                            className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition hover:text-accent">
-                                            Change file
-                                        </button>
-                                        <button onClick={analyze}
-                                            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover">
-                                            <SparklesIcon className="h-4 w-4" /> Analyze resume
+                                            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-accent hover:bg-accent/5 hover:text-accent">
+                                            Change
                                         </button>
                                     </div>
+                                    {/* Primary action */}
+                                    <button onClick={analyze}
+                                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover hover:shadow-md">
+                                        <SparklesIcon className="h-4 w-4 transition-transform group-hover:rotate-12" />
+                                        Analyze resume
+                                    </button>
                                 </div>
                             )}
-                            <span className="text-xs text-muted-foreground">Drag &amp; drop or click · PDF or DOCX · max 2 MB · parsed in your browser</span>
+                            <span className="text-xs text-muted-foreground">Drag &amp; drop or click · PDF · max 2 MB · parsed in your browser</span>
                             <span className="text-[11px] text-muted-foreground">
                                 Free: 5 analyses/day, with your last 3 saved. <Link to="/pricing" className="font-semibold text-accent hover:underline">Subscribe</Link> for unlimited.
                             </span>
@@ -664,12 +693,7 @@ export default function ResumeCheckerPage() {
                 {/* Right preview — show the real document; only fall back to text when there is no PDF. */}
                 <section className="order-3 w-full shrink-0 lg:order-3 lg:h-full lg:w-[540px]">
                     {pdfPending ? (
-                        <div className="flex h-full min-h-[60vh] w-full items-center justify-center bg-muted">
-                            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-accent" />
-                                <p className="text-sm">Loading preview…</p>
-                            </div>
-                        </div>
+                        <PreviewSkeleton />
                     ) : isPdf ? (
                         <PdfViewer file={file} highlights={highlights} />
                     ) : (

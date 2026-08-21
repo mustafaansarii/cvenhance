@@ -29,7 +29,7 @@ function App() {
   const location = useLocation();
   const isEditor = location.pathname.startsWith('/doc-editor') || location.pathname.startsWith('/resume-builder');
   const noFooterPaths = ['/login', '/signup'];
-  const hideFooter = isEditor || noFooterPaths.includes(location.pathname);
+  const hideFooter = isEditor || noFooterPaths.includes(location.pathname) || location.pathname.startsWith('/resume-checker/');
 
   const [authReady, setAuthReady] = useState(false);
 
