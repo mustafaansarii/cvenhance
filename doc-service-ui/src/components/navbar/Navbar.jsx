@@ -46,7 +46,7 @@ const navItems = [
         },
     },
     {
-        label: 'Job Search',
+        label: 'Tools',
         mega: {
             columns: [
                 {
@@ -62,8 +62,8 @@ const navItems = [
             promo: { title: 'Land your next role faster', desc: 'Prep, track and apply — all in one place.', cta: 'Browse templates', to: '/templates?type=CV_AND_RESUME&page=1&size=50' },
         },
     },
-    { label: 'For Organizations', to: '/contact-us' },
-    { label: 'Pricing', to: '/pricing' },
+    { label: 'Contact Us', to: '/contact-us' },
+    { label: 'Plans', to: '/pricing' },
 ];
 
 const profileItems = [

@@ -10,7 +10,6 @@ export default function Footer() {
         ],
         account: [
             { name: 'My Profile', url: '/profile' },
-            { name: 'Settings', url: '/settings' },
         ],
         company: [
             { name: 'Contact Us', url: '/contact-us' },

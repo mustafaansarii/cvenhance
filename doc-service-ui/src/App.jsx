@@ -22,7 +22,6 @@ import ComingSoon from './pages/ComingSoon';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
 import ResumeBuilder from './pages/ResumeBuilder';
-import SettingsPage from './pages/SettingsPage';
 import ResumeUploadPrompt from './components/profile/ResumeUploadPrompt';
 import PrivacyConsentBanner from './components/shared/PrivacyConsentBanner';
 
@@ -69,41 +68,11 @@ function App() {
         <Route path="/job-tracker" element={<ComingSoon breadcrumb="Job Search" title="Job Tracker" description="Organize all your applications in one place." />} />
         <Route path="/job-board" element={<ComingSoon breadcrumb="Job Search" title="Job Board" description="Find roles that match your skills and experience." />} />
         <Route path="/templates" element={<DocTemplates />} />
-        <Route path="/resume-builder/:code" element={<ResumeBuilder />} />
-        <Route
-          path="/my-templates"
-          element={
-            <PrivateRoute>
-              <MyTemplates />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/doc-editor/:id"
-          element={
-            <PrivateRoute>
-              <DocEditor />
-            </PrivateRoute>
-          }
-        />
 
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <PrivateRoute>
-              <SettingsPage />
-            </PrivateRoute>
-          }
-        />
-
+        <Route path="/resume-builder/:code" element={<PrivateRoute> <ResumeBuilder /> </PrivateRoute>} />
+        <Route path="/my-templates" element={<PrivateRoute> <MyTemplates/> </PrivateRoute>} />
+        <Route path="/doc-editor/:id" element={<PrivateRoute> <DocEditor/></PrivateRoute>} />
+        <Route path="/profile" element={<PrivateRoute><ProfilePage/></PrivateRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideFooter && <Footer />}
