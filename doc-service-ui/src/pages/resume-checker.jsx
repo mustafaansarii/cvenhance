@@ -242,6 +242,7 @@ export default function ResumeCheckerPage() {
     const loadedIdRef = useRef(null); // id already reflected in state (skip refetch after analyze)
     const inputRef = useRef(null);
     const [file, setFile] = useState(null);
+    const [pdfPending, setPdfPending] = useState(false);
     const [text, setText] = useState('');
     const [data, setData] = useState(null);
     const [activeIdx, setActiveIdx] = useState(0);
@@ -269,13 +270,17 @@ export default function ResumeCheckerPage() {
         setData({ overallScore: item.overallScore, categories: cats });
         setActiveIdx(firstFixIdx(cats));
         setFocusIdx(null);
+        setPdfPending(false);
         if (keepLocalFile) return;
         setFile(null);
-        if (item.resumeFileUrl && (item.resumeFileType || '').includes('pdf')) {
+        const expectsPdf = item.resumeFileUrl && (item.resumeFileType || '').includes('pdf');
+        setPdfPending(expectsPdf);
+        if (expectsPdf) {
             try {
                 const blob = await (await fetch(item.resumeFileUrl)).blob();
                 setFile(new File([blob], 'resume.pdf', { type: 'application/pdf' }));
-            } catch { /* keep text fallback */ }
+            } catch { /* fetch failed → fall back to the text preview */ }
+            setPdfPending(false);
         }
     };
 
@@ -391,7 +396,7 @@ export default function ResumeCheckerPage() {
     };
 
     const reset = () => {
-        setData(null); setFile(null); setText(''); setActiveIdx(0); setFocusIdx(null);
+        setData(null); setFile(null); setPdfPending(false); setText(''); setActiveIdx(0); setFocusIdx(null);
         loadedIdRef.current = null;
         navigate('/resume-checker');
     };
@@ -656,9 +661,16 @@ export default function ResumeCheckerPage() {
                     )}
                 </section>
 
-                {/* Right preview */}
+                {/* Right preview — show the real document; only fall back to text when there is no PDF. */}
                 <section className="order-3 w-full shrink-0 lg:order-3 lg:h-full lg:w-[540px]">
-                    {isPdf ? (
+                    {pdfPending ? (
+                        <div className="flex h-full min-h-[60vh] w-full items-center justify-center bg-muted">
+                            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                                <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-accent" />
+                                <p className="text-sm">Loading preview…</p>
+                            </div>
+                        </div>
+                    ) : isPdf ? (
                         <PdfViewer file={file} highlights={highlights} />
                     ) : (
                         <article className="h-full min-h-[60vh] overflow-auto whitespace-pre-wrap bg-muted p-5 font-serif text-sm leading-7 text-foreground">
