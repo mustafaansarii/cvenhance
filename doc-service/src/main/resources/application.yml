@@ -173,3 +173,7 @@ ai:
     api-key: ${OPENROUTER_API_KEY:}
     base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api}
     model: ${OPENROUTER_MODEL:openrouter/free}
+  groq:
+    api-key: ${GROQ_API_KEY:}
+    base-url: ${GROQ_BASE_URL:https://api.groq.com/openai}
+    model: ${GROQ_MODEL:openai/gpt-oss-120b}

@@ -91,6 +91,15 @@ public class AppProperties {
     @Value("${ai.openrouter.model:openrouter/free}")
     private String openRouterModel;
 
+    @Value("${ai.groq.api-key:}")
+    private String groqApiKey;
+
+    @Value("${ai.groq.base-url:https://api.groq.com/openai}")
+    private String groqBaseUrl;
+
+    @Value("${ai.groq.model:openai/gpt-oss-120b}")
+    private String groqModel;
+
     @Value("${ai.primary-provider:openrouter}")
     private String aiPrimaryProvider;
 

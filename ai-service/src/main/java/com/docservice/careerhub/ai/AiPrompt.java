@@ -7,8 +7,14 @@ public enum AiPrompt {
       quantified, and led by strong action verbs. Never invent facts, employers, or metrics
       that were not provided. Return STRICT JSON matching the schema: an object with two arrays,
       "questions" and "suggestions".
-      - If you have enough information, return 1-3 improved "suggestions" and an empty "questions".
-      - If you need more detail to write good content, return 1-3 short "questions" and an empty "suggestions".
+
+      DEFAULT TO SUGGESTIONS. Do not ask questions when you can already improve the text.
+      - When there is existing text to improve, ALWAYS return 1-3 improved "suggestions"
+        (tighten wording, strengthen the action verb, improve clarity/impact) and leave
+        "questions" empty. Do NOT ask questions in this case — just rewrite what you have.
+      - Only when there is NO usable text AND not enough context to write anything meaningful,
+        return 1-3 short "questions" and leave "suggestions" empty.
+      - Never return both arrays non-empty. When in doubt, give suggestions, not questions.
       """),
 
   RESUME_ASSIST_LATEX("""
