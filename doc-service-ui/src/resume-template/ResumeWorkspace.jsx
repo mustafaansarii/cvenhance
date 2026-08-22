@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
     PAGE_W, PAGE, GAP, STRIDE, MARGIN,
-    SECTION_CATALOG, META, blankItem, nextId, profileToResume, resumeToProfile, hasResumeContent,
+    SECTION_CATALOG, META, blankItem, profileToResume, resumeToProfile, hasResumeContent,
     AddButton, RemoveButton,
 } from './shared';
 import userService from '../services/user.service';
@@ -397,8 +397,18 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         document.body.appendChild(holder);
 
         try {
-            try { await document.fonts?.ready; } catch { /* ignore */ }
+            try {
+                await document.fonts?.ready;
+                const ff = getComputedStyle(clone).fontFamily || 'serif';
+                await Promise.all([
+                    document.fonts?.load(`400 16px ${ff}`),
+                    document.fonts?.load(`700 16px ${ff}`),
+                    document.fonts?.load(`italic 400 16px ${ff}`),
+                ].filter(Boolean));
+            } catch { /* ignore */ }
+            void clone.offsetHeight; // force a layout/reflow of the offscreen clone
             await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await new Promise((resolve) => setTimeout(resolve, 150)); // settle: styles + fonts applied
 
             const cTop = clone.getBoundingClientRect().top;
             const segs = [];
@@ -417,7 +427,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
             segs.push({ top: pageStart, bottom: lastBottom });
 
             const scale = 2;
-            const canvas = await html2canvas(clone, { scale, backgroundColor: '#ffffff', useCORS: true });
+            const canvas = await html2canvas(clone, {
+                scale,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                onclone: async (clonedDoc) => { try { await clonedDoc.fonts?.ready; } catch { /* ignore */ } },
+            });
 
             const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
             const pageWpt = pdf.internal.pageSize.getWidth();
