@@ -41,8 +41,6 @@ const FONT_OPTIONS = [
 const ACCENTS = ['#0f172a', '#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#db2777', '#0891b2'];
 
 export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
-    // Prefer the saved document only when it holds real content; otherwise seed from the user's profile
-    // (a signed-in user with no profile gets a blank form, never the sample — see profileToResume).
     const hasDoc = hasResumeContent(initialDocument?.resumeData);
     const [resume, setResume] = useState(() => hasDoc
         ? initialDocument.resumeData
