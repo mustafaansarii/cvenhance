@@ -48,6 +48,9 @@ public class AuthService {
     @Autowired
     private AppProperties appProperties;
 
+    @Autowired
+    private AccountMailer accountMailer;
+
     public record LoginResult(AuthUser user, String accessToken) {
     }
 
@@ -89,6 +92,7 @@ public class AuthService {
     @Transactional
     public LoginResult login(SigninRequest request, DeviceMetadata device) {
         AuthUser user = authenticate(request);
+        accountMailer.sendWelcome(user.getEmail(), user.getFullName());
         String tokenId = createSession(user.getEmail(), device);
         List<String> roleNames = user.getRoles().stream().map(Enum::name).toList();
         String token = jwtService.generate(user.getEmail(), tokenId, roleNames);
@@ -108,6 +112,7 @@ public class AuthService {
         user.setVerified(true);
         user.setProvider(provider);
         AuthUser saved = authUserRepository.save(user);
+        accountMailer.sendWelcome(saved.getEmail(), saved.getFullName());
 
         String tokenId = createSession(saved.getEmail(), device);
         List<String> roleNames = saved.getRoles().stream().map(Enum::name).toList();

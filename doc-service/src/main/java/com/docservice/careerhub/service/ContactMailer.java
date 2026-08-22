@@ -2,6 +2,7 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.config.AppProperties;
 import com.docservice.careerhub.dto.request.ContactRequest;
+import com.docservice.careerhub.util.EmailBodies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 @Service
 public class ContactMailer {
@@ -31,10 +31,8 @@ public class ContactMailer {
         String subject = "New contact query from " + request.getName()
                 + " (" + request.getEmail() + ") · " + LocalDateTime.now(IST).format(SUBJECT_TIME);
         String text = "From: " + request.getName() + " (" + request.getEmail() + ")\n\n" + request.getMessage();
-        String html = mailService.renderEmail("contact.html", Map.of(
-                "name", request.getName(),
-                "email", request.getEmail(),
-                "message", request.getMessage()));
+        String html = mailService.renderEmail(
+                EmailBodies.contact(request.getName(), request.getEmail(), request.getMessage()));
 
         boolean sent = mailService.sendHtml(appProperties.getMailSupportAddress(), subject, text, html, request.getEmail());
         if (!sent) {

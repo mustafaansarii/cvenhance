@@ -71,8 +71,8 @@ public class UserDocService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UserDoc> list(String ownerEmail, String keyword, DocType type, Pageable pageable) {
-        return userDocRepository.search(ownerEmail, keyword, type, pageable);
+    public Page<UserDoc> getUserDocs(String ownerEmail, String keyword, DocType type, Pageable pageable) {
+        return userDocRepository.getUserDocs(ownerEmail, keyword, type, pageable);
     }
 
     @Transactional(readOnly = true)

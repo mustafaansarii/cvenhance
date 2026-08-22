@@ -61,6 +61,7 @@ spring:
           time_zone: ${APP_TIMEZONE:Asia/Kolkata}
 
   flyway:
+    enabled: ${FLYWAY_ENABLED:false}
     baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:true}
     baseline-version: ${FLYWAY_BASELINE_VERSION:0}
     placeholder-replacement: false

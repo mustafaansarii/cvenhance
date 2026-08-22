@@ -10,9 +10,9 @@ export default function DocTemplates() {
                 style={{ backgroundImage: "url('/assest/home_page.png')" }}>
                 <Navbar />
                 <PageHero
-                    breadcrumb="Document Templates"
-                    title="Document Templates"
-                    description="Browse, preview, and download professional templates for every need."
+                    breadcrumb="Templates"
+                    title="Explore Templates"
+                    description="Browse, preview, analyze, edit, improve and download professional templates for every need."
                 />
             </div>
             <Templates />
