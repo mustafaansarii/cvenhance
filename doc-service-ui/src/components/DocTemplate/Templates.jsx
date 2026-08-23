@@ -12,6 +12,9 @@ import {
 } from '@heroicons/react/24/outline';
 import docService from '../../services/doc.service';
 import authService from '../../services/auth.service';
+import { TEMPLATE_MAP } from '../../resume-template/registry';
+
+const hasFormBuilder = (code) => !!code && !!TEMPLATE_MAP[code];
 const CATEGORIES = [
     { key: 'CV_AND_RESUME', label: 'CV & Resume' },
     { key: 'COVER_LETTER', label: 'Cover Letter' },
@@ -35,7 +38,7 @@ const STATUS_BADGE = {
     FAILED: 'bg-red-50 text-red-600',
 };
 
-function TemplateCard({ doc, onAction, isBusy, isUserDocs }) {
+function TemplateCard({ doc, onAction, isBusy }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef(null);
 
@@ -46,10 +49,11 @@ function TemplateCard({ doc, onAction, isBusy, isUserDocs }) {
     }, []);
 
     const choose = (m) => { setMenuOpen(false); onAction(doc, m); };
+    const formAvailable = hasFormBuilder(doc.templateCode);
 
     return (
         <div
-            onClick={() => !isBusy && choose(isUserDocs ? 'latex' : 'form')}
+            onClick={() => !isBusy && choose(formAvailable ? 'form' : 'latex')}
             className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:shadow-lg hover:ring-1 hover:ring-accent"
         >
             <div className="relative flex items-center justify-center overflow-hidden bg-muted" style={{ aspectRatio: '3/4' }}>
@@ -88,7 +92,7 @@ function TemplateCard({ doc, onAction, isBusy, isUserDocs }) {
                     </button>
                     {menuOpen && (
                         <div className="absolute bottom-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
-                            {!isUserDocs && (
+                            {formAvailable && (
                                 <button onClick={() => choose('form')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><PencilSquareIcon className="h-4 w-4 text-muted-foreground" /> Edit with form</button>
                             )}
                             <button onClick={() => choose('latex')} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted"><CodeBracketIcon className="h-4 w-4 text-muted-foreground" /> Edit with LaTeX editor</button>
@@ -189,7 +193,7 @@ export default function Templates({ mode = 'templates' }) {
     const handleAction = async (doc, action = 'form') => {
 
         if (busyId) return;
-        if (action === 'form' && !isUserDocs) {
+        if (action === 'form') {
             navigate(`/resume-builder/${doc.templateCode || 'classic'}`);
             return;
         }
@@ -266,7 +270,7 @@ export default function Templates({ mode = 'templates' }) {
     const docGrid = (items) => (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((doc) => (
-                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} isUserDocs={isUserDocs} />
+                <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} />
             ))}
         </div>
     );
@@ -345,7 +349,7 @@ export default function Templates({ mode = 'templates' }) {
                 {!error && !loading && !isUserDocs && (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {templates.map((doc) => (
-                            <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} isUserDocs={isUserDocs} />
+                            <TemplateCard key={doc.id} doc={doc} isBusy={busyId === doc.id} onAction={handleAction} />
                         ))}
                     </div>
                 )}

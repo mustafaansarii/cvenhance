@@ -40,6 +40,7 @@ class AuthServiceTest {
     private UserSessionRepository sessionRepo;
     private PasswordEncoder encoder;
     private OtpMailer otpMailer;
+    private AccountMailer accountMailer;
     private JwtService jwtService;
     private AuthService service;
 
@@ -49,6 +50,7 @@ class AuthServiceTest {
         sessionRepo = mock(UserSessionRepository.class);
         encoder = new BCryptPasswordEncoder();
         otpMailer = mock(OtpMailer.class);
+        accountMailer = mock(AccountMailer.class);
         AppProperties props = new AppProperties();
         props.setJwtSecret("0123456789012345678901234567890123456789");
         props.setJwtExpiryMs(3600000L);
@@ -60,6 +62,7 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(service, "userSessionRepository", sessionRepo);
         ReflectionTestUtils.setField(service, "passwordEncoder", encoder);
         ReflectionTestUtils.setField(service, "otpMailer", otpMailer);
+        ReflectionTestUtils.setField(service, "accountMailer", accountMailer);
         ReflectionTestUtils.setField(service, "jwtService", jwtService);
         ReflectionTestUtils.setField(service, "appProperties", props);
     }

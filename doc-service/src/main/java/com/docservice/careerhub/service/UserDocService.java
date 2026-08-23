@@ -178,7 +178,7 @@ public class UserDocService {
         return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
     }
     
-    private UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
+    public UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
         if (Objects.nonNull(template.getTemplateCode())) {
             UserDoc existing = userDocRepository
                     .findFirstByOwnerEmailAndTemplateCode(ownerEmail, template.getTemplateCode())
