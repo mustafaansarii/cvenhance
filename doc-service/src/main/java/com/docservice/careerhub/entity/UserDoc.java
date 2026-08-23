@@ -35,6 +35,8 @@ public class UserDoc {
 
     private String templateCode;
 
+    private Long builderDocId;
+
     @Column(nullable = false)
     private String name;
 
