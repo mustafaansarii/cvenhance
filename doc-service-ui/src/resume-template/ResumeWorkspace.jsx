@@ -40,6 +40,10 @@ const FONT_OPTIONS = [
 ];
 const ACCENTS = ['#0f172a', '#0f766e', '#2563eb', '#7c3aed', '#dc2626', '#ea580c', '#db2777', '#0891b2'];
 
+const TB_BTN = 'flex h-8 w-8 items-center justify-center rounded-lg text-white/85 transition hover:bg-white/15 hover:text-white active:scale-95';
+const TB_DIV = 'mx-0.5 h-5 w-px bg-white/15';
+const TB_ICON = 'h-[17px] w-[17px]';
+
 export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
     const hasDoc = hasResumeContent(initialDocument?.resumeData);
     const [resume, setResume] = useState(() => hasDoc
@@ -70,10 +74,10 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     const navigate = useNavigate();
 
     const [settings, setSettings] = useState(() => ({
-        margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e', ...initialDocument?.editorSettings,
+        margin: MARGIN, spacing: 18, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e', ...initialDocument?.editorSettings,
     }));
     const setSetting = (k, v) => setSettings((s) => ({ ...s, [k]: v }));
-    const resetDesign = () => setSettings({ margin: MARGIN, spacing: 24, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e' });
+    const resetDesign = () => setSettings({ margin: MARGIN, spacing: 8, fontSize: 14, lineHeight: 1.2, fontFamily: '', accent: design.accent || '#0f766e' });
     const sheetRef = useRef(null);
     const canvasRef = useRef(null);
     const scaleRef = useRef(1);
@@ -87,7 +91,20 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     const [aiOpen, setAiOpen] = useState(false);
     const [aiText, setAiText] = useState('');
     const [aiSection, setAiSection] = useState('resume text');
+    const [linkPopover, setLinkPopover] = useState(null); // { top, left } for the link input
+    const [linkValue, setLinkValue] = useState('');
+    const linkInputRef = useRef(null);
+    const linkPopRef = useRef(null);
     useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+    // Autofocus the link input when the popover opens, and close it on an outside click.
+    useEffect(() => {
+        if (!linkPopover) return undefined;
+        const t = setTimeout(() => linkInputRef.current?.focus(), 0);
+        const onDown = (e) => { if (linkPopRef.current && !linkPopRef.current.contains(e.target)) setLinkPopover(null); };
+        document.addEventListener('mousedown', onDown);
+        return () => { clearTimeout(t); document.removeEventListener('mousedown', onDown); };
+    }, [linkPopover]);
 
     useEffect(() => {
         if (!authed || !docId) return undefined;
@@ -290,17 +307,40 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         return () => document.removeEventListener('selectionchange', onSelect);
     }, []);
     const format = (cmd) => document.execCommand(cmd, false, null);
-    const addLink = () => {
+    const align = (cmd) => {
+        try { document.execCommand('styleWithCSS', false, true); } catch { /* ignore */ }
+        document.execCommand(cmd, false, null);
+        try { document.execCommand('styleWithCSS', false, false); } catch { /* ignore */ }
+    };
+    // Open a custom (Gmail-style) link popover anchored under the current selection.
+    const openLinkPopover = () => {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-        const range = sel.getRangeAt(0).cloneRange();
-        const inp = window.prompt('Enter the URL to link to:', 'https://');
-        if (!inp) return;
-        let href = inp.trim();
+        const range = sel.getRangeAt(0);
+        savedRangeRef.current = range.cloneRange();
+        const node = range.commonAncestorContainer;
+        const el = node.nodeType === 3 ? node.parentElement : node;
+        const existing = el?.closest?.('a[href]')?.getAttribute('href') || '';
+        const rect = range.getBoundingClientRect();
+        setLinkValue(existing);
+        setLinkPopover({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+        setToolbar(null);
+    };
+
+    const applyLink = () => {
+        const range = savedRangeRef.current;
+        let href = linkValue.trim();
+        if (!range || !href) { setLinkPopover(null); return; }
         if (!/^(https?:\/\/|mailto:|tel:)/i.test(href)) href = `https://${href}`;
+        const node = range.commonAncestorContainer;
+        const el = node.nodeType === 3 ? node.parentElement : node;
+        el?.closest?.('.editable')?.focus({ preventScroll: true });
+        const sel = window.getSelection();
         sel.removeAllRanges(); sel.addRange(range);
         document.execCommand('createLink', false, href);
         sheetRef.current?.querySelectorAll('a:not([target])').forEach((a) => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+        setLinkPopover(null);
+        setLinkValue('');
     };
 
     const restoreSelection = () => {
@@ -653,7 +693,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         .editable:hover { box-shadow: 0 0 0 2px rgba(13,148,136,0.12); }
         .editable:focus { box-shadow: 0 0 0 2px rgba(13,148,136,0.5); }
         .editable:empty::before { content: attr(data-ph); color: #9ca3af; }
-        .editable a { color: #2563eb; text-decoration: underline; cursor: pointer; }
+        .editable a { color: inherit; text-decoration: none; cursor: pointer; }
         /* The @page margin gives uniform margins on every printed page; the sheet drops its own
            padding in print so content isn't inset twice. Native print keeps text selectable/ATS-readable. */
         @page { size: letter; margin: ${settings.margin}px; }
@@ -756,7 +796,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
             {toolbar && (
                 <div
-                    className="no-print fixed z-[100000] flex items-center -translate-x-1/2 gap-0.5 rounded-lg bg-slate-900 px-1 py-1 shadow-lg"
+                    className="no-print fixed z-[100000] flex items-center gap-0.5 -translate-x-1/2 rounded-xl border border-white/10 bg-slate-900/95 px-1.5 py-1 shadow-2xl ring-1 ring-black/5 backdrop-blur-md"
                     style={{ top: toolbar.top, left: toolbar.left }}
                     onMouseDown={(e) => {
                         e.preventDefault();
@@ -764,13 +804,19 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                         if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
                     }}
                 >
-                    <button onClick={() => format('bold')} title="Bold" className="h-7 w-7 rounded text-sm font-bold text-white transition hover:bg-white/15">B</button>
-                    <button onClick={() => format('italic')} title="Italic" className="h-7 w-7 rounded text-sm italic text-white transition hover:bg-white/15">I</button>
-                    <button onClick={() => format('underline')} title="Underline" className="h-7 w-7 rounded text-sm text-white underline transition hover:bg-white/15">U</button>
-                    <span className="my-1 w-px bg-white/20" />
+                    <button onClick={() => format('bold')} title="Bold" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={TB_ICON}><path d="M7 5h6.5a3.5 3.5 0 0 1 0 7H7zM7 12h7.5a3.5 3.5 0 0 1 0 7H7z" /></svg>
+                    </button>
+                    <button onClick={() => format('italic')} title="Italic" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={TB_ICON}><path d="M10 5h7M7 19h7M14 5l-4 14" /></svg>
+                    </button>
+                    <button onClick={() => format('underline')} title="Underline" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className={TB_ICON}><path d="M6 4v6a6 6 0 0 0 12 0V4M5 20h14" /></svg>
+                    </button>
+                    <span className={TB_DIV} />
                     <label
                         title="Text color"
-                        className="relative flex h-7 w-7 cursor-pointer flex-col items-center justify-center rounded text-white transition hover:bg-white/15"
+                        className={`relative cursor-pointer flex-col ${TB_BTN}`}
                         onMouseDown={(e) => {
                             e.stopPropagation();
                             pickingRef.current = true;
@@ -778,8 +824,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
                         }}
                     >
-                        <span className="text-sm font-semibold leading-none">A</span>
-                        <span className="mt-0.5 h-1 w-4 rounded bg-gradient-to-r from-red-500 via-emerald-500 to-blue-500" />
+                        <span className="h-[18px] w-[18px] rounded-full ring-1 ring-white/50 bg-[conic-gradient(from_0deg,#ef4444,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#ef4444)]" />
                         <input
                             type="color"
                             onChange={(e) => applyColor(e.target.value)}
@@ -787,25 +832,53 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                         />
                     </label>
-                    <button onClick={() => stepFontSize(-2)} title="Decrease font size" className="h-7 w-7 rounded text-xs font-bold text-white transition hover:bg-white/15">A−</button>
-                    <button onClick={() => stepFontSize(2)} title="Increase font size" className="h-7 w-7 rounded text-sm font-bold text-white transition hover:bg-white/15">A+</button>
-                    <span className="my-1 w-px bg-white/20" />
-                    <button
-                        onMouseDown={(e) => {
-                            e.preventDefault();
-                            const sel = window.getSelection();
-                            if (sel && sel.rangeCount && !sel.isCollapsed) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
-                        }}
-                        onClick={openAiAssist}
-                        title="Improve with AI"
-                        className="flex h-7 items-center gap-1 rounded px-1.5 text-xs font-semibold text-white transition hover:bg-white/15"
-                    >
-                        ✨ AI
+                    <button onClick={() => stepFontSize(-2)} title="Decrease font size" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={TB_ICON}><path d="M3 18L7 8l4 10M4.4 15h5.2M14 12h6" /></svg>
                     </button>
-                    <span className="my-1 w-px bg-white/20" />
-                    <button onClick={addLink} title="Add link" className="flex h-7 w-7 items-center justify-center rounded text-white transition hover:bg-white/15">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                    <button onClick={() => stepFontSize(2)} title="Increase font size" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={TB_ICON}><path d="M3 18L7 8l4 10M4.4 15h5.2M17 9v6M14 12h6" /></svg>
                     </button>
+                    <span className={TB_DIV} />
+                    <button onClick={() => align('justifyLeft')} title="Align left" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" className={TB_ICON}><path d="M4 6h16M4 10h10M4 14h16M4 18h10" /></svg>
+                    </button>
+                    <button onClick={() => align('justifyCenter')} title="Align center" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" className={TB_ICON}><path d="M4 6h16M7 10h10M4 14h16M7 18h10" /></svg>
+                    </button>
+                    <button onClick={() => align('justifyRight')} title="Align right" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" className={TB_ICON}><path d="M4 6h16M10 10h10M4 14h16M10 18h10" /></svg>
+                    </button>
+                    <span className={TB_DIV} />
+                    <button onClick={openLinkPopover} title="Add link" className={TB_BTN}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={TB_ICON}><path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                    </button>
+                </div>
+            )}
+
+            {/* Custom link insert popover (replaces the browser prompt) */}
+            {linkPopover && (
+                <div
+                    ref={linkPopRef}
+                    className="no-print fixed z-[100001] -translate-x-1/2 rounded-2xl border border-border bg-card p-2 shadow-2xl"
+                    style={{ top: linkPopover.top, left: linkPopover.left }}
+                >
+                    <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-muted-foreground"><path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                            <input
+                                ref={linkInputRef}
+                                value={linkValue}
+                                onChange={(e) => setLinkValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { e.preventDefault(); applyLink(); }
+                                    if (e.key === 'Escape') { e.preventDefault(); setLinkPopover(null); }
+                                }}
+                                placeholder="Type or paste a link"
+                                className="w-56 bg-transparent py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                            />
+                        </div>
+                        <button onClick={applyLink} className="rounded-lg px-3 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10">Apply</button>
+                    </div>
                 </div>
             )}
 
@@ -917,23 +990,23 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
             {/* Design & Font panel */}
             {panel === 'design' && (
-                <aside className="no-print fixed left-0 top-14 bottom-0 z-40 flex w-80 max-w-[88vw] flex-col border-r border-slate-200 bg-white shadow-2xl">
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <aside className="no-print fixed left-0 top-14 bottom-0 z-40 flex w-80 max-w-[88vw] flex-col border-r border-border bg-card shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-border px-5 py-4">
                         <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-accent">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h10M4 12h7M4 18h13M16 4v4M11 10v4M17 16v4" /></svg>
                             </span>
                             <div>
-                                <h3 className="text-sm font-bold leading-tight text-slate-800">Design &amp; Font</h3>
-                                <p className="text-[11px] text-slate-400">Make it yours</p>
+                                <h3 className="text-sm font-bold leading-tight text-foreground">Design &amp; Font</h3>
+                                <p className="text-[11px] text-muted-foreground">Make it yours</p>
                             </div>
                         </div>
-                        <button onClick={() => setPanel(null)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                        <button onClick={() => setPanel(null)} className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
 
-                    <div className="flex-1 space-y-7 overflow-y-auto px-5 py-5">
+                    <div className="flex-1 space-y-4 overflow-y-auto p-4">
                         <PanelSection title="Accent color">
                             <div className="flex flex-wrap gap-2.5">
                                 {ACCENTS.map((c) => {
@@ -943,14 +1016,14 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                                             key={c}
                                             onClick={() => setSetting('accent', c)}
                                             title={c}
-                                            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${active ? 'ring-2 ring-slate-900 ring-offset-2' : 'ring-1 ring-inset ring-black/10 hover:scale-110'}`}
+                                            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${active ? 'ring-2 ring-foreground ring-offset-2 ring-offset-card' : 'ring-1 ring-inset ring-black/10 hover:scale-110'}`}
                                             style={{ backgroundColor: c }}
                                         >
                                             {active && <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                         </button>
                                     );
                                 })}
-                                <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-teal-400 hover:text-teal-500" title="Custom color">
+                                <label className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-border text-muted-foreground transition hover:border-accent hover:text-accent" title="Custom color">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
                                     <input type="color" value={settings.accent} onChange={(e) => setSetting('accent', e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
                                 </label>
@@ -965,10 +1038,10 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                                         <button
                                             key={f.label}
                                             onClick={() => setSetting('fontFamily', f.value)}
-                                            className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition ${active ? 'border-teal-500 bg-teal-50/70' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                                            className={`flex w-full items-center justify-between rounded-lg border px-3.5 py-2.5 text-left transition ${active ? 'border-accent bg-accent/10' : 'border-border hover:border-accent/50 hover:bg-muted'}`}
                                         >
-                                            <span className="text-sm text-slate-800" style={{ fontFamily: f.value || 'Inter, system-ui, sans-serif' }}>{f.label}</span>
-                                            {active && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 shrink-0 text-teal-600"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                            <span className="text-sm text-foreground" style={{ fontFamily: f.value || 'Inter, system-ui, sans-serif' }}>{f.label}</span>
+                                            {active && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4 shrink-0 text-accent"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                                         </button>
                                     );
                                 })}
@@ -976,18 +1049,18 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                         </PanelSection>
 
                         <PanelSection title="Typography">
-                            <SliderRow label="Font size" display={`${settings.fontSize}px`} value={settings.fontSize} min={11} max={20} step={1} onChange={(e) => setSetting('fontSize', Number(e.target.value))} />
-                            <SliderRow label="Line height" display={settings.lineHeight.toFixed(2)} value={settings.lineHeight} min={1.1} max={1.9} step={0.05} onChange={(e) => setSetting('lineHeight', Number(e.target.value))} />
+                            <SliderRow label="Font size" display={`${settings.fontSize}px`} value={settings.fontSize} min={11} max={20} step={1} accentColor={settings.accent} onChange={(e) => setSetting('fontSize', Number(e.target.value))} />
+                            <SliderRow label="Line height" display={settings.lineHeight.toFixed(2)} value={settings.lineHeight} min={1.1} max={1.9} step={0.05} accentColor={settings.accent} onChange={(e) => setSetting('lineHeight', Number(e.target.value))} />
                         </PanelSection>
 
                         <PanelSection title="Layout">
-                            <SliderRow label="Page margins" display={`${settings.margin}px`} value={settings.margin} min={24} max={80} step={1} onChange={(e) => setSetting('margin', Number(e.target.value))} />
-                            <SliderRow label="Section spacing" display={`${settings.spacing}px`} value={settings.spacing} min={8} max={48} step={1} onChange={(e) => setSetting('spacing', Number(e.target.value))} />
+                            <SliderRow label="Page margins" display={`${settings.margin}px`} value={settings.margin} min={24} max={80} step={1} accentColor={settings.accent} onChange={(e) => setSetting('margin', Number(e.target.value))} />
+                            <SliderRow label="Section spacing" display={`${settings.spacing}px`} value={settings.spacing} min={4} max={48} step={1} accentColor={settings.accent} onChange={(e) => setSetting('spacing', Number(e.target.value))} />
                         </PanelSection>
                     </div>
 
-                    <div className="border-t border-slate-100 px-5 py-3">
-                        <button onClick={resetDesign} className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
+                    <div className="border-t border-border p-4">
+                        <button onClick={resetDesign} className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-sm font-semibold text-muted-foreground transition hover:border-accent hover:bg-accent/5 hover:text-accent">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6M20 20v-6h-6M5 19A9 9 0 0119 5" /></svg>
                             Reset to template default
                         </button>
@@ -1035,25 +1108,25 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
             />
 
             {previewUrl && (
-                <div className="no-print fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/70 p-4" onClick={closePreview}>
+                <div className="no-print fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 p-4" onClick={closePreview}>
                     <div
-                        className="flex h-[92vh] w-full max-w-[850px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+                        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden border border-border bg-card shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                            <p className="text-sm font-semibold text-slate-800">PDF preview</p>
+                        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-card px-4 py-3">
+                            <p className="text-sm font-semibold text-foreground">PDF preview</p>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={download}
                                     disabled={saving}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-teal-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-400 disabled:opacity-60"
+                                    className="inline-flex items-center gap-1.5 bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" /></svg>
                                     Download
                                 </button>
                                 <button
                                     onClick={closePreview}
-                                    className="inline-flex items-center justify-center rounded-full border border-slate-300 p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                                    className="inline-flex items-center justify-center border border-border p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                                     title="Close"
                                 >
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1061,9 +1134,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             </div>
                         </div>
                         <iframe
-                            src={previewUrl}
+                            src={`${previewUrl}#view=FitH&toolbar=0&navpanes=0`}
                             title="PDF preview"
-                            className="min-h-0 flex-1 border-0 bg-slate-100"
+                            className="min-h-0 flex-1 border-0 bg-muted"
                         />
                     </div>
                 </div>
@@ -1074,21 +1147,25 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
 function PanelSection({ title, children }) {
     return (
-        <section>
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
+        <section className="rounded-xl border border-border bg-muted/30 p-4">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
             {children}
         </section>
     );
 }
 
-function SliderRow({ label, display, value, min, max, step = 1, onChange }) {
+function SliderRow({ label, display, value, min, max, step = 1, accentColor, onChange }) {
     return (
         <div className="mb-4 last:mb-0">
             <div className="mb-2 flex items-center justify-between">
-                <span className="text-[13px] font-medium text-slate-600">{label}</span>
-                <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-slate-500">{display}</span>
+                <span className="text-[13px] font-medium text-foreground">{label}</span>
+                <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">{display}</span>
             </div>
-            <input type="range" min={min} max={max} step={step} value={value} onChange={onChange} className="w-full accent-teal-500" />
+            <input
+                type="range" min={min} max={max} step={step} value={value} onChange={onChange}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full bg-foreground/20"
+                style={{ accentColor: accentColor || undefined }}
+            />
         </div>
     );
 }

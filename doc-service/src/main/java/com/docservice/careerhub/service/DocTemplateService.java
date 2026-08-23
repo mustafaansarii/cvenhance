@@ -41,6 +41,11 @@ public class DocTemplateService {
                 .orElseThrow(() -> ApiException.notFound("Doc template not found: " + id));
     }
 
+    public DocTemplate getTemplate(String templateCode) {
+        return docTemplateRepository.findFirstByTemplateCode(templateCode)
+                .orElseThrow(() -> ApiException.notFound("Doc template not found: " + templateCode));
+    }
+
     public Page<DocTemplate> list(String keyword, DocType type, Pageable pageable) {
         return docTemplateRepository.search(keyword, type, pageable);
     }

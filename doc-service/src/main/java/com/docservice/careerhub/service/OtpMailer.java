@@ -1,11 +1,10 @@
 package com.docservice.careerhub.service;
 
+import com.docservice.careerhub.util.EmailBodies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public class OtpMailer {
@@ -18,7 +17,7 @@ public class OtpMailer {
 
     public void send(String toEmail, String otp) {
         String text = "Your verification code is " + otp + ". It expires in 5 minutes.";
-        String html = mailService.renderEmail("otp.html", Map.of("otp", otp));
+        String html = mailService.renderEmail(EmailBodies.otp(otp));
         if (!mailService.sendHtml(toEmail, SUBJECT, text, html)) {
             LOGGER.warn("Mail not sent — OTP for {} is {}", toEmail, otp);
         }

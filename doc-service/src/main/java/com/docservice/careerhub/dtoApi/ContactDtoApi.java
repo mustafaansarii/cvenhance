@@ -6,10 +6,9 @@ import com.docservice.careerhub.dto.response.MessageResponse;
 import com.docservice.careerhub.service.ContactMailer;
 import com.docservice.careerhub.service.MailService;
 import com.docservice.careerhub.util.AbstractDtoUtil;
+import com.docservice.careerhub.util.EmailBodies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 @Component
 public class ContactDtoApi extends AbstractDtoUtil {
@@ -30,8 +29,7 @@ public class ContactDtoApi extends AbstractDtoUtil {
 
     public MessageResponse sendAdminMail(MailRequest request) {
         validate(request);
-        String html = mailService.renderEmail("message.html",
-                Map.of("heading", request.getSubject(), "message", request.getMessage()));
+        String html = mailService.renderEmail(EmailBodies.message(request.getSubject(), request.getMessage()));
         boolean ok = mailService.sendHtml(request.getTo(), request.getSubject(), request.getMessage(), html);
         return MessageResponse.of(ok
                 ? "Email sent to " + request.getTo()

@@ -71,8 +71,8 @@ public class UserDocService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UserDoc> list(String ownerEmail, String keyword, DocType type, Pageable pageable) {
-        return userDocRepository.search(ownerEmail, keyword, type, pageable);
+    public Page<UserDoc> getUserDocs(String ownerEmail, String keyword, DocType type, Pageable pageable) {
+        return userDocRepository.getUserDocs(ownerEmail, keyword, type, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -178,7 +178,7 @@ public class UserDocService {
         return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
     }
     
-    private UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
+    public UserDoc findOrCreateForTemplate(String ownerEmail, DocTemplate template) {
         if (Objects.nonNull(template.getTemplateCode())) {
             UserDoc existing = userDocRepository
                     .findFirstByOwnerEmailAndTemplateCode(ownerEmail, template.getTemplateCode())

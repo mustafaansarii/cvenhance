@@ -21,7 +21,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "doc_templates", indexes = {
         @Index(name = "idx_doc_templates_type", columnList = "type"),
-        @Index(name = "idx_doc_templates_status", columnList = "status")
+        @Index(name = "idx_doc_templates_status", columnList = "status"),
+        @Index(name = "idx_doc_templates_template_code", columnList = "templateCode")
 })
 public class DocTemplate {
 

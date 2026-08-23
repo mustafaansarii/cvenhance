@@ -38,7 +38,7 @@ public class UserDocController {
     @GetMapping
     public PageResponse<UserDocMetadata> list(Authentication authentication, PageQuery query,
                                               @RequestParam(required = false) DocType type) {
-        return userDocDtoApi.list(authentication.getName(), query, type);
+        return userDocDtoApi.getUserDocs(authentication.getName(), query, type);
     }
 
     @GetMapping("/{id}")

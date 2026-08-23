@@ -46,9 +46,9 @@ public class UserDocDtoApi extends AbstractDtoUtil {
     }
 
 
-    public PageResponse<UserDocMetadata> list(String ownerEmail, PageQuery query, DocType type) {
+    public PageResponse<UserDocMetadata> getUserDocs(String ownerEmail, PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);
-        Page<UserDoc> result = userDocService.list(ownerEmail, query.getKeyword(), type, pageable);
+        Page<UserDoc> result = userDocService.getUserDocs(ownerEmail, query.getKeyword(), type, pageable);
         EntitlementService.UnlockView unlockView = entitlementService.unlockViewFor(ownerEmail);
         List<UserDocMetadata> content = result.getContent().stream().map((doc) -> toMetadata(doc, unlockView)).toList();
         return PageUtil.toResponse(result, content);

@@ -1,12 +1,15 @@
 package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.request.SaveResumeBuilderDocumentRequest;
+import com.docservice.careerhub.entity.AuthUser;
 import com.docservice.careerhub.entity.ResumeBuilderDocument;
 import com.docservice.careerhub.entity.ResumeBuilderTemplate;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.repo.ResumeBuilderDocumentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,20 +18,23 @@ import java.util.List;
 @Service
 public class ResumeBuilderDocumentService {
 
-    private final ResumeBuilderDocumentRepository documentRepository;
-    private final ResumeBuilderTemplateService templateService;
-    private final EntitlementService entitlementService;
-    private final ObjectMapper objectMapper;
+    @Autowired
+    private ResumeBuilderDocumentRepository documentRepository;
 
-    public ResumeBuilderDocumentService(ResumeBuilderDocumentRepository documentRepository,
-                                        ResumeBuilderTemplateService templateService,
-                                        EntitlementService entitlementService,
-                                        ObjectMapper objectMapper) {
-        this.documentRepository = documentRepository;
-        this.templateService = templateService;
-        this.entitlementService = entitlementService;
-        this.objectMapper = objectMapper;
-    }
+    @Autowired
+    private ResumeBuilderTemplateService templateService;
+
+    @Autowired
+    private EntitlementService entitlementService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private AccountMailer accountMailer;
+
+    @Autowired
+    private AuthService authService;
 
     @Transactional
     public ResumeBuilderDocument open(String ownerEmail, String templateCode) {
@@ -71,8 +77,13 @@ public class ResumeBuilderDocumentService {
     @Transactional
     public ResumeBuilderDocument claim(String ownerEmail, Long id) {
         ResumeBuilderDocument document = getOwned(ownerEmail, id);
+        AuthUser user = authService.getActiveUser(ownerEmail);
+        boolean wasUnlocked = entitlementService.isUnlocked(ownerEmail, document.resumeKey());
         if (!entitlementService.unlock(ownerEmail, document.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
+        }
+        if (!wasUnlocked) {
+            accountMailer.sendTemplateUnlocked(ownerEmail, user.getFullName(), document.getName());
         }
         return document;
     }

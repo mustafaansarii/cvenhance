@@ -16,6 +16,8 @@ public interface UserDocRepository extends JpaRepository<UserDoc, Long> {
 
     Optional<UserDoc> findFirstByOwnerEmailAndTemplateCode(String ownerEmail, String templateCode);
 
+    Optional<UserDoc> findFirstByOwnerEmailAndBuilderDocId(String ownerEmail, Long builderDocId);
+
     @Query("""
             SELECT d FROM UserDoc d
             WHERE d.ownerEmail = :ownerEmail
@@ -24,6 +26,6 @@ public interface UserDocRepository extends JpaRepository<UserDoc, Long> {
                    OR LOWER(COALESCE(d.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:type IS NULL OR d.type = :type)
             """)
-    Page<UserDoc> search(@Param("ownerEmail") String ownerEmail, @Param("keyword") String keyword,
+    Page<UserDoc> getUserDocs(@Param("ownerEmail") String ownerEmail, @Param("keyword") String keyword,
                          @Param("type") DocType type, Pageable pageable);
 }

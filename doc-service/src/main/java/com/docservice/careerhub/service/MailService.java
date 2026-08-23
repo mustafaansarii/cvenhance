@@ -4,12 +4,13 @@ import com.docservice.careerhub.config.AppProperties;
 import com.resend.Resend;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.samskivert.mustache.Mustache;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -44,12 +45,11 @@ public class MailService {
         return dispatch(toEmail, subject, text, html, replyTo);
     }
 
-    public String renderEmail(String bodyTemplate, Map<String, Object> data) {
-        String body = render(bodyTemplate, data);
-        return render(LAYOUT, Map.of("body", body));
+    public String renderEmail(String bodyHtml) {
+        return render(LAYOUT, Map.of("body", bodyHtml == null ? "" : bodyHtml));
     }
 
-    public String render(String templateName, Map<String, Object> data) {
+    private String render(String templateName, Map<String, Object> data) {
         try (var in = new ClassPathResource(TEMPLATE_PATH + templateName).getInputStream()) {
             String template = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             return templateCompiler.compile(template).execute(data);
@@ -58,21 +58,26 @@ public class MailService {
         }
     }
 
-// -----------------Helper methods--------------------
+    // -----------------Helper methods--------------------
 
+    /** Try Resend first; if it isn't configured or fails, fall back to SMTP. */
     private boolean dispatch(String toEmail, String subject, String text, String html, String replyTo) {
         String from = fromAddress();
         if (!StringUtils.hasText(from)) {
             LOGGER.warn("No sender address configured — email to {} not sent", toEmail);
             return false;
         }
-        if (StringUtils.hasText(appProperties.getResendApiKey())) {
-            return sendViaResend(from, toEmail, subject, text, html, replyTo);
+
+        if (StringUtils.hasText(appProperties.getResendApiKey())
+                && sendViaResend(from, toEmail, subject, text, html, replyTo)) {
+            return true;
         }
-        if (mailSender != null) {
-            return sendViaSmtp(from, toEmail, subject, text, replyTo);
+
+        if (mailSender != null && sendViaSmtp(from, toEmail, subject, text, html, replyTo)) {
+            return true;
         }
-        LOGGER.warn("No email provider configured — email to {} not sent", toEmail);
+
+        LOGGER.warn("Email to {} could not be delivered by any provider", toEmail);
         return false;
     }
 
@@ -92,25 +97,30 @@ public class MailService {
             new Resend(appProperties.getResendApiKey()).emails().send(options.build());
             return true;
         } catch (Exception exception) {
-            LOGGER.error("Resend email to {} failed: {}", toEmail, exception.getMessage(), exception);
+            LOGGER.error("Resend email to {} failed, will try SMTP: {}", toEmail, exception.getMessage());
             return false;
         }
     }
 
-    private boolean sendViaSmtp(String from, String toEmail, String subject, String text, String replyTo) {
+    private boolean sendViaSmtp(String from, String toEmail, String subject, String text, String html, String replyTo) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setTo(toEmail);
-            message.setSubject(subject);
-            message.setText(text);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(from);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            if (StringUtils.hasText(html)) {
+                helper.setText(text == null ? "" : text, html); // text + HTML alternative
+            } else {
+                helper.setText(text == null ? "" : text);
+            }
             if (StringUtils.hasText(replyTo)) {
-                message.setReplyTo(replyTo);
+                helper.setReplyTo(replyTo);
             }
             mailSender.send(message);
             return true;
         } catch (Exception exception) {
-            LOGGER.error("SMTP email to {} failed: {}", toEmail, exception.getMessage(), exception);
+            LOGGER.error("SMTP email to {} failed: {}", toEmail, exception.getMessage());
             return false;
         }
     }
