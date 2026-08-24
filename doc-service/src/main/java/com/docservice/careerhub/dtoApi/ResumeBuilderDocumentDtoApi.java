@@ -28,7 +28,14 @@ public class ResumeBuilderDocumentDtoApi extends AbstractDtoUtil {
     }
 
     public ResumeBuilderDocumentResponse open(String ownerEmail, String templateCode) {
-        return buildResumeResponse(ownerEmail, resumeBuilderDocumentService.open(ownerEmail, templateCode));
+        ResumeBuilderDocument document = resumeBuilderDocumentService.open(ownerEmail, templateCode);
+        try {
+            DocTemplate docTemplate = documentService.getTemplate(document.getTemplateCode());
+            userDocService.findOrCreateForTemplate(ownerEmail, docTemplate);
+        } catch (Exception e) {
+            // Ignore if doc template is missing
+        }
+        return buildResumeResponse(ownerEmail, document);
     }
 
     public ResumeBuilderDocumentResponse get(String ownerEmail, Long id) {

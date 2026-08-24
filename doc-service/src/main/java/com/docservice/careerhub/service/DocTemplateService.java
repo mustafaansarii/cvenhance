@@ -2,6 +2,7 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.docservice.careerhub.dto.request.CreateDocTemplateRequest;
 import com.docservice.careerhub.entity.DocTemplate;
 import com.docservice.careerhub.exception.ApiException;
@@ -63,6 +64,9 @@ public class DocTemplateService {
         template.setDescription(request.getDescription());
         template.setImageUrl(request.getImageUrl());
         template.setLatexCode(request.getLatexCode());
+        template.setSubscriptionType(request.getSubscriptionType() != null
+                ? request.getSubscriptionType()
+                : SubscriptionType.PAID);
         template.setStatus(DocTemplateStatus.PENDING);
         template.setErrorMessage(null);
         return docTemplateRepository.save(template);

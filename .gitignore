@@ -6,3 +6,4 @@ dist/
 .DS_Store
 .worktrees/
 doc-service-ui/.DS_Store
+neon_backup.dump
