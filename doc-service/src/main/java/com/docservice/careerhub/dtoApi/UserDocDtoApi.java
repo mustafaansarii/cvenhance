@@ -1,6 +1,7 @@
 package com.docservice.careerhub.dtoApi;
 
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.docservice.careerhub.dto.request.CompileDocRequest;
 import com.docservice.careerhub.dto.request.PageQuery;
 import com.docservice.careerhub.dto.request.SaveUserDocRequest;
@@ -71,6 +72,8 @@ public class UserDocDtoApi extends AbstractDtoUtil {
 //-----------------------------------private methods-----------------------------------
 
     private UserDocMetadata toMetadata(UserDoc doc, EntitlementService.UnlockView unlockView) {
+        boolean isFree = SubscriptionType.FREE
+                .equals(doc.getSubscriptionType());
         return UserDocMetadata.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
@@ -82,13 +85,16 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
+                .unlocked(isFree || unlockView.isUnlocked(doc.resumeKey()))
+                .subscriptionType(doc.getSubscriptionType())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 
     private UserDocResponse toResponse(UserDoc doc, EntitlementService.UnlockView unlockView) {
+        boolean isFree = SubscriptionType.FREE
+                .equals(doc.getSubscriptionType());
         return UserDocResponse.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
@@ -101,9 +107,11 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
+                .unlocked(isFree || unlockView.isUnlocked(doc.resumeKey()))
+                .subscriptionType(doc.getSubscriptionType())
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();
     }
 }
+

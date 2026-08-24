@@ -2,6 +2,7 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.docservice.careerhub.entity.DocTemplate;
 import com.docservice.careerhub.entity.UserDoc;
 import com.docservice.careerhub.exception.ApiException;
@@ -65,6 +66,9 @@ public class UserDocService {
     @Transactional
     public void claim(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
+        if (SubscriptionType.FREE.equals(doc.getSubscriptionType())) {
+            return;
+        }
         if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
@@ -85,13 +89,16 @@ public class UserDocService {
     public byte[] compileAndUpdate(String ownerEmail, Long id, String latexCode) {
         UserDoc doc = getOwned(ownerEmail, id);
         doc.setLatexCode(latexCode);
-        return renderAndStore(doc, entitlementService.isUnlocked(ownerEmail, doc.resumeKey()));
+        boolean isFree = SubscriptionType.FREE.equals(doc.getSubscriptionType());
+        boolean unlocked = isFree || entitlementService.isUnlocked(ownerEmail, doc.resumeKey());
+        return renderAndStore(doc, unlocked);
     }
 
     @Transactional
     public byte[] unlockAndCompile(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
-        if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
+        boolean isFree = SubscriptionType.FREE.equals(doc.getSubscriptionType());
+        if (!isFree && !entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
         return renderAndStore(doc, true);
@@ -197,6 +204,9 @@ public class UserDocService {
         doc.setDescription(template.getDescription());
         doc.setLatexCode(template.getLatexCode());
         doc.setImageUrl(template.getImageUrl());
+        doc.setSubscriptionType(template.getSubscriptionType() != null
+                ? template.getSubscriptionType()
+                : SubscriptionType.PAID);
         doc.setStatus(DocTemplateStatus.READY);
         return userDocRepository.save(doc);
     }

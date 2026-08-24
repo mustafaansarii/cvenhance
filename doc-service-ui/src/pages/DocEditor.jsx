@@ -22,6 +22,7 @@ export default function DocEditor() {
     const navigate = useNavigate();
     const location = useLocation();
     const prefetched = location.state?.doc ?? null;
+    const isFreeDoc = (d) => d?.subscriptionType === 'FREE' || d?.unlocked;
 
     const [doc, setDoc] = useState(prefetched);
     const [loadingDoc, setLoadingDoc] = useState(!prefetched);
@@ -31,7 +32,7 @@ export default function DocEditor() {
     const [downloading, setDownloading] = useState(false);
     const [unlocking, setUnlocking] = useState(false);
     const [pricingOpen, setPricingOpen] = useState(false);
-    const [locked, setLocked] = useState(true);
+    const [locked, setLocked] = useState(!isFreeDoc(prefetched));
     const [isDark, setIsDark] = useState(
         () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches,
     );
@@ -41,13 +42,13 @@ export default function DocEditor() {
     const [aiOpen, setAiOpen] = useState(false);
     const [aiText, setAiText] = useState('');
     const handleCompileRef = useRef(null);
-    const lockedRef = useRef(true);
+    const lockedRef = useRef(!isFreeDoc(prefetched));
     useEffect(() => { lockedRef.current = locked; }, [locked]);
     const autoCompiledRef = useRef(false);
 
     useEffect(() => {
         if (prefetched) {
-            setLocked(!prefetched.unlocked);
+            setLocked(!isFreeDoc(prefetched));
             return;
         }
         docService.getUserDoc(id)
@@ -55,7 +56,7 @@ export default function DocEditor() {
                 setDoc(data);
                 setCode(data.latexCode || '');
                 setPdfUrl(data.pdfUrl || '');
-                setLocked(!data.unlocked);
+                setLocked(!isFreeDoc(data));
             })
             .catch(() => toast.error('Failed to load document'))
             .finally(() => setLoadingDoc(false));
