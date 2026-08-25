@@ -9,6 +9,9 @@ export async function textFromFile(file) {
     if (/\.docx$/i.test(file.name)) {
         return (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
     }
+    if (/\.txt$/i.test(file.name)) {
+        return await file.text();
+    }
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
     const pages = await Promise.all(
         Array.from({ length: pdf.numPages }, async (_, i) =>

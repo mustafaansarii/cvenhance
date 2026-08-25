@@ -4,22 +4,17 @@ import com.docservice.careerhub.ai.AiPrompt;
 import com.docservice.careerhub.ai.AiRequest;
 import com.docservice.careerhub.ai.AiService;
 import com.docservice.careerhub.dto.ai.Profile;
+import com.docservice.careerhub.dto.request.ImportResumeRequest;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.util.ParseProfileDataHelper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -55,90 +50,74 @@ public class ResumeImportService {
         } catch (Exception ignored) {}
     }
 
-    public Map<String, Object> importFromFile(String ownerEmail, MultipartFile file) {
-        String resumeText = extractText(file);
-        Map<String, Object> profile = parseProfile(resumeText);
+    public Map<String, Object> importFromText(String ownerEmail, ImportResumeRequest request) {
+        String resumeText = Objects.isNull(request) || Objects.isNull(request.getResumeText())
+                ? "" : request.getResumeText().trim();
+        String jobDescription = Objects.isNull(request) || Objects.isNull(request.getJobDescription())
+                ? "" : request.getJobDescription().trim();
+
+        if (resumeText.isBlank() && jobDescription.isBlank()) {
+            throw ApiException.badData("Please upload a resume or paste a job description.");
+        }
+
+        String sourceText = resumeText;
+        if (sourceText.isBlank()) {
+            sourceText = existingProfileText(ownerEmail);
+            if (sourceText.isBlank()) {
+                throw ApiException.badData("No existing resume to tailor — please upload your resume too.");
+            }
+        }
+
+        Map<String, Object> profile = parseProfile(sourceText, jobDescription);
         saveProfile(ownerEmail, profile);
         return profile;
     }
 
+    private String existingProfileText(String ownerEmail) {
+        try {
+            String data = authService.getActiveUser(ownerEmail).getProfileData();
+            return Objects.isNull(data) || data.isBlank() || "{}".equals(data.trim()) ? "" : data.trim();
+        } catch (Exception e) {
+            logger.error("Loading existing profile for JD tailoring failed", e);
+            return "";
+        }
+    }
+
 //-----------------Private Methods------------------------------
 
-    private String extractText(MultipartFile file) {
-        if (Objects.isNull(file) || file.isEmpty()) {
-            throw ApiException.badData("Please choose a file to upload");
-        }
-        String fileName = Objects.requireNonNullElse(file.getOriginalFilename(), "").toLowerCase();
-
-        String text;
-        if (fileName.endsWith(".pdf")) {
-            text = extractPdfText(file);
-        } else if (fileName.endsWith(".docx")) {
-            text = extractDocxText(file);
-        } else if (fileName.endsWith(".txt")) {
-            text = readBytes(file);
-        } else {
-            throw ApiException.badData("Unsupported file type. Please upload a PDF or DOCX.");
-        }
-
-        if (Objects.isNull(text) || text.isBlank()) {
-            throw ApiException.badData("Couldn't read any text from that file. Try a text-based PDF or a DOCX.");
-        }
-        return text;
-    }
-
-    private String extractPdfText(MultipartFile file) {
-        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
-            return new PDFTextStripper().getText(document);
-        } catch (Exception e) {
-            logger.error("PDF text extraction failed", e);
-            throw ApiException.badData("Failed to read the PDF: " + e.getMessage());
-        }
-    }
-
-    private String extractDocxText(MultipartFile file) {
-        try (XWPFDocument document = new XWPFDocument(file.getInputStream());
-             XWPFWordExtractor extractor = new XWPFWordExtractor(document)) {
-            return extractor.getText();
-        } catch (Exception e) {
-            logger.error("DOCX text extraction failed", e);
-            throw ApiException.badData("Failed to read the DOCX: " + e.getMessage());
-        }
-    }
-
-    private String readBytes(MultipartFile file) {
+    private Map<String, Object> parseProfile(String resumeText, String jobDescription) {
         try {
-            return new String(file.getBytes(), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            logger.error("File text extraction failed", e);
-            throw ApiException.badData("Failed to read the file: " + e.getMessage());
-        }
-    }
-
-    private Map<String, Object> parseProfile(String resumeText) {
-        try {
-            return parseProfileWithAi(resumeText);
+            return parseProfileWithAi(resumeText, jobDescription);
         } catch (Exception e) {
             logger.error("AI parsing failed, falling back to manual parsing", e);
+            // Manual fallback can only extract; it cannot tailor to a JD.
             return parseProfileDataHelper.parseProfileWithManual(resumeText, objectMapper, profileSchema);
         }
     }
 
-    private Map<String, Object> parseProfileWithAi(String resumeText) {
-        AiRequest request = new AiRequest(buildUserPrompt(resumeText), buildSystemInstruction(), EXTRACT_TEMPERATURE);
+    private Map<String, Object> parseProfileWithAi(String resumeText, String jobDescription) {
+        AiRequest request = new AiRequest(
+                buildUserPrompt(resumeText, jobDescription),
+                buildSystemInstruction(jobDescription),
+                EXTRACT_TEMPERATURE);
         Profile profile = aiService.generate(request, Profile.class);
         if (profile == null) {
-            throw ApiException.badData("Could not turn that file into profile data. Please try a clearer resume file.");
+            throw ApiException.badData("Could not turn that resume into profile data. Please try a clearer resume.");
         }
         return objectMapper.convertValue(profile, new TypeReference<Map<String, Object>>() { });
     }
 
-    private String buildSystemInstruction() {
-        return AiPrompt.RESUME_PARSER_SYSTEM.getPrompt();
+    private String buildSystemInstruction(String jobDescription) {
+        // With a JD present, use the parser+tailor prompt; otherwise plain extraction.
+        AiPrompt prompt = jobDescription.isBlank() ? AiPrompt.RESUME_PARSER_SYSTEM : AiPrompt.RESUME_PARSER_JD_SYSTEM;
+        return prompt.getPrompt();
     }
 
-    private String buildUserPrompt(String resumeText) {
-        return "RESUME TEXT:\n" + resumeText;
+    private String buildUserPrompt(String resumeText, String jobDescription) {
+        if (jobDescription.isBlank()) {
+            return "RESUME TEXT:\n" + resumeText;
+        }
+        return "TARGET JOB DESCRIPTION:\n" + jobDescription + "\n\nRESUME TEXT:\n" + resumeText;
     }
 
     private void saveProfile(String ownerEmail, Map<String, Object> profile) {
@@ -148,6 +127,5 @@ public class ResumeImportService {
             logger.error("Saving imported profile failed", e);
             throw new RuntimeException("Failed to save the imported profile", e);
         }
-
     }
 }
