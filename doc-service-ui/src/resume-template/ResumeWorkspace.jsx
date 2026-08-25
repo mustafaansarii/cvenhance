@@ -431,7 +431,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         const margin = settings.margin;
         const usable = Math.max(1, PAGE - 2 * margin);
         const holder = document.createElement('div');
-        holder.style.cssText = `position:fixed; left:-100000px; top:0; width:${PAGE_W}px; background:#ffffff;`;
+
+        holder.style.cssText = `position:fixed; left:0; top:0; z-index:-1; opacity:0; pointer-events:none; width:${PAGE_W}px; background:#ffffff;`;
         const clone = sheet.cloneNode(true);
         clone.style.margin = '0';
         clone.style.paddingTop = '0px';
@@ -629,6 +630,16 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     };
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
+
+    const downloadPreview = () => {
+        if (!previewUrl) { download(); return; }
+        const a = document.createElement('a');
+        a.href = previewUrl;
+        a.download = `${(resume.name || 'resume').trim() || 'resume'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
 
     const renderBody = (type, col = 'main') => {
         const meta = META[type];
@@ -1129,7 +1140,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             <p className="text-sm font-semibold text-foreground">PDF preview</p>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={download}
+                                    onClick={downloadPreview}
                                     disabled={saving}
                                     className="inline-flex items-center gap-1.5 bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60"
                                 >
