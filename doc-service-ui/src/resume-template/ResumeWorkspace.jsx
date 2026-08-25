@@ -250,12 +250,11 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         let ro;
         const measureApply = () => {
             sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
-            const s = scaleRef.current || 1;   // sheet may be visually scaled to fit; normalize to layout px
+            const s = scaleRef.current || 1;
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
             const sheetTop = sheet.getBoundingClientRect().top;
 
-            // Push blocks down so none straddle a page boundary; returns the last page index used.
             const paginate = (root) => {
                 const blocks = breakUnits(root, usable, s);
                 const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: (r.top - sheetTop) / s, h: r.height / s }; });
@@ -736,8 +735,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 <div className="flex shrink-0 items-center gap-1">
                     {authed && (
                         <ResumeUploadButton
-                            label="Upload CV"
+                            label="AI Edit"
                             labelClassName="hidden sm:inline"
+                            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>}
                             confirm="We'll read your uploaded file and automatically fill in your resume for you. This replaces the details currently on screen."
                             className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
                             onDone={(p) => {
