@@ -2,6 +2,7 @@ package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.docservice.careerhub.dto.request.CreateDocTemplateRequest;
 import com.docservice.careerhub.entity.DocTemplate;
 import com.docservice.careerhub.exception.ApiException;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +48,28 @@ public class DocTemplateService {
                 .orElseThrow(() -> ApiException.notFound("Doc template not found: " + templateCode));
     }
 
+    public java.util.Optional<DocTemplate> findTemplate(String templateCode) {
+        return docTemplateRepository.findFirstByTemplateCode(templateCode);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isFreeTemplate(String templateCode) {
+        if (templateCode == null || templateCode.isBlank()) {
+            return false;
+        }
+        return docTemplateRepository.findFirstByTemplateCode(templateCode)
+                .map(t -> t.getSubscriptionType() == com.docservice.careerhub.dto.constants.SubscriptionType.FREE)
+                .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public Set<String> freeTemplateCodesAmong(java.util.Collection<String> codes) {
+        if (codes == null || codes.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(docTemplateRepository.findFreeTemplateCodesIn(codes));
+    }
+
     public Page<DocTemplate> list(String keyword, DocType type, Pageable pageable) {
         return docTemplateRepository.search(keyword, type, pageable);
     }
@@ -60,6 +84,8 @@ public class DocTemplateService {
         }
         template.setName(request.getName());
         template.setType(request.getType());
+        template.setSubscriptionType(request.getSubscriptionType() != null
+                ? request.getSubscriptionType() : SubscriptionType.PAID);
         template.setDescription(request.getDescription());
         template.setImageUrl(request.getImageUrl());
         template.setLatexCode(request.getLatexCode());

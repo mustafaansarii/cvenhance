@@ -97,7 +97,17 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     const linkPopRef = useRef(null);
     useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-    // Autofocus the link input when the popover opens, and close it on an outside click.
+    const freeClaimedRef = useRef(false);
+    useEffect(() => {
+        if (freeClaimedRef.current) return;
+        if (!authed || !docId) return;
+        if (initialDocument?.subscriptionType !== 'FREE') return;
+        freeClaimedRef.current = true;
+        resumeBuilderService.claimDocument(docId)
+            .then((doc) => setLocked(!doc.unlocked))
+            .catch(() => { /* still editable; ignore */ });
+    }, [authed, docId, initialDocument?.subscriptionType]);
+
     useEffect(() => {
         if (!linkPopover) return undefined;
         const t = setTimeout(() => linkInputRef.current?.focus(), 0);
@@ -115,7 +125,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 sectionOrder: order,
                 editorSettings: settings,
             }).catch(() => {
-                // Autosave failure should not interrupt typing; the explicit download path retries a save.
+              
             });
         }, 700);
         return () => window.clearTimeout(timer);

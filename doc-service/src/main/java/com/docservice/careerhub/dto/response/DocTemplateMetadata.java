@@ -2,6 +2,7 @@ package com.docservice.careerhub.dto.response;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,6 +16,7 @@ public class DocTemplateMetadata {
     private String templateCode;
     private String name;
     private DocType type;
+    private SubscriptionType subscriptionType;
     private String description;
     private DocTemplateStatus status;
     private String imageUrl;

@@ -72,6 +72,16 @@ function TemplateCard({ doc, onAction, isBusy }) {
                         {doc.status}
                     </span>
                 )}
+                {doc.subscriptionType && (
+                    <span className={`absolute right-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm ring-1 ring-black/5 backdrop-blur-sm ${doc.subscriptionType === 'FREE' ? 'bg-emerald-500/95' : 'bg-amber-500/95'}`}>
+                        {doc.subscriptionType === 'FREE' ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V7a4.5 4.5 0 10-9 0v3.5M6 10.5h12v9H6z" /></svg>
+                        )}
+                        {doc.subscriptionType === 'FREE' ? 'Free' : 'Paid'}
+                    </span>
+                )}
                 {isBusy && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-semibold text-white">
                         Opening…

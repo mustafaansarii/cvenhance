@@ -2,6 +2,7 @@ package com.docservice.careerhub.entity;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,6 +40,10 @@ public class DocTemplate {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DocType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubscriptionType subscriptionType = SubscriptionType.PAID;
 
     @Column(length = 1000)
     private String description;
