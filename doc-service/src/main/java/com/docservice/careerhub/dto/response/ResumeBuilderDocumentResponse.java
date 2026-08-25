@@ -1,5 +1,6 @@
 package com.docservice.careerhub.dto.response;
 
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class ResumeBuilderDocumentResponse {
     private JsonNode sectionOrder;
     private JsonNode editorSettings;
     private boolean unlocked;
+    private SubscriptionType subscriptionType;
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -8,6 +8,7 @@ import com.docservice.careerhub.dto.response.PageResponse;
 import com.docservice.careerhub.dto.response.UserDocMetadata;
 import com.docservice.careerhub.dto.response.UserDocResponse;
 import com.docservice.careerhub.entity.UserDoc;
+import com.docservice.careerhub.service.DocTemplateService;
 import com.docservice.careerhub.service.EntitlementService;
 import com.docservice.careerhub.service.UserDocService;
 import com.docservice.careerhub.util.AbstractDtoUtil;
@@ -30,6 +31,9 @@ public class UserDocDtoApi extends AbstractDtoUtil {
     @Autowired
     private EntitlementService entitlementService;
 
+    @Autowired
+    private DocTemplateService docTemplateService;
+
     public UserDocResponse save(String ownerEmail, SaveUserDocRequest request) {
         validate(request);
         UserDoc doc = userDocService.saveTemplateToAccount(ownerEmail, request.getTemplateId());
@@ -50,7 +54,10 @@ public class UserDocDtoApi extends AbstractDtoUtil {
         Pageable pageable = PageUtil.toPageable(query, DEFAULT_SORT);
         Page<UserDoc> result = userDocService.getUserDocs(ownerEmail, query.getKeyword(), type, pageable);
         EntitlementService.UnlockView unlockView = entitlementService.unlockViewFor(ownerEmail);
-        List<UserDocMetadata> content = result.getContent().stream().map((doc) -> toMetadata(doc, unlockView)).toList();
+        java.util.Set<String> freeCodes = docTemplateService.freeTemplateCodesAmong(
+                result.getContent().stream().map(UserDoc::getTemplateCode).toList());
+        List<UserDocMetadata> content = result.getContent().stream()
+                .map((doc) -> toMetadata(doc, unlockView, freeCodes)).toList();
         return PageUtil.toResponse(result, content);
     }
 
@@ -70,19 +77,21 @@ public class UserDocDtoApi extends AbstractDtoUtil {
 
 //-----------------------------------private methods-----------------------------------
 
-    private UserDocMetadata toMetadata(UserDoc doc, EntitlementService.UnlockView unlockView) {
+    private UserDocMetadata toMetadata(UserDoc doc, EntitlementService.UnlockView unlockView,
+                                       java.util.Set<String> freeCodes) {
         return UserDocMetadata.builder()
                 .id(doc.getId())
                 .sourceTemplateId(doc.getSourceTemplateId())
                 .templateCode(doc.getTemplateCode())
                 .name(doc.getName())
                 .type(doc.getType())
+                .subscriptionType(doc.getSubscriptionType())
                 .description(doc.getDescription())
                 .status(doc.getStatus())
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
+                .unlocked(freeCodes.contains(doc.getTemplateCode()) || unlockView.isUnlocked(doc.resumeKey()))
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();
@@ -95,13 +104,15 @@ public class UserDocDtoApi extends AbstractDtoUtil {
                 .templateCode(doc.getTemplateCode())
                 .name(doc.getName())
                 .type(doc.getType())
+                .subscriptionType(doc.getSubscriptionType())
                 .description(doc.getDescription())
                 .latexCode(doc.getLatexCode())
                 .status(doc.getStatus())
                 .pdfUrl(doc.getPdfUrl())
                 .imageUrl(doc.getImageUrl())
                 .errorMessage(doc.getErrorMessage())
-                .unlocked(unlockView.isUnlocked(doc.resumeKey()))
+                .unlocked(docTemplateService.isFreeTemplate(doc.getTemplateCode())
+                        || unlockView.isUnlocked(doc.resumeKey()))
                 .createdAt(doc.getCreatedAt())
                 .updatedAt(doc.getUpdatedAt())
                 .build();

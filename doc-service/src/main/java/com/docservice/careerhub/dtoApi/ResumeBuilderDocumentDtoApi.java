@@ -28,7 +28,10 @@ public class ResumeBuilderDocumentDtoApi extends AbstractDtoUtil {
     }
 
     public ResumeBuilderDocumentResponse open(String ownerEmail, String templateCode) {
-        return buildResumeResponse(ownerEmail, resumeBuilderDocumentService.open(ownerEmail, templateCode));
+        ResumeBuilderDocument document = resumeBuilderDocumentService.open(ownerEmail, templateCode);
+        documentService.findTemplate(templateCode)
+                .ifPresent(docTemplate -> userDocService.findOrCreateForTemplate(ownerEmail, docTemplate));
+        return buildResumeResponse(ownerEmail, document);
     }
 
     public ResumeBuilderDocumentResponse get(String ownerEmail, Long id) {
@@ -65,6 +68,9 @@ public class ResumeBuilderDocumentDtoApi extends AbstractDtoUtil {
                 .sectionOrder(resumeBuilderDocumentService.readJson(document.getSectionOrderJson()))
                 .editorSettings(resumeBuilderDocumentService.readJson(document.getEditorSettingsJson()))
                 .unlocked(resumeBuilderDocumentService.isUnlocked(ownerEmail, document))
+                .subscriptionType(documentService.findTemplate(document.getTemplateCode())
+                        .map(DocTemplate::getSubscriptionType)
+                        .orElse(com.docservice.careerhub.dto.constants.SubscriptionType.PAID))
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getUpdatedAt())
                 .build();

@@ -57,6 +57,7 @@ public class DocTemplateDtoApi extends AbstractDtoUtil {
                 .templateCode(template.getTemplateCode())
                 .name(template.getName())
                 .type(template.getType())
+                .subscriptionType(template.getSubscriptionType())
                 .description(template.getDescription())
                 .status(template.getStatus())
                 .imageUrl(template.getImageUrl())

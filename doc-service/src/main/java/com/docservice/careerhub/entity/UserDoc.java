@@ -2,6 +2,7 @@ package com.docservice.careerhub.entity;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
+import com.docservice.careerhub.dto.constants.SubscriptionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,6 +35,9 @@ public class UserDoc {
     private Long sourceTemplateId;
 
     private String templateCode;
+
+    @Enumerated(EnumType.STRING)
+    private SubscriptionType subscriptionType;
 
     private Long builderDocId;
 
@@ -81,5 +85,9 @@ public class UserDoc {
 
     public String resumeKey() {
         return templateCode != null ? templateCode : "doc-" + id;
+    }
+
+    public boolean isFree() {
+        return subscriptionType == SubscriptionType.FREE;
     }
 }

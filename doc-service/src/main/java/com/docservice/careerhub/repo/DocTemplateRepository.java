@@ -19,6 +19,13 @@ public interface DocTemplateRepository extends JpaRepository<DocTemplate, Long> 
 
     boolean existsByTemplateCode(String templateCode);
 
+    @Query("""
+            SELECT t.templateCode FROM DocTemplate t
+            WHERE t.templateCode IN :codes
+              AND t.subscriptionType = com.docservice.careerhub.dto.constants.SubscriptionType.FREE
+            """)
+    List<String> findFreeTemplateCodesIn(@Param("codes") java.util.Collection<String> codes);
+
     String COMPILABLE_QUERY = """
             SELECT t FROM DocTemplate t
             WHERE t.status = :pending

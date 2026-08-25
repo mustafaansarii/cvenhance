@@ -65,9 +65,18 @@ public class UserDocService {
     @Transactional
     public void claim(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
-        if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
+        // FREE templates need no subscription; PAID still requires an active plan.
+        if (!isFree(doc) && !entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
+    }
+
+    // Resolve FREE from the live template (keyed by templateCode), falling back to the
+    // snapshot copied onto the doc — so marking a template FREE takes effect immediately.
+    private boolean isFree(UserDoc doc) {
+        return doc.isFree() || docTemplateRepository.findFirstByTemplateCode(doc.getTemplateCode())
+                .map(t -> t.getSubscriptionType() == com.docservice.careerhub.dto.constants.SubscriptionType.FREE)
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)
@@ -85,13 +94,14 @@ public class UserDocService {
     public byte[] compileAndUpdate(String ownerEmail, Long id, String latexCode) {
         UserDoc doc = getOwned(ownerEmail, id);
         doc.setLatexCode(latexCode);
-        return renderAndStore(doc, entitlementService.isUnlocked(ownerEmail, doc.resumeKey()));
+        return renderAndStore(doc, isFree(doc) || entitlementService.isUnlocked(ownerEmail, doc.resumeKey()));
     }
 
     @Transactional
     public byte[] unlockAndCompile(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
-        if (!entitlementService.unlock(ownerEmail, doc.resumeKey())) {
+        // FREE templates need no subscription; PAID still requires an active plan.
+        if (!isFree(doc) && !entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
         return renderAndStore(doc, true);
@@ -184,6 +194,11 @@ public class UserDocService {
                     .findFirstByOwnerEmailAndTemplateCode(ownerEmail, template.getTemplateCode())
                     .orElse(null);
             if (Objects.nonNull(existing)) {
+                // keep the FREE/PAID snapshot in sync with the current template
+                if (existing.getSubscriptionType() != template.getSubscriptionType()) {
+                    existing.setSubscriptionType(template.getSubscriptionType());
+                    userDocRepository.save(existing);
+                }
                 return existing;
             }
         }
@@ -194,6 +209,7 @@ public class UserDocService {
         doc.setTemplateCode(template.getTemplateCode());
         doc.setName(template.getName());
         doc.setType(template.getType());
+        doc.setSubscriptionType(template.getSubscriptionType());
         doc.setDescription(template.getDescription());
         doc.setLatexCode(template.getLatexCode());
         doc.setImageUrl(template.getImageUrl());

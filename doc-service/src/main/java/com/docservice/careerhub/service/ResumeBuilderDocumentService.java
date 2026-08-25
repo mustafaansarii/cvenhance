@@ -36,6 +36,9 @@ public class ResumeBuilderDocumentService {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private DocTemplateService docTemplateService;
+
     @Transactional
     public ResumeBuilderDocument open(String ownerEmail, String templateCode) {
         ResumeBuilderTemplate template = templateService.getActive(templateCode);
@@ -78,8 +81,9 @@ public class ResumeBuilderDocumentService {
     public ResumeBuilderDocument claim(String ownerEmail, Long id) {
         ResumeBuilderDocument document = getOwned(ownerEmail, id);
         AuthUser user = authService.getActiveUser(ownerEmail);
-        boolean wasUnlocked = entitlementService.isUnlocked(ownerEmail, document.resumeKey());
-        if (!entitlementService.unlock(ownerEmail, document.resumeKey())) {
+        boolean free = docTemplateService.isFreeTemplate(document.getTemplateCode());
+        boolean wasUnlocked = free || entitlementService.isUnlocked(ownerEmail, document.resumeKey());
+        if (!free && !entitlementService.unlock(ownerEmail, document.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
         if (!wasUnlocked) {
@@ -89,7 +93,8 @@ public class ResumeBuilderDocumentService {
     }
 
     public boolean isUnlocked(String ownerEmail, ResumeBuilderDocument document) {
-        return entitlementService.isUnlocked(ownerEmail, document.resumeKey());
+        return docTemplateService.isFreeTemplate(document.getTemplateCode())
+                || entitlementService.isUnlocked(ownerEmail, document.resumeKey());
     }
 
     public JsonNode readJson(String value) {
