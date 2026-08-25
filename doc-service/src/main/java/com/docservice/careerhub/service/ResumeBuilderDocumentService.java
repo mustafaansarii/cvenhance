@@ -4,8 +4,6 @@ import com.docservice.careerhub.dto.request.SaveResumeBuilderDocumentRequest;
 import com.docservice.careerhub.entity.AuthUser;
 import com.docservice.careerhub.entity.ResumeBuilderDocument;
 import com.docservice.careerhub.entity.ResumeBuilderTemplate;
-import com.docservice.careerhub.entity.DocTemplate;
-import com.docservice.careerhub.dto.constants.SubscriptionType;
 import com.docservice.careerhub.exception.ApiException;
 import com.docservice.careerhub.repo.ResumeBuilderDocumentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,9 +35,6 @@ public class ResumeBuilderDocumentService {
 
     @Autowired
     private AuthService authService;
-
-    @Autowired
-    private DocTemplateService docTemplateService;
 
     @Transactional
     public ResumeBuilderDocument open(String ownerEmail, String templateCode) {
@@ -82,10 +77,6 @@ public class ResumeBuilderDocumentService {
     @Transactional
     public ResumeBuilderDocument claim(String ownerEmail, Long id) {
         ResumeBuilderDocument document = getOwned(ownerEmail, id);
-        if (isFree(document)) {
-            return document;
-        }
-
         AuthUser user = authService.getActiveUser(ownerEmail);
         boolean wasUnlocked = entitlementService.isUnlocked(ownerEmail, document.resumeKey());
         if (!entitlementService.unlock(ownerEmail, document.resumeKey())) {
@@ -98,19 +89,7 @@ public class ResumeBuilderDocumentService {
     }
 
     public boolean isUnlocked(String ownerEmail, ResumeBuilderDocument document) {
-        if (isFree(document)) {
-            return true;
-        }
         return entitlementService.isUnlocked(ownerEmail, document.resumeKey());
-    }
-
-    private boolean isFree(ResumeBuilderDocument document) {
-        try {
-            DocTemplate template = docTemplateService.getTemplate(document.getTemplateCode());
-            return SubscriptionType.FREE.equals(template.getSubscriptionType());
-        } catch (ApiException e) {
-            return false;
-        }
     }
 
     public JsonNode readJson(String value) {

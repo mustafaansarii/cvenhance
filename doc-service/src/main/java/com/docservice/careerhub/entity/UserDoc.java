@@ -2,7 +2,6 @@ package com.docservice.careerhub.entity;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
-import com.docservice.careerhub.dto.constants.SubscriptionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -58,10 +57,6 @@ public class UserDoc {
     private String pdfUrl;
 
     private String imageUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SubscriptionType subscriptionType = SubscriptionType.PAID;
 
     @Column(length = 2000)
     private String errorMessage;

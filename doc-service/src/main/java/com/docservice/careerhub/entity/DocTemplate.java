@@ -14,7 +14,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Data;
-import com.docservice.careerhub.dto.constants.SubscriptionType;
 
 import java.time.Instant;
 
@@ -36,10 +35,6 @@ public class DocTemplate {
 
     @Column(nullable = false)
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SubscriptionType subscriptionType = SubscriptionType.PAID;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
