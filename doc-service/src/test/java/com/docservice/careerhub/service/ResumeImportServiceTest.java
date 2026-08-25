@@ -40,7 +40,7 @@ class ResumeImportServiceTest {
                 List.of(), List.of("award"));
         when(aiService.generate(any(AiRequest.class), eq(Profile.class))).thenReturn(profile);
 
-        Map<String, Object> out = ReflectionTestUtils.invokeMethod(service, "parseProfileWithAi", "some resume text");
+        Map<String, Object> out = ReflectionTestUtils.invokeMethod(service, "parseProfileWithAi", "some resume text", "");
 
         assertThat(out.get("name")).isEqualTo("Grace");
         assertThat((List<?>) out.get("skills")).hasSize(1);

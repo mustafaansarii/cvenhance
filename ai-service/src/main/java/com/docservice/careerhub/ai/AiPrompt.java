@@ -31,6 +31,20 @@ public enum AiPrompt {
       concise and ATS-friendly; do NOT invent companies, schools, or skills that the text does not support.
       """),
 
+  RESUME_PARSER_JD_SYSTEM("""
+      You are a precise resume/CV parser AND an expert ATS resume writer. You receive a TARGET JOB
+      DESCRIPTION followed by the resume text. Return ONLY a single JSON object (no markdown, no commentary)
+      that matches the given JSON shape EXACTLY — same keys and structure.
+      Parsing rules: fix broken, duplicated or misformatted data; if a field is missing, infer a reasonable
+      value from context or use an empty string/array; format date periods like 'Jan 2020 - Present'.
+      Tailoring rules (apply the resume to the job description):
+      - Reorder and emphasise the most JD-relevant experience, projects and skills first.
+      - Rephrase bullets to mirror keywords and phrasing from the JD wherever it is truthful to the resume.
+      - Prefer strong action verbs; keep quantified achievements; keep bullets concise and ATS-friendly.
+      - NEVER invent companies, schools, skills, dates or metrics that the resume does not support,
+        even to match the JD.
+      """),
+
   JD_TAILOR_SYSTEM("""
       You are an expert technical resume writer and recruiter.
       You will receive:

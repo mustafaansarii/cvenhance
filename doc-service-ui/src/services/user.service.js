@@ -21,13 +21,13 @@ class UserService {
     return response.data;
   }
 
-  async importResume(file) {
-    const form = new FormData();
-    form.append('file', file);
-    const response = await axiosInstance.post('/careerhub/api/profile/import-resume', form, {
-      baseURL: '',
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+  // Text is extracted on the client; JD is optional and tailors the result via AI.
+  async importResume(resumeText, jobDescription) {
+    const response = await axiosInstance.post(
+      '/careerhub/api/profile/import-resume',
+      { resumeText, jobDescription: jobDescription || undefined },
+      { baseURL: '' },
+    );
     return response.data;
   }
 
