@@ -50,7 +50,6 @@ function TemplateCard({ doc, onAction, isBusy }) {
 
     const choose = (m) => { setMenuOpen(false); onAction(doc, m); };
     const formAvailable = hasFormBuilder(doc.templateCode);
-    const isFree = doc.subscriptionType === 'FREE';
 
     return (
         <div
@@ -71,11 +70,6 @@ function TemplateCard({ doc, onAction, isBusy }) {
                 {doc.status && doc.status !== 'READY' && (
                     <span className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_BADGE[doc.status] || 'bg-muted text-muted-foreground'}`}>
                         {doc.status}
-                    </span>
-                )}
-                {isFree && (
-                    <span className="absolute right-2 top-2 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-                        FREE
                     </span>
                 )}
                 {isBusy && (

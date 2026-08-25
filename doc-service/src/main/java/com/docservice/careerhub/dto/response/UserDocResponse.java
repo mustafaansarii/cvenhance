@@ -2,7 +2,6 @@ package com.docservice.careerhub.dto.response;
 
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
-import com.docservice.careerhub.dto.constants.SubscriptionType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -24,8 +23,6 @@ public class UserDocResponse {
     private String imageUrl;
     private String errorMessage;
     private boolean unlocked;
-    private SubscriptionType subscriptionType;
     private Instant createdAt;
     private Instant updatedAt;
 }
-

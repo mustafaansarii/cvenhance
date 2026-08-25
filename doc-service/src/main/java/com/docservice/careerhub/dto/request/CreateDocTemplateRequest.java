@@ -1,7 +1,6 @@
 package com.docservice.careerhub.dto.request;
 
 import com.docservice.careerhub.dto.constants.DocType;
-import com.docservice.careerhub.dto.constants.SubscriptionType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -25,6 +24,4 @@ public class CreateDocTemplateRequest {
 
     @NotBlank(message = "latexCode is required")
     private String latexCode;
-
-    private SubscriptionType subscriptionType = SubscriptionType.PAID;
 }
