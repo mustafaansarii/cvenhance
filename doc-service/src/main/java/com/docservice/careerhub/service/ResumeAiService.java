@@ -21,8 +21,6 @@ public class ResumeAiService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResumeAiService.class);
     private static final double TEMPERATURE = 0.4;
-    private static final int FREE_DAILY_LIMIT = 5;
-    private static final int SUBSCRIBED_DAILY_LIMIT = 20;
 
     @Autowired
     private AiService aiService;
@@ -37,8 +35,7 @@ public class ResumeAiService {
             action = com.docservice.careerhub.dto.constants.AuditAction.AI_ASSIST_USED,
             actor = "#userEmail", detail = "'section=' + #request.section")
     public AiAssistResult assist(String userEmail, AiAssistRequest request) {
-        int limit = entitlementService.hasActivePlan(userEmail) ? SUBSCRIBED_DAILY_LIMIT : FREE_DAILY_LIMIT;
-        redisRateLimiter.checkDailyLimit(userEmail, "ai-assist", limit);
+        redisRateLimiter.checkAiDailyLimit(userEmail, entitlementService.hasActivePlan(userEmail));
         validate(request);
 
         boolean latex = "latex".equalsIgnoreCase(request.getFormat());
