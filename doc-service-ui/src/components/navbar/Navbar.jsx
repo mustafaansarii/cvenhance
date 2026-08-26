@@ -317,7 +317,7 @@ function ProfileMenu({ onLogout }) {
     );
 }
 
-function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, menuRef, menuTop }) {
+function MobileMenu({ visibleNavItems, isAuthenticated, isAdmin, profileItems, onLogout, menuRef, menuTop }) {
     const [openSection, setOpenSection] = useState(null);
     const toggle = (label) => setOpenSection((prev) => (prev === label ? null : label));
 
@@ -371,6 +371,11 @@ function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, 
             <div className="border-t border-border px-3 py-3">
                 {isAuthenticated ? (
                     <div className="space-y-0.5">
+                        {isAdmin && (
+                            <NavLink to="/admin" className="block rounded-lg px-3 py-2 text-sm font-semibold text-accent hover:bg-muted">
+                                Admin
+                            </NavLink>
+                        )}
                         {profileItems.map((item) => (
                             <NavLink key={item.to} to={item.to} className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">
                                 {item.label}
@@ -398,6 +403,7 @@ function MobileMenu({ visibleNavItems, isAuthenticated, profileItems, onLogout, 
 export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
+    const [isAdmin, setIsAdmin] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const hamburgerRef = useRef(null);
@@ -409,6 +415,18 @@ export default function Navbar() {
         setIsAuthenticated(authService.isAuthenticated());
         setIsMobileMenuOpen(false);
     }, [location]);
+
+    // Detect admin role to reveal the Admin link.
+    useEffect(() => {
+        let alive = true;
+        const resolveAdmin = isAuthenticated
+            ? authService.me().then((me) => Array.isArray(me?.roles) && me.roles.includes('ADMIN'))
+            : Promise.resolve(false);
+        resolveAdmin
+            .then((admin) => { if (alive) setIsAdmin(admin); })
+            .catch(() => { if (alive) setIsAdmin(false); });
+        return () => { alive = false; };
+    }, [isAuthenticated]);
 
     useEffect(() => {
         if (!isMobileMenuOpen) return;
@@ -468,7 +486,16 @@ export default function Navbar() {
 
                 <div className="flex flex-1 items-center justify-end gap-2">
                     {isAuthenticated ? (
-                        <div className="hidden md:block">
+                        <div className="hidden items-center gap-2 md:flex">
+                            {isAdmin && (
+                                <NavLink
+                                    to="/admin"
+                                    className={({ isActive }) => `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? 'bg-white/15 text-white' : 'text-white/90 hover:bg-white/10 hover:text-white'}`}
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /></svg>
+                                    Admin
+                                </NavLink>
+                            )}
                             <ProfileMenu onLogout={handleLogout} />
                         </div>
                     ) : (
@@ -514,6 +541,7 @@ export default function Navbar() {
                 <MobileMenu
                     visibleNavItems={visibleNavItems}
                     isAuthenticated={isAuthenticated}
+                    isAdmin={isAdmin}
                     profileItems={profileItems}
                     onLogout={handleLogout}
                     menuRef={mobileMenuRef}

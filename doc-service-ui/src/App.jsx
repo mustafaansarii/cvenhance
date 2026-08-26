@@ -22,6 +22,7 @@ import ComingSoon from './pages/ComingSoon';
 import DocTemplates from './pages/DocTemplates';
 import MyTemplates from './pages/MyTemplates';
 import ResumeBuilder from './pages/ResumeBuilder';
+import AdminPage from './pages/AdminPage';
 import ResumeUploadPrompt from './components/profile/ResumeUploadPrompt';
 import PrivacyConsentBanner from './components/shared/PrivacyConsentBanner';
 
@@ -73,6 +74,7 @@ function App() {
         <Route path="/my-templates" element={<PrivateRoute> <MyTemplates/> </PrivateRoute>} />
         <Route path="/doc-editor/:id" element={<PrivateRoute> <DocEditor/></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage/></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute><AdminPage/></PrivateRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideFooter && <Footer />}
