@@ -1,6 +1,8 @@
 package com.docservice.careerhub.service;
 
 import com.docservice.careerhub.config.AppProperties;
+import com.docservice.careerhub.audit.Auditable;
+import com.docservice.careerhub.dto.constants.AuditAction;
 import com.docservice.careerhub.dto.request.DeviceMetadata;
 import com.docservice.careerhub.dto.request.SigninRequest;
 import com.docservice.careerhub.dto.request.SignupRequest;
@@ -74,6 +76,7 @@ public class AuthService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.SIGNUP, actor = "#result.email")
     public AuthUser register(SignupRequest request) {
         if (Objects.isNull(request.getOtp()) || request.getOtp().isBlank()) {
             throw ApiException.badData("OTP is required for registration");
@@ -90,6 +93,7 @@ public class AuthService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.LOGIN, actor = "#result.user().email")
     public LoginResult login(SigninRequest request, DeviceMetadata device) {
         AuthUser user = authenticate(request);
         accountMailer.sendWelcome(user.getEmail(), user.getFullName());
@@ -100,6 +104,7 @@ public class AuthService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.OAUTH_LOGIN, actor = "#result.user().email", detail = "'provider=' + #provider")
     public LoginResult loginWithOAuth(String email, String fullName, String provider, DeviceMetadata device) {
         AuthUser user = authUserRepository.findByEmail(email).orElseGet(() -> new AuthUser());
         boolean isNew = Objects.isNull(user.getId());

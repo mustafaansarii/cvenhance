@@ -51,6 +51,9 @@ public class PaymentOrderService {
     private ObjectMapper objectMapper;
 
     @Transactional
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.PAYMENT_ORDER_CREATED,
+            actor = "#ownerEmail", targetType = "PAYMENT_ORDER", detail = "'plan=' + #planId")
     public OrderResponse createOrder(String ownerEmail, String planId, String customerPhone) {
         Plan plan = parsePlan(planId);
         AuthUser user = authService.getActiveUser(ownerEmail);

@@ -12,6 +12,7 @@ import PricingModal from '../components/payment/PricingModal';
 import AiAssistPanel from '../components/ai/AiAssistPanel';
 import ResumeCheckPanel from '../components/ai/ResumeCheckPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
+import PdfPreviewPane from '../components/shared/PdfPreviewPane';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
 
@@ -249,12 +250,11 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         let ro;
         const measureApply = () => {
             sheet.querySelectorAll('[data-block]').forEach((b) => { b.style.marginTop = ''; });
-            const s = scaleRef.current || 1;   // sheet may be visually scaled to fit; normalize to layout px
+            const s = scaleRef.current || 1;
             const M = settingsRef.current.margin;
             const usable = PAGE - 2 * M;
             const sheetTop = sheet.getBoundingClientRect().top;
 
-            // Push blocks down so none straddle a page boundary; returns the last page index used.
             const paginate = (root) => {
                 const blocks = breakUnits(root, usable, s);
                 const data = blocks.map((b) => { const r = b.getBoundingClientRect(); return { el: b, top: (r.top - sheetTop) / s, h: r.height / s }; });
@@ -431,7 +431,8 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         const margin = settings.margin;
         const usable = Math.max(1, PAGE - 2 * margin);
         const holder = document.createElement('div');
-        holder.style.cssText = `position:fixed; left:-100000px; top:0; width:${PAGE_W}px; background:#ffffff;`;
+
+        holder.style.cssText = `position:fixed; left:0; top:0; z-index:-1; opacity:0; pointer-events:none; width:${PAGE_W}px; background:#ffffff;`;
         const clone = sheet.cloneNode(true);
         clone.style.margin = '0';
         clone.style.paddingTop = '0px';
@@ -630,6 +631,16 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
+    const downloadPreview = () => {
+        if (!previewUrl) { download(); return; }
+        const a = document.createElement('a');
+        a.href = previewUrl;
+        a.download = `${(resume.name || 'resume').trim() || 'resume'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
     const renderBody = (type, col = 'main') => {
         const meta = META[type];
         if (meta.kind === 'text') {
@@ -726,19 +737,20 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 <div className="flex min-w-0 items-center gap-3">
                     <Link to="/templates?type=CV_AND_RESUME&page=1&size=50" className="flex shrink-0 items-center gap-2 text-muted-foreground transition hover:text-foreground">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                        <span className="hidden text-sm font-medium sm:inline">Templates</span>
+                        <span className="hidden text-xs font-light sm:inline">Templates</span>
                     </Link>
                     <div className="hidden h-4 w-px bg-border md:block" />
-                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-sm font-medium text-muted-foreground transition hover:text-foreground md:inline">My Templates</Link>
-                    {design?.name && <span className="hidden truncate rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent sm:inline">{design.name}</span>}
+                    <Link to="/my-templates?type=CV_AND_RESUME&page=1&size=50" className="hidden text-xs font-light text-muted-foreground transition hover:text-foreground md:inline">My Templates</Link>
+                    {design?.name && <span className="hidden truncate rounded-full bg-accent/10 px-2.5 py-0.5 text-[11px] font-normal text-accent sm:inline">{design.name}</span>}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                     {authed && (
                         <ResumeUploadButton
-                            label="Upload CV"
+                            label="AI Edit"
                             labelClassName="hidden sm:inline"
+                            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" /></svg>}
                             confirm="We'll read your uploaded file and automatically fill in your resume for you. This replaces the details currently on screen."
-                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
                             onDone={(p) => {
                                 const r = profileToResume(p);
                                 setResume(r);
@@ -750,34 +762,35 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                     <button
                         onClick={() => setAtsAiOpen((o) => !o)}
                         title="AI resume analysis"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${atsAiOpen ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light transition sm:px-3 ${atsAiOpen ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                        <span className="flex h-4 w-4 items-center justify-center rounded-sm border border-current text-[8px] font-bold">AI</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z" /><path strokeLinecap="round" strokeLinejoin="round" d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z" /></svg>
                         <span className="hidden sm:inline">Analyze</span>
                     </button>
                     <button
                         onClick={() => setPanel(panel === 'design' ? null : 'design')}
                         title="Design & Font"
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium transition sm:px-3 ${panel === 'design' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light transition sm:px-3 ${panel === 'design' ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" d="M12 3a9 9 0 000 18" fill="currentColor" stroke="none" opacity="0.5" /></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3a9 9 0 100 18h1.5a2 2 0 002-2 2 2 0 00-.5-1.3 2 2 0 01-.5-1.2 1.5 1.5 0 011.5-1.5H18a3 3 0 003-3c0-4.4-4-8-9-8z" /><circle cx="7.5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="10" cy="8" r="1" fill="currentColor" stroke="none" /><circle cx="14" cy="8" r="1" fill="currentColor" stroke="none" /><circle cx="16.5" cy="12" r="1" fill="currentColor" stroke="none" /></svg>
                         <span className="hidden sm:inline">Design &amp; Font</span>
                     </button>
                     <button
                         onClick={preview}
                         disabled={saving}
                         title="Preview the PDF before downloading"
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light text-muted-foreground transition hover:bg-muted disabled:opacity-60 sm:px-3"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" /><circle cx="12" cy="12" r="3" /></svg>
                         <span className="hidden sm:inline">Preview</span>
                     </button>
+                    <div className="mx-1 hidden h-5 w-px bg-border sm:block" />
                     {locked ? (
                         <button
                             onClick={unlock}
                             disabled={saving}
                             title="Unlock this resume (uses one credit)"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-2 text-sm font-semibold text-background shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:px-4"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background shadow-sm transition hover:opacity-90 disabled:opacity-60 sm:px-4"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -791,7 +804,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             onClick={download}
                             disabled={saving}
                             title="Download PDF"
-                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60 sm:px-4"
+                            className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-2 text-xs font-medium text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-60 sm:px-4"
                         >
                             {saving ? (
                                 <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 3a9 9 0 109 9" /></svg>
@@ -1127,7 +1140,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                             <p className="text-sm font-semibold text-foreground">PDF preview</p>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={download}
+                                    onClick={downloadPreview}
                                     disabled={saving}
                                     className="inline-flex items-center gap-1.5 bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60"
                                 >
@@ -1143,11 +1156,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                                 </button>
                             </div>
                         </div>
-                        <iframe
-                            src={`${previewUrl}#view=FitH&toolbar=0&navpanes=0`}
-                            title="PDF preview"
-                            className="min-h-0 flex-1 border-0 bg-muted"
-                        />
+                        <PdfPreviewPane url={previewUrl} className="min-h-0 flex-1 border-0 bg-muted" />
                     </div>
                 </div>
             )}

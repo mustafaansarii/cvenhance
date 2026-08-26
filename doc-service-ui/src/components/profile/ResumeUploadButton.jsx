@@ -9,6 +9,7 @@ export default function ResumeUploadButton({
     confirm,
     onDone,
     className,
+    icon,
 }) {
     const inputRef = useRef(null);
     const [busy, setBusy] = useState(false);
@@ -87,7 +88,9 @@ export default function ResumeUploadButton({
                 disabled={busy}
                 className={className || 'inline-flex items-center gap-1.5 rounded-full border border-accent px-4 py-2 text-sm font-semibold text-accent transition hover:bg-accent/10 disabled:opacity-60'}
             >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                {icon || (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                )}
                 <span className={labelClassName}>{busy ? 'Working…' : label}</span>
             </button>
 
@@ -145,7 +148,7 @@ export default function ResumeUploadButton({
                             {/* Job description (optional) */}
                             <div className="mt-4">
                                 <label className="mb-1.5 block text-sm font-semibold text-foreground">
-                                    Target job description <span className="font-normal text-muted-foreground">(optional)</span>
+                                    Tell us what you'd like to update, or share a job description <span className="font-normal text-muted-foreground">(optional)</span>
                                 </label>
                                 <textarea
                                     value={jd}

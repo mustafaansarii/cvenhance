@@ -1,5 +1,7 @@
 package com.docservice.careerhub.service;
 
+import com.docservice.careerhub.audit.Auditable;
+import com.docservice.careerhub.dto.constants.AuditAction;
 import com.docservice.careerhub.dto.constants.DocTemplateStatus;
 import com.docservice.careerhub.dto.constants.DocType;
 import com.docservice.careerhub.entity.DocTemplate;
@@ -63,16 +65,15 @@ public class UserDocService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.TEMPLATE_CLAIMED, actor = "#ownerEmail",
+            targetType = "USER_DOC", targetId = "#id")
     public void claim(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
-        // FREE templates need no subscription; PAID still requires an active plan.
         if (!isFree(doc) && !entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }
     }
 
-    // Resolve FREE from the live template (keyed by templateCode), falling back to the
-    // snapshot copied onto the doc — so marking a template FREE takes effect immediately.
     private boolean isFree(UserDoc doc) {
         return doc.isFree() || docTemplateRepository.findFirstByTemplateCode(doc.getTemplateCode())
                 .map(t -> t.getSubscriptionType() == com.docservice.careerhub.dto.constants.SubscriptionType.FREE)
@@ -98,9 +99,10 @@ public class UserDocService {
     }
 
     @Transactional
+    @Auditable(action = AuditAction.TEMPLATE_UNLOCKED, actor = "#ownerEmail",
+            targetType = "USER_DOC", targetId = "#id")
     public byte[] unlockAndCompile(String ownerEmail, Long id) {
         UserDoc doc = getOwned(ownerEmail, id);
-        // FREE templates need no subscription; PAID still requires an active plan.
         if (!isFree(doc) && !entitlementService.unlock(ownerEmail, doc.resumeKey())) {
             throw ApiException.paymentRequired("Upgrade your plan to download this resume");
         }

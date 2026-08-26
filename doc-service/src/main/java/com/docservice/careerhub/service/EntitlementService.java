@@ -131,6 +131,9 @@ public class EntitlementService {
     }
 
     @Transactional
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.SUBSCRIPTION_GRANTED,
+            actor = "#ownerEmail", targetType = "SUBSCRIPTION", detail = "'plan=' + #plan")
     public Subscription grant(String ownerEmail, Plan plan) {
         Subscription subscription = subscriptionRepository.findByOwnerEmail(ownerEmail).orElseGet(() -> {
             Subscription fresh = new Subscription();
