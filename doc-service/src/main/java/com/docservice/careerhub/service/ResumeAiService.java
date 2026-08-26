@@ -33,6 +33,9 @@ public class ResumeAiService {
     @Autowired
     private EntitlementService entitlementService;
 
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.AI_ASSIST_USED,
+            actor = "#userEmail", detail = "'section=' + #request.section")
     public AiAssistResult assist(String userEmail, AiAssistRequest request) {
         int limit = entitlementService.hasActivePlan(userEmail) ? SUBSCRIBED_DAILY_LIMIT : FREE_DAILY_LIMIT;
         redisRateLimiter.checkDailyLimit(userEmail, "ai-assist", limit);

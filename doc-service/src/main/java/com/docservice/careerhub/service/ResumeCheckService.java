@@ -44,6 +44,10 @@ public class ResumeCheckService {
     @Autowired
     private StorageService storageService;
 
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.RESUME_ANALYZED,
+            actor = "#userEmail", targetType = "RESUME_CHECK",
+            targetId = "#result.id", detail = "'score=' + #result.overallScore")
     public ResumeCheckHistory check(String userEmail, String resumeText, MultipartFile file) {
         boolean subscribed = entitlementService.hasActivePlan(userEmail);
         if (!subscribed) {
@@ -85,11 +89,10 @@ public class ResumeCheckService {
             return saved;
         } catch (Exception e) {
             LOGGER.warn("Failed to persist resume-check history for {}: {}", ownerEmail, e.getMessage());
-            return history; // transient (no id) — the analysis is still returned to the user
+            return history;
         }
     }
 
-    /** Uploads the original resume file to storage so the history preview can render it. Best-effort. */
     private void storeFile(String ownerEmail, MultipartFile file, ResumeCheckHistory history) {
         if (file == null || file.isEmpty()) {
             return;
@@ -99,8 +102,8 @@ public class ResumeCheckService {
             String ext = contentType.contains("word") || contentType.contains("docx") ? ".docx" : ".pdf";
             String path = "resume-checks/" + slug(ownerEmail) + "/" + UUID.randomUUID() + ext;
             String url = storageService.upload(file.getBytes(), path, contentType);
-            history.setResumeFilePath(path);   // kept for deletion on prune
-            history.setResumeFileUrl(url);     // public URL rendered in the history preview
+            history.setResumeFilePath(path);
+            history.setResumeFileUrl(url);
             history.setResumeFileType(contentType);
         } catch (Exception e) {
             LOGGER.warn("Failed to store resume file for {}: {}", ownerEmail, e.getMessage());

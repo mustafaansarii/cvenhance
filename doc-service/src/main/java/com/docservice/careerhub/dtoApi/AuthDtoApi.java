@@ -54,6 +54,9 @@ public class AuthDtoApi extends AbstractDtoUtil {
         return toUserResponse(result.user());
     }
 
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.LOGOUT,
+            actor = "#authentication.name")
     public MessageResponse logout(Authentication authentication, HttpServletResponse httpResponse) {
         authService.revokeSession(tokenIdOf(authentication));
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, authCookies.clear().toString());

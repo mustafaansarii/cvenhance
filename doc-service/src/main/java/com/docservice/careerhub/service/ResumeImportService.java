@@ -50,6 +50,8 @@ public class ResumeImportService {
         } catch (Exception ignored) {}
     }
 
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.RESUME_IMPORTED, actor = "#ownerEmail")
     public Map<String, Object> importFromText(String ownerEmail, ImportResumeRequest request) {
         String resumeText = Objects.isNull(request) || Objects.isNull(request.getResumeText())
                 ? "" : request.getResumeText().trim();

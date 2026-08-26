@@ -78,6 +78,10 @@ public class ResumeBuilderDocumentService {
     }
 
     @Transactional
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.TEMPLATE_CLAIMED,
+            actor = "#ownerEmail", targetType = "RESUME_BUILDER_DOCUMENT", targetId = "#id",
+            detail = "'template=' + #result.templateCode")
     public ResumeBuilderDocument claim(String ownerEmail, Long id) {
         ResumeBuilderDocument document = getOwned(ownerEmail, id);
         AuthUser user = authService.getActiveUser(ownerEmail);

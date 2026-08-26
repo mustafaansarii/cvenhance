@@ -19,6 +19,9 @@ public class ContactDtoApi extends AbstractDtoUtil {
     @Autowired
     private MailService mailService;
 
+    @com.docservice.careerhub.audit.Auditable(
+            action = com.docservice.careerhub.dto.constants.AuditAction.CONTACT_SUBMITTED,
+            actor = "#request.email")
     public MessageResponse submit(ContactRequest request) {
         validate(request);
         boolean ok = contactMailer.send(request);

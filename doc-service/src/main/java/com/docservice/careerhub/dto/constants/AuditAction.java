@@ -1,0 +1,19 @@
+package com.docservice.careerhub.dto.constants;
+
+public enum AuditAction {
+    SIGNUP,
+    LOGIN,
+    OAUTH_LOGIN,
+    LOGOUT,
+    PROFILE_UPDATED,
+    RESUME_IMPORTED,
+    RESUME_ANALYZED,
+    AI_ASSIST_USED,
+    TEMPLATE_CLAIMED,
+    TEMPLATE_UNLOCKED,
+    DOC_DOWNLOADED,
+    PAYMENT_ORDER_CREATED,
+    PAYMENT_VERIFIED,
+    SUBSCRIPTION_GRANTED,
+    CONTACT_SUBMITTED
+}
