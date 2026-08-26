@@ -28,4 +28,14 @@ public interface UserDocRepository extends JpaRepository<UserDoc, Long> {
             """)
     Page<UserDoc> getUserDocs(@Param("ownerEmail") String ownerEmail, @Param("keyword") String keyword,
                          @Param("type") DocType type, Pageable pageable);
+
+    @Query("""
+            SELECT d FROM UserDoc d
+            WHERE (:keyword IS NULL OR :keyword = ''
+                   OR LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(d.ownerEmail) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                   OR LOWER(COALESCE(d.templateCode, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:type IS NULL OR d.type = :type)
+            """)
+    Page<UserDoc> searchAll(@Param("keyword") String keyword, @Param("type") DocType type, Pageable pageable);
 }

@@ -4,6 +4,13 @@ PATCH,/api/auth/profile,USER|ADMIN
 POST,/api/admin/doc-templates,ADMIN
 GET,/api/admin/doc-templates,PUBLIC
 GET,/api/admin/doc-templates/*,PUBLIC
+GET,/api/admin/audit-events,ADMIN
+GET,/api/admin/users,ADMIN
+PATCH,/api/admin/users,ADMIN
+GET,/api/admin/templates,ADMIN
+PATCH,/api/admin/templates,ADMIN
+GET,/api/admin/user-docs,ADMIN
+PATCH,/api/admin/user-docs,ADMIN
 POST,/api/user-docs,USER|ADMIN
 GET,/api/user-docs,USER|ADMIN
 GET,/api/user-docs/*,USER|ADMIN
