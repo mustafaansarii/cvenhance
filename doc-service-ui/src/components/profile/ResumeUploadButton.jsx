@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import userService from '../../services/user.service';
-import { textFromFile, MAX_UPLOAD_BYTES } from '../../utils/resumeText';
+import { textFromFile, MAX_UPLOAD_BYTES, MAX_PDF_PAGES, ResumeUploadError } from '../../utils/resumeText';
 
 export default function ResumeUploadButton({
     label = 'Upload resume / CV',
@@ -29,7 +29,7 @@ export default function ResumeUploadButton({
         e.target.value = '';
         if (!file) return;
         if (file.size > MAX_UPLOAD_BYTES) {
-            toast.error('File is too large. Please upload a resume under 2 MB.');
+            toast.error('File is too large. Please upload a resume under 5 MB.');
             return;
         }
         setReading(true);
@@ -41,8 +41,8 @@ export default function ResumeUploadButton({
             }
             setFileText(text.trim());
             setFileName(file.name);
-        } catch {
-            toast.error('Failed to read that file. Try a text-based PDF or a DOCX.');
+        } catch (err) {
+            toast.error(err instanceof ResumeUploadError ? err.message : 'Failed to read that file. Try a text-based PDF or a DOCX.');
         } finally {
             setReading(false);
         }
@@ -131,7 +131,7 @@ export default function ResumeUploadButton({
                                         {reading ? 'Reading…' : 'Choose file'}
                                     </button>
                                     <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-                                        {fileName || 'PDF, DOCX or TXT · under 2 MB'}
+                                        {fileName || `PDF, DOCX or TXT · under 5 MB · max ${MAX_PDF_PAGES} pages`}
                                     </span>
                                     {fileText && !reading && (
                                         <button

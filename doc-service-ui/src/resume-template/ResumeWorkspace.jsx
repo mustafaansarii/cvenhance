@@ -295,7 +295,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         window.addEventListener('beforeprint', clearPushes);
         window.addEventListener('afterprint', schedule);
         return () => { cancelAnimationFrame(raf); if (ro) ro.disconnect(); sheet.removeEventListener('input', schedule); window.removeEventListener('beforeprint', clearPushes); window.removeEventListener('afterprint', schedule); };
-    }, [design]);
+    }, [design, dataVersion]);
 
     useEffect(() => { scheduleRef.current(); }, [order, resume, design, settings]);
 
@@ -607,7 +607,6 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         }
     };
 
-    /** A PDF snapshot of the current résumé as a File — used by the analysis panel so history stores the real doc. */
     const buildPdfFile = async () => {
         const pdf = await buildPdf();
         if (!pdf) return null;
