@@ -11,4 +11,5 @@ public class ImportResumeRequest {
 
     @Size(max = 20000, message = "jobDescription must be at most 20000 characters")
     private String jobDescription;
+
 }

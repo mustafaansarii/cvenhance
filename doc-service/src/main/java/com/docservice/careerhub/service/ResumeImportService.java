@@ -55,11 +55,12 @@ public class ResumeImportService {
     public Map<String, Object> importFromText(String ownerEmail, ImportResumeRequest request) {
         String resumeText = Objects.isNull(request) || Objects.isNull(request.getResumeText())
                 ? "" : request.getResumeText().trim();
-        String jobDescription = Objects.isNull(request) || Objects.isNull(request.getJobDescription())
+        // Single guidance field, used in all cases: a job description and/or improvement feedback.
+        String guidance = Objects.isNull(request) || Objects.isNull(request.getJobDescription())
                 ? "" : request.getJobDescription().trim();
 
-        if (resumeText.isBlank() && jobDescription.isBlank()) {
-            throw ApiException.badData("Please upload a resume or paste a job description.");
+        if (resumeText.isBlank() && guidance.isBlank()) {
+            throw ApiException.badData("Please upload a resume or provide some guidance.");
         }
 
         String sourceText = resumeText;
@@ -70,7 +71,7 @@ public class ResumeImportService {
             }
         }
 
-        Map<String, Object> profile = parseProfile(sourceText, jobDescription);
+        Map<String, Object> profile = parseProfile(sourceText, guidance);
         saveProfile(ownerEmail, profile);
         return profile;
     }
@@ -87,20 +88,20 @@ public class ResumeImportService {
 
 //-----------------Private Methods------------------------------
 
-    private Map<String, Object> parseProfile(String resumeText, String jobDescription) {
+    private Map<String, Object> parseProfile(String resumeText, String guidance) {
         try {
-            return parseProfileWithAi(resumeText, jobDescription);
+            return parseProfileWithAi(resumeText, guidance);
         } catch (Exception e) {
             logger.error("AI parsing failed, falling back to manual parsing", e);
-            // Manual fallback can only extract; it cannot tailor to a JD.
+            // Manual fallback can only extract; it cannot tailor or apply guidance.
             return parseProfileDataHelper.parseProfileWithManual(resumeText, objectMapper, profileSchema);
         }
     }
 
-    private Map<String, Object> parseProfileWithAi(String resumeText, String jobDescription) {
+    private Map<String, Object> parseProfileWithAi(String resumeText, String guidance) {
         AiRequest request = new AiRequest(
-                buildUserPrompt(resumeText, jobDescription),
-                buildSystemInstruction(jobDescription),
+                buildUserPrompt(resumeText, guidance),
+                buildSystemInstruction(guidance),
                 EXTRACT_TEMPERATURE);
         Profile profile = aiService.generate(request, Profile.class);
         if (profile == null) {
@@ -109,17 +110,17 @@ public class ResumeImportService {
         return objectMapper.convertValue(profile, new TypeReference<Map<String, Object>>() { });
     }
 
-    private String buildSystemInstruction(String jobDescription) {
-        // With a JD present, use the parser+tailor prompt; otherwise plain extraction.
-        AiPrompt prompt = jobDescription.isBlank() ? AiPrompt.RESUME_PARSER_SYSTEM : AiPrompt.RESUME_PARSER_JD_SYSTEM;
-        return prompt.getPrompt();
+    private String buildSystemInstruction(String guidance) {
+        // With guidance (a JD and/or improvement feedback) use the guided prompt; else plain extraction.
+        return (guidance.isBlank() ? AiPrompt.RESUME_PARSER_SYSTEM : AiPrompt.RESUME_GUIDED_SYSTEM).getPrompt();
     }
 
-    private String buildUserPrompt(String resumeText, String jobDescription) {
-        if (jobDescription.isBlank()) {
+    private String buildUserPrompt(String resumeText, String guidance) {
+        if (guidance.isBlank()) {
             return "RESUME TEXT:\n" + resumeText;
         }
-        return "TARGET JOB DESCRIPTION:\n" + jobDescription + "\n\nRESUME TEXT:\n" + resumeText;
+        return "GUIDANCE (target job description and/or improvement feedback):\n" + guidance
+                + "\n\nRESUME TEXT:\n" + resumeText;
     }
 
     private void saveProfile(String ownerEmail, Map<String, Object> profile) {

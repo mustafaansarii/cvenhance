@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { DocumentTextIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import resumeCheckerService from '../../services/resumeChecker.service';
+import userService from '../../services/user.service';
 
 const STATUS_DOT = { good: 'bg-emerald-500', warning: 'bg-amber-500', bad: 'bg-red-500' };
+const SEV = {
+    bad: 'bg-red-500',
+    warning: 'bg-amber-500',
+    good: 'bg-emerald-500',
+    info: 'bg-blue-500',
+};
 const problemsOf = (c) => (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning').length;
 const scoreText = (s) => (s >= 80 ? 'text-emerald-500' : s >= 55 ? 'text-amber-500' : 'text-red-500');
 const scoreBg = (s) => (s >= 80 ? 'bg-emerald-500' : s >= 55 ? 'bg-amber-500' : 'bg-red-500');
@@ -12,13 +19,16 @@ const scoreLabel = (s) => (s >= 80 ? 'Strong' : s >= 55 ? 'Needs work' : 'Weak')
 const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 /** Form-builder drawer: a concise ATS summary of the current resume (or an uploaded PDF/DOCX). */
-export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, onPaymentRequired }) {
+export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, onPaymentRequired, onProfileUpdated }) {
     const [loading, setLoading] = useState(false);
+    const [fixing, setFixing] = useState(false);
     const [result, setResult] = useState(null);
     const [source, setSource] = useState(null); // label of what was analyzed
     const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
+    const [expanded, setExpanded] = useState({});
+    const toggleCat = (k) => setExpanded((p) => ({ ...p, [k]: !p[k] }));
 
     const onCloseRef = useRef(onClose);
     useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
@@ -95,7 +105,7 @@ export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, 
     const toResult = (entity) => {
         let categories = [];
         try { categories = JSON.parse(entity?.categoriesJson || '[]'); } catch { categories = []; }
-        return { overallScore: entity?.overallScore ?? 0, categories };
+        return { id: entity?.id ?? null, overallScore: entity?.overallScore ?? 0, categories };
     };
 
     const analyze = async ({ resumeText, file, label }) => {
@@ -128,6 +138,38 @@ export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, 
         await analyze({ resumeText, file, label: 'Current resume' });
     };
 
+    // Turn the analysis findings into a fix brief for the AI.
+    const buildFixGuidance = () => {
+        const lines = ['Improve this resume to fix the following ATS analysis issues. Apply the suggestions where truthful; do not invent any experience, metrics or skills.'];
+        (result?.categories || []).forEach((c) => {
+            const fs = (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning');
+            if (!fs.length) return;
+            lines.push(`\n[${c.label}]`);
+            fs.forEach((f) => lines.push(`- ${f.issue}${f.suggestion ? ` → ${f.suggestion}` : ''}${f.phrase ? ` (text: "${f.phrase}")` : ''}`));
+        });
+        return lines.join('\n');
+    };
+
+    // One-click fix: send the current resume + the analysis report to the import API, then apply the result.
+    const runFix = async () => {
+        const resumeText = buildResumeText();
+        if (!resumeText.trim()) { toast.error('Add some content to your resume first.'); return; }
+        setFixing(true);
+        const id = toast.loading('Applying AI fixes…');
+        try {
+            const profile = await userService.importResume(resumeText, buildFixGuidance());
+            toast.success('Resume improved — re-analyze to see the new score', { id });
+            onProfileUpdated?.(profile);
+        } catch (err) {
+            if (err?.response?.status === 402) {
+                toast.dismiss(id);
+                onClose?.(); onPaymentRequired?.();
+            } else {
+                toast.error(err?.response?.data?.message || 'Could not apply fixes. Please try again.', { id });
+            }
+        } finally { setFixing(false); }
+    };
+
     const loadHistoryItem = async (id) => {
         setLoading(true); setError(null);
         try {
@@ -144,7 +186,7 @@ export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, 
     const totalIssues = withIssues.reduce((s, x) => s + x.n, 0);
 
     return (
-        <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-80 max-w-[88vw] overflow-y-auto border-l border-border bg-card p-5 shadow-2xl">
+        <div className="no-print fixed right-0 top-14 bottom-0 z-40 w-96 max-w-[92vw] overflow-y-auto border-l border-border bg-card p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground">Resume analysis</h3>
                 <button onClick={onClose} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
@@ -196,31 +238,71 @@ export default function ResumeCheckPanel({ open, resume, buildPdfFile, onClose, 
                         </div>
                     </div>
 
-                    {/* Top fixes — compact list, no per-finding detail */}
+                    {/* Sections that need work — a few key fixes each (open the full analysis for everything) */}
                     {withIssues.length > 0 && (
                         <div>
-                            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Top fixes</p>
-                            <ul className="space-y-1">
-                                {withIssues.slice(0, 6).map(({ c, n }) => (
-                                    <li key={c.key} className="flex items-center justify-between rounded-lg border border-border px-2.5 py-1.5 text-xs">
-                                        <span className="flex items-center gap-1.5 text-foreground">
-                                            <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[c.status] || 'bg-slate-400'}`} />
-                                            {c.label}
-                                        </span>
-                                        <span className={`font-semibold ${scoreText(c.score)}`}>{n} issue{n === 1 ? '' : 's'}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <p className="mb-1.5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                <span>Top fixes</span>
+                                {okCount > 0 && <span className="normal-case text-emerald-600 dark:text-emerald-400">✓ {okCount} good</span>}
+                            </p>
+                            <div className="space-y-1.5">
+                                {withIssues.map(({ c, n }) => {
+                                    const isOpen = expanded[c.key] ?? true;
+                                    const issues = (c.findings || []).filter((f) => f.severity === 'bad' || f.severity === 'warning');
+                                    const shown = issues.slice(0, 3);
+                                    const more = issues.length - shown.length;
+                                    return (
+                                        <div key={c.key} className="overflow-hidden rounded-lg border border-border">
+                                            <button
+                                                onClick={() => toggleCat(c.key)}
+                                                className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-xs hover:bg-muted/50"
+                                            >
+                                                <span className="flex min-w-0 items-center gap-1.5 text-foreground">
+                                                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[c.status] || 'bg-slate-400'}`} />
+                                                    <span className="truncate font-medium">{c.label}</span>
+                                                </span>
+                                                <span className="flex shrink-0 items-center gap-2">
+                                                    <span className={`font-semibold ${scoreText(c.score)}`}>{n} issue{n === 1 ? '' : 's'}</span>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`h-3 w-3 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}><path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" /></svg>
+                                                </span>
+                                            </button>
+                                            {isOpen && (
+                                                <div className="space-y-2 border-t border-border px-2.5 py-2">
+                                                    {shown.map((f, i) => (
+                                                        <div key={i} className="flex items-start gap-1.5 text-[11px]">
+                                                            <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${SEV[f.severity] || 'bg-slate-400'}`} />
+                                                            <div className="min-w-0">
+                                                                {/* the actual resume text flagged */}
+                                                                {f.phrase
+                                                                    ? <p className="italic text-red-600 dark:text-red-400">“{f.phrase}”</p>
+                                                                    : <p className="text-foreground">{f.issue}</p>}
+                                                                {f.suggestion && (
+                                                                    <p className="mt-0.5 text-emerald-700 dark:text-emerald-400">→ {f.suggestion}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {more > 0 && (
+                                                        <p className="pl-3 text-[10px] text-muted-foreground">+{more} more in full analysis</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
-                    {okCount > 0 && (
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                            ✓ {okCount} section{okCount === 1 ? '' : 's'} looking good
-                        </p>
+                    {withIssues.length > 0 && source === 'Current resume' && (
+                        <button onClick={runFix} disabled={fixing || loading}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent-hover disabled:opacity-60">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z" /></svg>
+                            {fixing ? 'Applying fixes…' : 'One-click fix'}
+                        </button>
                     )}
 
-                    <Link to="/resume-checker" target="_blank" rel="noopener noreferrer"
+                    <Link to={result.id ? `/resume-checker/${result.id}` : '/resume-checker'} target="_blank" rel="noopener noreferrer"
                         className="flex items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-xs font-semibold text-accent transition hover:bg-accent/5">
                         Open full analysis <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
                     </Link>

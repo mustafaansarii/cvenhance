@@ -5,6 +5,8 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.ChatOptions;
 
 public final class ChatModelAiProvider implements AiProvider {
+    private static final int MAX_OUTPUT_TOKENS = 8192;
+
     private final String name;
     private final String model;
     private final ChatClient chatClient;
@@ -38,7 +40,8 @@ public final class ChatModelAiProvider implements AiProvider {
     private ChatClient.ChatClientRequestSpec spec(AiRequest request) {
         ChatClient.ChatClientRequestSpec prompt = chatClient.prompt().user(request.prompt());
         if (request.system() != null && !request.system().isBlank()) prompt = prompt.system(request.system());
-        if (request.temperature() != null) prompt = prompt.options(ChatOptions.builder().temperature(request.temperature()).build());
-        return prompt;
+        ChatOptions.Builder options = ChatOptions.builder().maxTokens(MAX_OUTPUT_TOKENS);
+        if (request.temperature() != null) options.temperature(request.temperature());
+        return prompt.options(options.build());
     }
 }
