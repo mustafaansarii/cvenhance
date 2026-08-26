@@ -20,25 +20,21 @@ import java.util.Map;
 public class RedisRateLimiter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RedisRateLimiter.class);
-    private static final int AI_DAILY_LIMIT = 10;
     private static final long DAY_TTL_SECONDS = 90_000;
+
+    private static final int FREE_AI_DAILY_LIMIT = 3;
+    private static final int SUBSCRIBED_AI_DAILY_LIMIT = 20;
 
     private final RestClient restClient = RestClient.create();
 
     @Autowired
     private AppProperties appProperties;
 
-    public void checkDailyLimit(String email) {
-        String key = "ai:assist:" + email + ":" + LocalDate.now(ZoneOffset.UTC);
-        if (!allow(key, AI_DAILY_LIMIT, DAY_TTL_SECONDS)) {
-            throw ApiException.tooManyRequests("You've reached today's AI limit. Please try again tomorrow.");
-        }
-    }
-
-    public void checkDailyLimit(String email, String feature, int limit) {
-        String key = "ai:" + feature + ":" + email + ":" + LocalDate.now(ZoneOffset.UTC);
+    public void checkAiDailyLimit(String email, boolean subscribed) {
+        int limit = subscribed ? SUBSCRIBED_AI_DAILY_LIMIT : FREE_AI_DAILY_LIMIT;
+        String key = "ai:all:" + email + ":" + LocalDate.now(ZoneOffset.UTC);
         if (!allow(key, limit, DAY_TTL_SECONDS)) {
-            throw ApiException.tooManyRequests("You've reached today's limit. Please try again tomorrow.");
+            throw ApiException.tooManyRequests("You've reached your AI limit for today. Please subscribe to continue using.");
         }
     }
 
@@ -59,7 +55,7 @@ public class RedisRateLimiter {
                     .retrieve()
                     .body(new ParameterizedTypeReference<List<Map<String, Object>>>() { });
             if (results == null || results.isEmpty() || results.get(0).get("result") == null) {
-                return true; // unexpected shape → fail open
+                return true;
             }
             long count = ((Number) results.get(0).get("result")).longValue();
             return count <= limit;

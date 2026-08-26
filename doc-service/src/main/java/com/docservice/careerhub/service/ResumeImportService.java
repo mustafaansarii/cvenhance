@@ -41,6 +41,12 @@ public class ResumeImportService {
     @Autowired
     private ParseProfileDataHelper parseProfileDataHelper;
 
+    @Autowired
+    private RedisRateLimiter redisRateLimiter;
+
+    @Autowired
+    private EntitlementService entitlementService;
+
     private String profileSchema = "{}";
 
     @PostConstruct
@@ -53,9 +59,9 @@ public class ResumeImportService {
     @com.docservice.careerhub.audit.Auditable(
             action = com.docservice.careerhub.dto.constants.AuditAction.RESUME_IMPORTED, actor = "#ownerEmail")
     public Map<String, Object> importFromText(String ownerEmail, ImportResumeRequest request) {
+        redisRateLimiter.checkAiDailyLimit(ownerEmail, entitlementService.hasActivePlan(ownerEmail));
         String resumeText = Objects.isNull(request) || Objects.isNull(request.getResumeText())
                 ? "" : request.getResumeText().trim();
-        // Single guidance field, used in all cases: a job description and/or improvement feedback.
         String guidance = Objects.isNull(request) || Objects.isNull(request.getJobDescription())
                 ? "" : request.getJobDescription().trim();
 

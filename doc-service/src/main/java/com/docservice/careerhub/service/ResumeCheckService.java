@@ -22,7 +22,6 @@ public class ResumeCheckService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResumeCheckService.class);
 
-    private static final int FREE_DAILY_LIMIT = 5;
     private static final int HISTORY_LIMIT = 3;
     private static final int MAX_INPUT_CHARS = 20_000;
 
@@ -49,10 +48,7 @@ public class ResumeCheckService {
             actor = "#userEmail", targetType = "RESUME_CHECK",
             targetId = "#result.id", detail = "'score=' + #result.overallScore")
     public ResumeCheckHistory check(String userEmail, String resumeText, MultipartFile file) {
-        boolean subscribed = entitlementService.hasActivePlan(userEmail);
-        if (!subscribed) {
-            redisRateLimiter.checkDailyLimit(userEmail, "resume-check", FREE_DAILY_LIMIT);
-        }
+        redisRateLimiter.checkAiDailyLimit(userEmail, entitlementService.hasActivePlan(userEmail));
         validate(resumeText);
 
         String text = resumeText.trim();
