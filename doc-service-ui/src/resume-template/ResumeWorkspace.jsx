@@ -592,16 +592,24 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         return true;
     };
 
+    const buildPdfWithRetry = async () => {
+        try {
+            const pdf = await buildPdf();
+            if (pdf) return pdf;
+        } catch { /* fall through to one retry */ }
+        await new Promise((r) => setTimeout(r, 250));
+        return buildPdf();
+    };
+
     const download = async () => {
         if (!ensureUnlocked()) return;
         setSaving(true);
         try {
-            const pdf = await buildPdf();
+            const pdf = await buildPdfWithRetry();
             if (pdf) pdf.save(`${(resume.name || 'resume').trim() || 'resume'}.pdf`);
-            else window.print();
+            else toast.error('Could not generate the PDF. Please try again.');
         } catch {
-            toast.error('Could not generate the PDF — opening print instead');
-            window.print();
+            toast.error('Could not generate the PDF. Please try again.');
         } finally {
             setSaving(false);
         }
@@ -617,12 +625,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
         if (!ensureUnlocked()) return;
         setSaving(true);
         try {
-            const pdf = await buildPdf();
-            if (!pdf) { window.print(); return; }
+            const pdf = await buildPdfWithRetry();
+            if (!pdf) { toast.error('Could not generate the preview. Please try again.'); return; }
             const url = URL.createObjectURL(pdf.output('blob'));
             setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
         } catch {
-            toast.error('Could not generate the preview');
+            toast.error('Could not generate the preview. Please try again.');
         } finally {
             setSaving(false);
         }
@@ -904,7 +912,7 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 </div>
             )}
 
-            <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${atsAiOpen ? 'md:mr-80' : ''}`}>
+            <div id="rb-canvas" ref={canvasRef} className={`flex justify-center overflow-hidden px-4 py-8 ${panel === 'design' ? 'md:ml-80' : ''} ${atsAiOpen ? 'md:mr-96' : ''}`}>
                 <div style={{ width: PAGE_W * fitScale, height: stackHeight * fitScale }}>
                 <div id="rb-stack" className="relative" style={{ width: PAGE_W, height: stackHeight, transform: `scale(${fitScale})`, transformOrigin: 'top left' }}>
                     {Array.from({ length: pageCount }).map((_, p) => (
@@ -1127,6 +1135,12 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                 buildPdfFile={buildPdfFile}
                 onClose={() => setAtsAiOpen(false)}
                 onPaymentRequired={() => setPricingOpen(true)}
+                onProfileUpdated={(p) => {
+                    const r = profileToResume(p);
+                    setResume(r);
+                    setOrder(r._order || ['summary', 'experience', 'skills', 'courses', 'education']);
+                    setDataVersion((v) => v + 1);
+                }}
             />
 
             {previewUrl && (
