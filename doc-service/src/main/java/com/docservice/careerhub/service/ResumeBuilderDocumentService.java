@@ -71,7 +71,7 @@ public class ResumeBuilderDocumentService {
         if (request.getName() != null && !request.getName().isBlank()) {
             document.setName(request.getName().trim());
         }
-        document.setResumeDataJson(writeJson(request.getResumeData()));
+        // Only config is persisted per document; resume content lives in the user's profile.
         document.setSectionOrderJson(writeJson(request.getSectionOrder()));
         document.setEditorSettingsJson(writeJson(request.getEditorSettings()));
         return documentRepository.save(document);
@@ -110,9 +110,6 @@ public class ResumeBuilderDocumentService {
     }
 
     private void validateDocument(SaveResumeBuilderDocumentRequest request) {
-        if (!request.getResumeData().isObject()) {
-            throw ApiException.badData("resumeData must be an object");
-        }
         if (!request.getSectionOrder().isArray()) {
             throw ApiException.badData("sectionOrder must be an array");
         }

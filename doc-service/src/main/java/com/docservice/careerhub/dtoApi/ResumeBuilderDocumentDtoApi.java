@@ -64,7 +64,6 @@ public class ResumeBuilderDocumentDtoApi extends AbstractDtoUtil {
                 .templateCode(document.getTemplateCode())
                 .templateVersion(document.getTemplateVersion())
                 .name(document.getName())
-                .resumeData(resumeBuilderDocumentService.readJson(document.getResumeDataJson()))
                 .sectionOrder(resumeBuilderDocumentService.readJson(document.getSectionOrderJson()))
                 .editorSettings(resumeBuilderDocumentService.readJson(document.getEditorSettingsJson()))
                 .unlocked(resumeBuilderDocumentService.isUnlocked(ownerEmail, document))
