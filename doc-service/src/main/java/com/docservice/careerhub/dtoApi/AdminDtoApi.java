@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import com.docservice.careerhub.dto.response.MessageResponse;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,15 +35,11 @@ public class AdminDtoApi extends AbstractDtoUtil {
     @Autowired
     private AdminService adminService;
 
-    // ---------------- Audit ----------------
-
     public PageResponse<AuditEvent> listAudit(PageQuery query, AuditAction action) {
         Pageable pageable = PageUtil.toPageable(query, "createdAt");
         Page<AuditEvent> result = adminService.listAudit(query.getKeyword(), action, pageable);
         return PageUtil.toResponse(result, result.getContent());
     }
-
-    // ---------------- Users ----------------
 
     public PageResponse<AdminUserDto> listUsers(PageQuery query) {
         Pageable pageable = PageUtil.toPageable(query, "createdAt");
@@ -55,7 +52,13 @@ public class AdminDtoApi extends AbstractDtoUtil {
         return adminService.updateUsers(updates).stream().map(this::toUserDto).toList();
     }
 
-    // ---------------- Doc templates ----------------
+    public MessageResponse assignResume(
+            String adminEmail, com.docservice.careerhub.dto.request.AssignResumeRequest request) {
+        validate(request);
+        adminService.assignResume(adminEmail, request);
+        return MessageResponse.of(
+                "Resume assigned to " + request.getTargetEmail().trim());
+    }
 
     public PageResponse<DocTemplateMetadata> listTemplates(PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, "createdAt");
@@ -67,8 +70,6 @@ public class AdminDtoApi extends AbstractDtoUtil {
         validateBatch(updates);
         return adminService.updateTemplates(updates).stream().map(this::toTemplateDto).toList();
     }
-
-    // ---------------- User docs ----------------
 
     public PageResponse<AdminUserDocDto> listUserDocs(PageQuery query, DocType type) {
         Pageable pageable = PageUtil.toPageable(query, "updatedAt");

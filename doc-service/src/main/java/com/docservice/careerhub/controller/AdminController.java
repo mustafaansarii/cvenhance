@@ -15,6 +15,7 @@ import com.docservice.careerhub.entity.AuditEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,6 +48,13 @@ public class AdminController {
     @PatchMapping("/users")
     public List<AdminUserDto> updateUsers(@RequestBody List<AdminUserUpdate> updates) {
         return adminDtoApi.updateUsers(updates);
+    }
+
+    @PostMapping("/users/resume")
+    public com.docservice.careerhub.dto.response.MessageResponse assignResume(
+            org.springframework.security.core.Authentication authentication,
+            @RequestBody com.docservice.careerhub.dto.request.AssignResumeRequest request) {
+        return adminDtoApi.assignResume(authentication.getName(), request);
     }
 
     // ---------------- Doc templates ----------------

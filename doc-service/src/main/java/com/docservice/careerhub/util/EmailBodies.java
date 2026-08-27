@@ -68,4 +68,13 @@ public final class EmailBodies {
                 + "<p style='margin:16px 0;'><a href='https://cvenhance.in/my-templates' style='" + BTN + "'>Open my resume →</a></p>"
                 + "<p style='" + MUTED + "'>Tip: run it through our ATS checker before you apply.</p>";
     }
+
+    public static String resumeAssigned(String name) {
+        String userName = StringUtils.hasText(name) ? esc(name) : "there";
+        return "<p style='" + H + "'>A resume has been added to your account 🎉</p>"
+                + "<p style='" + P + "'>Hi " + userName + ", our team has prepared a resume and added it to your CVEnhance account.</p>"
+                + "<p style='" + P + "'>Sign in to review it, make edits, analyze it, and download an ATS-friendly PDF.</p>"
+                + "<p style='margin:16px 0;'><a href='https://cvenhance.in/my-templates' style='" + BTN + "'>Open my resume →</a></p>"
+                + "<p style='" + MUTED + "'>If you weren't expecting this, you can safely ignore this email.</p>";
+    }
 }

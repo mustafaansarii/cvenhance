@@ -10,7 +10,7 @@ import Seo from '../components/shared/Seo';
 export default function ResumeBuilder() {
     const { code } = useParams();
     const design = getTemplate(code); // local template design, keyed by code (falls back to classic)
-    const [state, setState] = useState({ loading: true, profile: null, authed: false, document: null });
+    const [state, setState] = useState({ loading: true, profile: null, authed: false, document: null, isAdmin: false });
 
     useEffect(() => {
         let alive = true;
@@ -18,9 +18,11 @@ export default function ResumeBuilder() {
             let profile = null;
             let authed = false;
             let document = null;
+            let isAdmin = false;
             try {
                 const me = await userService.getProfile();
                 profile = me?.profileData || null;
+                isAdmin = Array.isArray(me?.roles) && me.roles.includes('ADMIN');
                 authed = true;
                 // Open a backend doc so save/unlock work. If this template code isn't seeded in
                 // resume_builder_templates, fall back to a document-less (guest-style) session.
@@ -28,7 +30,7 @@ export default function ResumeBuilder() {
             } catch {
                 // Signed-out visitor: still editable; saving/downloading begins after sign-in.
             }
-            if (alive) setState({ loading: false, profile, authed, document });
+            if (alive) setState({ loading: false, profile, authed, document, isAdmin });
         })();
         return () => { alive = false; };
     }, [design.code]);
@@ -56,6 +58,7 @@ export default function ResumeBuilder() {
                 initialProfile={state.profile}
                 initialDocument={state.document}
                 authed={state.authed}
+                isAdmin={state.isAdmin}
             />
         </>
     );

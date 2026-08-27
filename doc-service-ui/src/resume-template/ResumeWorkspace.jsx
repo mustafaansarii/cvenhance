@@ -13,6 +13,7 @@ import AiAssistPanel from '../components/ai/AiAssistPanel';
 import ResumeCheckPanel from '../components/ai/ResumeCheckPanel';
 import ResumeUploadButton from '../components/profile/ResumeUploadButton';
 import PdfPreviewPane from '../components/shared/PdfPreviewPane';
+import adminService from '../services/admin.service';
 
 const ITEM_MARGIN = { exp: 'mb-4', proj: 'mb-4', edu: 'mb-3', courses: 'mb-1.5', pair: 'mb-1', simple: 'mb-1' };
 
@@ -45,7 +46,7 @@ const TB_BTN = 'flex h-8 w-8 items-center justify-center rounded-lg text-white/8
 const TB_DIV = 'mx-0.5 h-5 w-px bg-white/15';
 const TB_ICON = 'h-[17px] w-[17px]';
 
-export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
+export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false, isAdmin = false }) {
     // Resume content always comes from the user's profile (single source of truth); the document
     // only carries per-template config (section order + editor settings).
     const profileResume = profileToResume(initialProfile, authed);
@@ -69,6 +70,9 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     const [fitScale, setFitScale] = useState(1);
     const [locked, setLocked] = useState(() => !initialDocument?.unlocked);
     const [docId] = useState(() => initialDocument?.id || null);
+    const [assignOpen, setAssignOpen] = useState(false);
+    const [assignEmail, setAssignEmail] = useState('');
+    const [assigning, setAssigning] = useState(false);
     const navigate = useNavigate();
 
     const [settings, setSettings] = useState(() => ({
@@ -634,6 +638,30 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
 
     const closePreview = () => setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null; });
 
+    // Admin: build this resume and copy it into another user's account.
+    const runAssign = async () => {
+        const email = assignEmail.trim();
+        if (!email) { toast.error('Enter the user\'s email'); return; }
+        setAssigning(true);
+        const id = toast.loading(`Assigning resume to ${email}…`);
+        try {
+            await adminService.assignResume({
+                targetEmail: email,
+                profileData: resumeToProfile(resume),
+                templateCode: design.code,
+                sectionOrder: order,
+                editorSettings: settings,
+            });
+            toast.success(`Resume assigned to ${email}`, { id });
+            setAssignOpen(false);
+            setAssignEmail('');
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Could not assign the resume', { id });
+        } finally {
+            setAssigning(false);
+        }
+    };
+
     const downloadPreview = () => {
         if (!previewUrl) { download(); return; }
         const a = document.createElement('a');
@@ -761,6 +789,16 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                                 setDataVersion((v) => v + 1);
                             }}
                         />
+                    )}
+                    {isAdmin && authed && (
+                        <button
+                            onClick={() => setAssignOpen(true)}
+                            title="Create this resume for another user"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-light text-muted-foreground transition hover:bg-muted sm:px-3"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M22 11h-6" /></svg>
+                            <span className="hidden sm:inline">Create for user</span>
+                        </button>
                     )}
                     <button
                         onClick={() => setAtsAiOpen((o) => !o)}
@@ -1138,6 +1176,38 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
                     setDataVersion((v) => v + 1);
                 }}
             />
+
+            {assignOpen && (
+                <div className="no-print fixed inset-0 z-[100001] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={() => setAssignOpen(false)}>
+                    <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-6 pt-6">
+                            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-accent/10 text-accent">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M22 11h-6" /></svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-foreground">Create resume for a user</h3>
+                            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                                The current resume content and this template will be copied to the user's account. This replaces their existing profile data.
+                            </p>
+                            <label className="mb-1.5 mt-4 block text-sm font-semibold text-foreground">User email</label>
+                            <input
+                                type="email"
+                                value={assignEmail}
+                                onChange={(e) => setAssignEmail(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') runAssign(); }}
+                                placeholder="user@example.com"
+                                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
+                            />
+                            <p className="mt-1 text-xs text-muted-foreground">The user must already have an account. They'll get an email.</p>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-2.5 border-t border-border bg-muted/40 px-6 py-4">
+                            <button type="button" onClick={() => setAssignOpen(false)} className="rounded-lg px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted">Cancel</button>
+                            <button type="button" onClick={runAssign} disabled={assigning || !assignEmail.trim()} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-sm transition hover:bg-accent-hover disabled:opacity-50">
+                                {assigning ? 'Assigning…' : 'Create for user'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {previewUrl && (
                 <div className="no-print fixed inset-0 z-[100000] flex items-center justify-center bg-black/60 p-4" onClick={closePreview}>
