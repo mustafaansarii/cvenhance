@@ -22,8 +22,9 @@ const resumeBuilderService = {
         return response.data;
     },
 
-    async saveDocument(id, { name, resumeData, sectionOrder, editorSettings }) {
-        const response = await api.patch(`documents/${id}`, { name, resumeData, sectionOrder, editorSettings });
+    // Resume content lives in the user's profile; only config is saved per document.
+    async saveDocument(id, { name, sectionOrder, editorSettings }) {
+        const response = await api.patch(`documents/${id}`, { name, sectionOrder, editorSettings });
         return response.data;
     },
 

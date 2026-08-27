@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
     PAGE_W, PAGE, GAP, STRIDE, MARGIN,
-    SECTION_CATALOG, META, blankItem, profileToResume, resumeToProfile, hasResumeContent,
+    SECTION_CATALOG, META, blankItem, profileToResume, resumeToProfile,
     AddButton, RemoveButton,
 } from './shared';
 import userService from '../services/user.service';
@@ -46,18 +46,15 @@ const TB_DIV = 'mx-0.5 h-5 w-px bg-white/15';
 const TB_ICON = 'h-[17px] w-[17px]';
 
 export default function ResumeWorkspace({ design, initialProfile = null, initialDocument = null, authed = false }) {
-    const hasDoc = hasResumeContent(initialDocument?.resumeData);
-    const [resume, setResume] = useState(() => hasDoc
-        ? initialDocument.resumeData
-        : profileToResume(initialProfile, authed));
-    const [order, setOrder] = useState(() => {
-        if (hasDoc) {
-            return initialDocument.sectionOrder?.length
-                ? initialDocument.sectionOrder
-                : (initialDocument.resumeData._order || ['summary', 'experience', 'skills', 'courses', 'education']);
-        }
-        return profileToResume(initialProfile, authed)._order || ['summary', 'experience', 'skills', 'courses', 'education'];
-    });
+    // Resume content always comes from the user's profile (single source of truth); the document
+    // only carries per-template config (section order + editor settings).
+    const profileResume = profileToResume(initialProfile, authed);
+    const [resume, setResume] = useState(() => profileResume);
+    const [order, setOrder] = useState(() => (
+        initialDocument?.sectionOrder?.length
+            ? initialDocument.sectionOrder
+            : (profileResume._order || ['summary', 'experience', 'skills', 'courses', 'education'])
+    ));
     const [pageCount, setPageCount] = useState(1);
     const [dragType, setDragType] = useState(null);
     const [overType, setOverType] = useState(null);
@@ -120,14 +117,13 @@ export default function ResumeWorkspace({ design, initialProfile = null, initial
     useEffect(() => {
         if (!authed || !docId) return undefined;
         const timer = window.setTimeout(() => {
+            // Config → document; resume content → the user's profile (not stored per document).
             resumeBuilderService.saveDocument(docId, {
                 name: resume.name ? `${resume.name} resume` : undefined,
-                resumeData: resume,
                 sectionOrder: order,
                 editorSettings: settings,
-            }).catch(() => {
-              
-            });
+            }).catch(() => { /* ignore */ });
+            userService.updateProfile(resumeToProfile(resume)).catch(() => { /* ignore */ });
         }, 700);
         return () => window.clearTimeout(timer);
     }, [authed, docId, order, resume, settings]);

@@ -14,7 +14,6 @@ public class ResumeBuilderDocumentResponse {
     private String templateCode;
     private int templateVersion;
     private String name;
-    private JsonNode resumeData;
     private JsonNode sectionOrder;
     private JsonNode editorSettings;
     private boolean unlocked;
