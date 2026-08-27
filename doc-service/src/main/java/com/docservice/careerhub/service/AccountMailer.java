@@ -34,4 +34,14 @@ public class AccountMailer {
             LOGGER.warn("Unlock email to {} failed: {}", toEmail, exception.getMessage());
         }
     }
+
+    @Async
+    public void sendResumeAssigned(String toEmail, String name) {
+        try {
+            String html = mailService.renderEmail(EmailBodies.resumeAssigned(name));
+            mailService.sendHtml(toEmail, "A resume was added to your account 🎉", "A resume was added to your account.", html);
+        } catch (Exception exception) {
+            LOGGER.warn("Resume-assigned email to {} failed: {}", toEmail, exception.getMessage());
+        }
+    }
 }

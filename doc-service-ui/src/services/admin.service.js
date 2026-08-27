@@ -42,6 +42,12 @@ class AdminService {
         const res = await axiosInstance.get('audit-events', { params });
         return res.data;
     }
+
+    // Build a resume and copy it into another user's account.
+    async assignResume(payload) {
+        const res = await axiosInstance.post('users/resume', payload);
+        return res.data;
+    }
 }
 
 export default new AdminService();
