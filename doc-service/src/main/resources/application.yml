@@ -56,6 +56,7 @@ spring:
 
     properties:
       hibernate:
+        default_schema: ${DB_SCHEMA:public}
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           time_zone: ${APP_TIMEZONE:Asia/Kolkata}
