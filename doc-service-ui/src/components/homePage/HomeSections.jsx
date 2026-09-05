@@ -26,18 +26,6 @@ const FEATURES = [
     { title: 'Designer templates', desc: 'Dozens of professionally crafted templates for every document type.', path: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v4H4V5zm0 6h7v9H5a1 1 0 01-1-1v-8zm9 0h7v8a1 1 0 01-1 1h-6v-9z' },
 ];
 
-const ATS_PILLS = [
-    { title: 'Readable contact information', path: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-    { title: 'Full experience parsing', path: 'M9 17v-6h13M9 7h13M5 7h.01M5 12h.01M5 17h.01' },
-    { title: 'Optimized skills section', path: 'M13 10V3L4 14h7v7l9-11h-7z' },
-];
-
-const STEPS = [
-    { n: '01', title: 'Pick a template', desc: 'Choose from polished, ATS-ready designs for resumes, cover letters and more.' },
-    { n: '02', title: 'Make it yours', desc: 'Edit content in the live editor — the PDF preview updates as you type.' },
-    { n: '03', title: 'Download & apply', desc: 'Export a pixel-perfect PDF and save it to your account for later edits.' },
-];
-
 const TEMPLATES = [
     { src: 'https://i.ibb.co/v4dWrK1j/Vishnu-Singh.jpg', name: 'Modern Tech', tag: 'Resume', to: '/templates?type=CV_AND_RESUME' },
     { src: 'http://raw.githubusercontent.com/jakegut/resume/refs/heads/master/resume.png', name: 'Classic Professional', tag: 'Resume', to: '/templates?type=CV_AND_RESUME' },
@@ -47,23 +35,17 @@ const TEMPLATES = [
 
 const REVIEWS = [
     { name: 'Khushboo S.', when: '22 hours ago', stars: 5, text: 'The best CV building tool — tailored output for every job description, and the look and feel is truly dynamic.' },
-    { name: 'Virgil', when: '1 day ago', stars: 5, text: 'Very easy to draft a CV with lots of templates to choose from.' },
-    { name: 'Collins', when: '2 days ago', stars: 5, text: 'It aids in generating a good, outstanding, comprehensive resume.' },
     { name: 'Aisha K.', when: '3 days ago', stars: 5, text: 'Rebuilt my resume in 20 minutes and started getting callbacks the same week.' },
     { name: 'Roseline', when: '4 days ago', stars: 5, text: 'Nicely surprised by the professional level of the templates.' },
     { name: 'Daniel R.', when: '5 days ago', stars: 4, text: 'Finally a builder that does not fight me on formatting. Genuinely professional.' },
 ];
 
 const FAQS = [
-    { q: 'Is CVEnhance free to use?', a: 'Yes. You can build a resume, fill in your details, and download a PDF for free — no payment required to get a finished, recruiter-ready document.' },
-    { q: 'Do I need an account to use a resume template?', a: 'Create an account to save a template to your documents, edit it, and return to it later.' },
-    { q: 'How do I edit a template?', a: 'Choose a template, save it to your account, and edit it in the LaTeX editor with a live PDF preview.' },
-    { q: 'Are CVEnhance resumes ATS-friendly?', a: 'Yes. Every template uses clean, single-column-friendly layouts with standard section headings and readable fonts, so applicant tracking systems can parse your name, experience, and skills without dropping content.' },
-    { q: 'How do I download my resume as a PDF?', a: 'Use the PDF controls in the editor to compile and download your document.' },
-    { q: 'Can I edit my resume after I have started?', a: 'Yes. Saved documents remain in My Documents, where you can edit and compile them again anytime.' },
-    { q: 'Can I switch templates?', a: 'Yes. Browse templates and save another design to your account whenever you want to try a different layout.' },
-    { q: 'How do I sign in or create an account?', a: 'Use your email and password, or continue with Google or GitHub. If you sign in with a social account for the first time, an account is created for you automatically.' },
-    { q: 'Can I add sections like Projects, Certifications, or Awards?', a: 'Yes. Add the section in your template source, then compile the document again to update the PDF.' }
+    { q: 'Is CVEnhance free to use?', a: 'Yes. You can build, edit, and download a finished, recruiter-ready PDF resume completely for free.' },
+    { q: 'Are the templates ATS-friendly?', a: 'Yes. All our templates use clean layouts and readable fonts that Applicant Tracking Systems can easily parse.' },
+    { q: 'Do I need an account to build a resume?', a: 'An account is required to save your progress, so you can return anytime to edit, update, or download your documents.' },
+    { q: 'Can I switch templates after filling in my details?', a: 'Yes. You can browse our collection and apply a different design to your resume at any time.' },
+    { q: 'Can I add custom sections like Projects or Certifications?', a: 'Absolutely. You can easily add, rename, or reorder any section within the live editor.' }
 ];
 
 function FaqItem({ item, isOpen, onToggle }) {
@@ -95,7 +77,7 @@ function FaqSection() {
     const [open, setOpen] = useState(0);
     return (
         <section className="border-t border-border">
-            <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
                 <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport} className="text-center">
                     <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Frequently asked questions</h2>
                     <p className="mt-4 text-base text-muted-foreground">Everything you need to know about building documents with CVEnhance.</p>
@@ -141,7 +123,7 @@ export default function HomeSections() {
         <div className="bg-background text-foreground">
 
             <section className="border-b border-border">
-                <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                     <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                         Trusted by job seekers hired at
                     </p>
@@ -153,7 +135,7 @@ export default function HomeSections() {
                 </div>
             </section>
 
-            <section className="relative overflow-hidden border-b border-border mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+            <section className="relative overflow-hidden border-b border-border mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                 <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
                     <div className="max-w-xl">
                         <span className="inline-flex items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
@@ -184,7 +166,7 @@ export default function HomeSections() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+            <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                 <div className="grid items-center gap-12 lg:grid-cols-2">
                     <div className="grid grid-cols-2 gap-5">
                         {STATS.map((s, i) => (
@@ -222,7 +204,7 @@ export default function HomeSections() {
             </section>
 
             <section className="border-y border-border">
-                <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-2xl text-center">
                         <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">Everything you need to get hired</h2>
                         <p className="mt-4 text-base text-muted-foreground">The builder handles design and formatting, so you can focus on the words that land the job.</p>
@@ -240,54 +222,8 @@ export default function HomeSections() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="relative overflow-hidden rounded-[2rem] border border-border bg-muted px-6 py-14 sm:px-12 lg:py-20">
-                    <div className="relative grid items-center gap-12 lg:grid-cols-2">
-                        <MotionDiv variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                            <h2 className="font-serif text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-                                Resumes optimized for Applicant Tracking Systems
-                            </h2>
-                            <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground">
-                                Every template is tested against top ATS software for full compatibility — clean layouts, readable fonts, and standard section titles, so nothing gets lost.
-                            </p>
-                            <Link to="/templates?type=CV_AND_RESUME" className="mt-8 inline-flex items-center gap-1.5 rounded-full bg-accent hover:bg-accent-hover px-6 py-3 text-sm font-semibold text-accent-foreground shadow-lg transition">
-                                Build an ATS-friendly resume
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4M3 12h18" /></svg>
-                            </Link>
-                        </MotionDiv>
-
-                        <div className="space-y-4">
-                            {ATS_PILLS.map((p, i) => (
-                                <MotionDiv key={p.title} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                                    className={`flex items-center gap-4 rounded-2xl border border-border bg-card p-4 ${i === 1 ? 'lg:ml-12' : i === 2 ? 'lg:ml-6' : ''}`}>
-                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6"><path strokeLinecap="round" strokeLinejoin="round" d={p.path} /></svg>
-                                    </span>
-                                    <span className="text-sm font-semibold text-foreground">{p.title}</span>
-                                </MotionDiv>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="font-serif text-3xl font-bold tracking-tight sm:text-4xl text-foreground">From blank page to PDF in 3 steps</h2>
-                </div>
-                <div className="mt-14 grid gap-8 md:grid-cols-3">
-                    {STEPS.map((s, i) => (
-                        <MotionDiv key={s.n} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}>
-                            <span className="text-5xl font-extrabold text-accent/25">{s.n}</span>
-                            <h3 className="mt-3 text-lg font-semibold text-foreground">{s.title}</h3>
-                            <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
-                        </MotionDiv>
-                    ))}
-                </div>
-            </section>
-
-            <section className="relative overflow-hidden border-y border-border bg-muted">
-                <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+            <section className="relative overflow-hidden border-b border-border bg-muted">
+                <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                     <div className="grid items-start gap-8 lg:grid-cols-[1fr_1.4fr]">
                         <div className="lg:sticky lg:top-24">
                             <h2 className="font-serif text-3xl font-bold leading-tight tracking-tight sm:text-4xl text-foreground">Trusted by executives &amp; senior professionals</h2>
@@ -300,10 +236,10 @@ export default function HomeSections() {
                             </div>
                         </div>
 
-                        <div className="columns-1 gap-5 sm:columns-2 [&>*]:mb-5">
+                        <div className="grid gap-5 sm:grid-cols-2">
                             {REVIEWS.map((r, i) => (
-                                <MotionDiv key={r.name} custom={i % 3} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
-                                    className="break-inside-avoid rounded-2xl border border-border bg-card p-5 shadow-sm">
+                                <MotionDiv key={r.name} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={viewport}
+                                    className="rounded-2xl border border-border bg-card p-5 shadow-sm">
                                     <Stars count={r.stars} />
                                     <p className="mt-2 text-xs text-muted-foreground">{r.when}</p>
                                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{r.text}</p>

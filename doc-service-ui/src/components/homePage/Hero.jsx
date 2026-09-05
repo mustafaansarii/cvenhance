@@ -136,9 +136,9 @@ export default function Hero() {
                         className="hidden relative mt-8"
                     >
                         <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory">
-                            {Doc_templates_images.map((src) => (
+                            {Doc_templates_images.map((src, idx) => (
                                 <div
-                                    key={src}
+                                    key={src + idx}
                                     className="snap-start min-w-[260px] sm:min-w-[320px] h-[240px] sm:h-[300px] rounded-2xl overflow-hidden border border-white bg-white/60"
                                 >
                                     <img src={src} alt="Resume template preview" className="w-full h-full object-contain" />
@@ -158,7 +158,7 @@ export default function Hero() {
 
                             return (
                                 <motion.div
-                                    key={src}
+                                    key={src + idx}
                                     initial={pos.initial}
                                     animate={{ opacity: 1, x: 0, y: 0 }}
                                     transition={{ duration: 0.5, delay: pos.delay }}
